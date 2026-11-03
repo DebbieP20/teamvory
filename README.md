@@ -2,7 +2,7 @@
 
 *Your team, perfectly organized.*
 
-TeamVory is a web app for employee scheduling in small and seasonal businesses. Employees enter their availability once, on their phone. The owner builds a fair weekly schedule in minutes, either by assigning shifts by hand or by clicking **Generate**. Then they publish it, and everyone gets an email.
+TeamVory is a web app for employee scheduling in small, medium and seasonal businesses. Employees enter their availability once, on their phone. The owner builds a fair weekly schedule in minutes, either by assigning shifts by hand or by clicking **Generate**. Then they publish it, and everyone gets an email.
 
 It replaces the usual routine of collecting availability by text message, typing it into Excel and building the schedule cell by cell.
 
