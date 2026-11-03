@@ -21,6 +21,8 @@ erDiagram
     BUSINESS ||--o{ WEEK : plans
     WEEK ||--o{ SHIFT : contains
     BUSINESS ||--o{ EVENT : holds
+    BUSINESS ||--o{ CALENDAR_FEED : "reads events from"
+    CALENDAR_FEED |o--o{ EVENT : imports
     EVENT |o--o{ SHIFT : "staffed by"
 
     WEEK ||--o{ SCHEDULE : "has versions"
@@ -50,7 +52,20 @@ erDiagram
         string timezone "America/New_York"
         enum weekStartsOn "MONDAY"
         enum swapApprovalMode "AUTO or MANAGER"
+        boolean reminderEnabled
+        enum reminderStartDay "MON to SUN"
+        int reminderDays "days in a row"
+        time reminderTime
+        boolean reminderIncludeDefaultOnly
         datetime createdAt
+    }
+    CALENDAR_FEED {
+        uuid id PK
+        uuid businessId FK
+        string name
+        string url "encrypted"
+        datetime lastSyncedAt
+        string lastError "optional"
     }
     MEMBERSHIP {
         uuid id PK
@@ -140,6 +155,9 @@ erDiagram
         string location
         string notes
         boolean requiresStaffing
+        enum source "MANUAL or CALENDAR"
+        uuid calendarFeedId FK "optional"
+        string externalUid "optional"
     }
     SCHEDULE {
         uuid id PK
@@ -220,6 +238,8 @@ erDiagram
 | **User** and **Membership** are separate | One person (one login) could later work for two businesses that both use TeamVory. Role and active/inactive status belong to the membership, not the person |
 | `schedulingMode` on Membership | The owner works shifts too. Employees are *fair share*; the owner is *backup* by default: he picks his own shifts and covers whatever nobody else can (decision 19). *Not scheduled* is for managers who don't work shifts |
 | `override` on Assignment | The manager may add someone who marked themselves not available, after agreeing with them (decision 20). The flag shows the *agreed* tag and stops it being reported as a conflict |
+| Reminder settings on **Business** | One set of reminder choices per business (decision 26). Who gets reminded is worked out when sending, not stored |
+| **CalendarFeed** + `externalUid` on Event | Events imported from the owner's phone calendar (decision 27). The calendar's own event ID matches updates and deletions, so re-syncing never creates duplicates. Unique (`calendarFeedId`, `externalUid`) |
 | `pinned` on Assignment | Shifts the owner puts himself on (or any shift placed by hand and pinned) survive Generate and Regenerate |
 | Availability = **template + overrides** | The default week is entered once; each week only stores the days that differ (decision 7) |
 | Overrides keyed by **date**, not by week | Availability can be entered for any future week before that week is set up |

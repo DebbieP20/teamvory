@@ -189,7 +189,7 @@ footer { font-size: var(--s-1); color: var(--muted); border-top: 1px solid var(-
     <span>Updated <b>Nov 3, 2026</b></span>
   </div>
   <nav class="toc" aria-label="Sections">
-    <a href="#problem">Problem</a><a href="#decisions">Decisions</a><a href="#shifts">Shift patterns</a><a href="#fair">Fairness</a><a href="#swaps">Swaps</a><a href="#stack">Stack</a><a href="#architecture">Architecture</a><a href="#data">Database</a><a href="#permissions">Permissions</a><a href="#pages">Pages</a><a href="#milestones">Milestones</a><a href="#open">Open questions</a><a href="#brand">Brand</a>
+    <a href="#problem">Problem</a><a href="#decisions">Decisions</a><a href="#shifts">Shift patterns</a><a href="#fair">Fairness</a><a href="#swaps">Swaps</a><a href="#stack">Stack</a><a href="#architecture">Architecture</a><a href="#data">Database</a><a href="#permissions">Permissions</a><a href="#pages">Pages</a><a href="#milestones">Milestones</a><a href="#open">Open questions</a><a href="#future">Future</a><a href="#brand">Brand</a>
   </nav>
 </header>
 
@@ -243,6 +243,11 @@ footer { font-size: var(--s-1); color: var(--muted); border-top: 1px solid var(-
       <tr><td>Owner on the schedule</td><td>Yes. He schedules himself each week and chooses his days off. He can work just one shift of a day (2–5 or 5–9). When no one else is available, he covers the shift.</td></tr>
       <tr><td>Assigning someone marked not available</td><td>Allowed for the manager after a confirmation, when they've agreed with the employee (rare). The auto-scheduler never does it.</td></tr>
       <tr><td>Availability ranges</td><td>One time range per day</td></tr>
+      <tr><td>Usual shift times</td><td>12–5 PM and 5–9 PM every day, weekends included. A slow rainy day gets one employee, or the owner works half or the whole day.</td></tr>
+      <tr><td>Sign-up</td><td>Any business can sign up on its own. The Contact page stays for questions and support.</td></tr>
+      <tr><td>Pricing</td><td>Per business, per month. Price not decided yet, so no prices on the site at first.</td></tr>
+      <tr><td>Availability reminders</td><td>The owner picks the day, how many days in a row and the time. Only employees missing next week's availability get it.</td></tr>
+      <tr><td>Calendar sync</td><td>Events the owner adds in Apple Calendar (or Google) appear in TeamVory automatically, through the calendar's link.</td></tr>
       <tr><td>How far ahead</td><td>Week by week, at most 2 weeks out. Employees change this week or next week; the default week covers the rest.</td></tr>
     </tbody>
   </table>
@@ -252,14 +257,14 @@ footer { font-size: var(--s-1); color: var(--muted); border-top: 1px solid var(-
 <section id="shifts">
   <span class="eyebrow">Shift configuration</span>
   <h2>Shift patterns that change with the season</h2>
-  <p>Shift times follow sales, so the owner saves named patterns and applies one to a week. Copying last week is a single click, and editing one day never changes the other days or the saved pattern.</p>
+  <p>Shifts are usually 12–5 PM and 5–9 PM every day, weekends included. The owner saves named patterns, like <b>Standard</b> and <b>Slow day</b> for rain, and applies one to a whole week or a single day. Copying last week is a single click, and editing one day never changes the other days or the saved pattern.</p>
   <div class="board">
     <div class="board-head">
       <h3>Example week</h3>
       <div class="seg" role="group" aria-label="Shift pattern">
-        <button type="button" id="p-early" data-p="early" aria-pressed="true">Early season</button>
-        <button type="button" id="p-mid" data-p="mid" aria-pressed="false">Mid season</button>
-        <button type="button" id="p-late" data-p="late" aria-pressed="false">Late season</button>
+        <button type="button" id="p-early" data-p="early" aria-pressed="true">Standard</button>
+        <button type="button" id="p-mid" data-p="mid" aria-pressed="false">Slow day</button>
+        <button type="button" id="p-late" data-p="late" aria-pressed="false">Short evening</button>
       </div>
     </div>
     <div class="scroll">
@@ -280,7 +285,7 @@ footer { font-size: var(--s-1); color: var(--muted); border-top: 1px solid var(-
   <div class="formula">eligibleHours(person) = shift hours this week the person can fully cover
 target(person)        = hoursNeeded × eligibleHours(person) ÷ Σ eligibleHours(everyone)</div>
   <p>Only employees share hours this way. The owner is a <b>backup</b>: he puts himself on the shifts he wants, and covers any shift nobody else can. His default is available every shift, so he only marks his days off.</p>
-  <p>Example with four employees in an Early season week (126 staff hours needed):</p>
+  <p>Example with four employees in a Standard week (126 staff hours needed):</p>
   <div class="fair" id="fair"></div>
   <div class="legend">
     <span><span class="key" style="border:1.5px dashed var(--muted)"></span>Hours they could work</span>
@@ -360,6 +365,7 @@ flowchart LR
     EM["Email service<br/>(Resend)"]
     SMS["SMS service<br/>(Twilio, after v1)"]
     INBOX["Site owner's inbox"]
+    CAL["Owner's phone calendar<br/>(Apple / Google, calendar link)"]
 
     V -->|Reads public site, sends contact form| TV
     O -->|Sets up shifts, builds and publishes schedules| TV
@@ -370,6 +376,7 @@ flowchart LR
     EM --> E
     TV -->|Contact form messages| EM
     EM --> INBOX
+    CAL -.->|Events, read every hour| TV
 </script></figure></div>
   <h3>What runs where</h3>
   <div class="scroll"><figure class="diagram" aria-label="Container diagram"><div class="dg" id="dg-2"><p class="dg-note">Loading diagram… (needs an internet connection)</p></div><script type="text/x-mermaid" data-for="dg-2">
@@ -391,7 +398,7 @@ flowchart TB
                 AUTHZ["Permission checks<br/>requireRole(), scoped queries"]
             end
         end
-        CRON["Vercel Cron<br/>daily: retry failed notifications"]
+        CRON["Scheduled jobs<br/>hourly: availability reminders, calendar sync<br/>daily: retry failed notifications"]
     end
 
     DB[("PostgreSQL<br/>Neon")]
@@ -540,7 +547,7 @@ erDiagram
     SHIFT_PATTERN {
         uuid id PK
         uuid businessId FK
-        string name "Early season"
+        string name "Standard"
         json shifts "start, end, people needed"
     }
     WEEK {
@@ -569,6 +576,8 @@ erDiagram
         string location
         string notes
         boolean requiresStaffing
+        enum source "MANUAL or CALENDAR"
+        string externalUid "optional"
     }
     SCHEDULE {
         uuid id PK
@@ -694,10 +703,10 @@ erDiagram
     <li><span class="id">M2</span><div><div class="t">Accounts</div><div class="d">Create a business, log in, reset password, invite employees, roles</div></div></li>
     <li><span class="id">M3</span><div><div class="t">Availability</div><div class="d">Default week + exceptions, manager entry, time off, overview</div></div></li>
     <li><span class="id">M4</span><div><div class="t">Shift setup + manual schedule</div><div class="d">Patterns, copy last week, assign by click, hour totals, conflict alerts</div></div></li>
-    <li class="cut"><span class="id">M5</span><div><div class="t">Publish + email</div><div class="d">Versioned schedules, email on publish and changes, My schedule</div></div></li>
+    <li class="cut"><span class="id">M5</span><div><div class="t">Publish + email</div><div class="d">Versioned schedules, email on publish and changes, My schedule, availability reminders</div></div></li>
     <li><span class="id">M6</span><div><div class="t">Auto-scheduler</div><div class="d">Fairness algorithm with tests, generate and regenerate, unfilled-shift report</div></div></li>
     <li><span class="id">M7</span><div><div class="t">Swaps + open shifts</div><div class="d">Requests, pickups, approval setting, notifications</div></div></li>
-    <li><span class="id">M8</span><div><div class="t">Events + exports</div><div class="d">Events in the planning view; PDF, PNG, JPG, Word, Excel</div></div></li>
+    <li><span class="id">M8</span><div><div class="t">Events + exports</div><div class="d">Events in the planning view, import from the owner's phone calendar; PDF, PNG, JPG, Word, Excel</div></div></li>
     <li><span class="id">M9</span><div><div class="t">Polish + launch</div><div class="d">Season roster, accessibility and mobile checks, client testing, handover</div></div></li>
     <li><span class="id">M10</span><div><div class="t">SMS</div><div class="d">Text notifications, with each user choosing email or SMS</div></div></li>
   </ol>
@@ -709,6 +718,20 @@ erDiagram
   <h2>Open questions</h2>
   <div class="open">
     <div><b>Contact email, phone and social links</b><span class="def">On hold until the client creates them. The contact form is built anyway, and the details go in one config file when ready.</span></div>
+  </div>
+</section>
+
+<section id="future">
+  <span class="eyebrow">Later</span>
+  <h2>Future features</h2>
+  <p>Not needed by the first client, but likely as TeamVory grows to more and larger businesses. The database already leaves room for each one.</p>
+  <div class="open">
+    <div><b>Positions</b><span class="def">Cook, cashier, server… Only trained people get those shifts.</span></div>
+    <div><b>Multiple locations</b><span class="def">One business with several sites, each with its own shifts and staff.</span></div>
+    <div><b>More managers</b><span class="def">Already supported. Later, a manager can be limited to certain locations or positions.</span></div>
+    <div><b>Pricing page + billing</b><span class="def">A monthly price per business, card payments and a free trial. The price isn't set yet.</span></div>
+    <div><b>Calendar feed for staff</b><span class="def">Each person's shifts appear in their Apple or Google Calendar automatically.</span></div>
+    <div><b>SMS</b><span class="def">Already planned as M10.</span></div>
   </div>
 </section>
 
@@ -742,9 +765,9 @@ erDiagram
 (function () {
   var START = 12, END = 21, SPAN = END - START;
   var patterns = {
-    early: [[12, 17], [17, 21]],
-    mid:   [[14, 17], [17, 21]],
-    late:  [[14, 17], [17, 20]]
+    early: [[12, 17, 2], [17, 21, 2]],
+    mid:   [[12, 17, 1], [17, 21, 1]],
+    late:  [[12, 17, 2], [17, 20, 2]]
   };
   var days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   function fmt(h) { var x = h > 12 ? h - 12 : h; return x + (h >= 12 ? " PM" : " AM"); }
@@ -768,10 +791,10 @@ erDiagram
         var s = p[i], bar = t.querySelector(cls);
         bar.style.left = ((s[0] - START) / SPAN * 100) + "%";
         bar.style.width = ((s[1] - s[0]) / SPAN * 100) + "%";
-        bar.textContent = short(s[0]) + "–" + short(s[1]) + " ×2";
+        bar.textContent = short(s[0]) + "–" + short(s[1]) + " ×" + s[2];
       });
     });
-    p.forEach(function (s) { total += (s[1] - s[0]) * 2 * 7; });
+    p.forEach(function (s) { total += (s[1] - s[0]) * s[2] * 7; });
     document.getElementById("total").textContent = total + " h";
     document.querySelectorAll(".seg button").forEach(function (b) {
       b.setAttribute("aria-pressed", String(b.dataset.p === key));
@@ -782,7 +805,7 @@ erDiagram
   });
   render("early");
 
-  // Fairness example: Early season, 126 staff hours needed.
+  // Fairness example: Standard, 126 staff hours needed.
   var people = [["Ana", 60], ["Cara", 45], ["Ben", 30], ["Dev", 15]];
   var needed = 126, sum = people.reduce(function (a, p) { return a + p[1]; }, 0);
   var max = people[0][1];

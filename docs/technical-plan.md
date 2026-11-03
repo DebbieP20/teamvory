@@ -59,7 +59,9 @@ User            id, email, passwordHash, name, phone, createdAt
 Business        id, name, timezone ("America/New_York"), weekStartsOn (MONDAY),
                 logoUrl,
                 swapApprovalMode (AUTO | MANAGER_APPROVAL),
-                openShiftPickup (bool)
+                openShiftPickup (bool),
+                reminderEnabled, reminderStartDay (MON–SUN), reminderDays (1–7),
+                reminderTime ("10:00"), reminderIncludeDefaultOnly (bool)
 Membership      id, userId, businessId, role (OWNER | MANAGER | EMPLOYEE),
                 status (INVITED | ACTIVE | INACTIVE),
                 schedulingMode (FAIR_SHARE | BACKUP | NOT_SCHEDULED),
@@ -99,7 +101,9 @@ ShiftRequest    id, assignmentId, requesterId,
                 pickedUpById?, reason, resolvedAt
 
 Event           id, businessId, title, date, startTime, endTime,
-                location, notes, requiresStaffing (bool)
+                location, notes, requiresStaffing (bool),
+                source (MANUAL | CALENDAR), calendarFeedId?, externalUid?
+CalendarFeed    id, businessId, name, url (encrypted), lastSyncedAt, lastError?
 
 Notification    id, userId, channel (EMAIL | SMS), type,
                 dedupeKey UNIQUE, sentAt
@@ -118,16 +122,17 @@ AuditLog        id, businessId, actorId, action, entity, before, after, at
 
 ---
 
-## 4. Shift configuration (changes by month)
+## 4. Shift configuration
 
-The shift times aren't fixed. They change during the season based on sales (e.g. `12–5 / 5–9` early in the season, then `2–5 / 5–9` or `2–5 / 5–8`). So:
+Shifts are usually the **same every day, weekends included: 12–5 PM and 5–9 PM** (decision 23). They change only for unexpected situations, mostly bad weather: on a rainy day the business is slow, so the owner schedules one employee, or works half a day or the whole day himself. Times can also still change during the season. So:
 
 - The manager saves named **Shift patterns**, for example:
-  - *Early season*: 12:00–17:00 ×2, 17:00–21:00 ×2
-  - *Mid season*: 14:00–17:00 ×2, 17:00–21:00 ×2
-  - *Late season*: 14:00–17:00 ×2, 17:00–20:00 ×2
+  - *Standard* (the default): 12:00–17:00 ×2, 17:00–21:00 ×2
+  - *Slow day* (rain, bad weather): 12:00–17:00 ×1, 17:00–21:00 ×1
+  - Others if the season calls for it (e.g. 14:00–17:00 / 17:00–20:00)
 - When setting up a week, the manager either **copies last week** (the default, one click) or **applies a pattern** to some or all days, then edits single days as needed.
 - Editing one day never changes the others or the saved pattern (the spec rule "changes to an individual day shall not unintentionally modify other days").
+- **A slow day after publishing:** if rain is forecast for a day that's already published, the manager applies *Slow day* to that day, removes the extra people on the Schedule page and publishes again. Only the employees whose shifts changed get an email. The owner can put himself on one shift (half day) or both (whole day) like any other week.
 
 ---
 
@@ -196,6 +201,40 @@ After completion, hours totals update and everyone involved gets a notification.
 
 ---
 
+## 6b. Availability reminders and calendar sync
+
+### Availability reminders (decision 26)
+
+In **Settings → Availability reminders** the owner chooses:
+- **Start day** (e.g. Wednesday) and **how many days in a row** to send it (e.g. 2 → Wednesday and Thursday)
+- **Time** of day (business time zone)
+- On/off
+
+Each reminder day, an email goes to **active employees who haven't set their availability for next week**. "Set" means they have a default week saved or have entered changes for next week. People who already have it get nothing, and the reminder stops for a person as soon as they enter it (so day 2 only reaches whoever is still missing). One extra option, off by default: *also remind people who only use their default week, to check it's still right*.
+
+This is only a nudge. There is still no deadline (decision 6). Each send is saved in the notification outbox with a `dedupeKey` like `avail-reminder:{weekStart}:{userId}:{date}`, so nobody gets the same reminder twice. The dashboard's "who hasn't updated availability" list uses the same rule.
+
+### Importing events from the owner's phone calendar (decision 27)
+
+So the owner doesn't type each event twice, TeamVory **reads events from his Apple (or Google) Calendar**:
+
+1. In Apple Calendar he makes a calendar just for business events (e.g. "TeamVory events") and turns on **Public Calendar** to get its link (`webcal://…`). Google Calendar has the same thing: the calendar's *secret address in iCal format*.
+2. He pastes the link into **Settings → Calendar sync**.
+3. TeamVory checks the link every hour (and when he taps **Sync now**). New events appear in *Events* and on the dashboard, tagged *From calendar*. Edited or deleted events are updated too, matched by the event's unique ID (`externalUid`).
+4. As before, he adds the staffing shifts for an event by hand (decision 16). The dashboard flags events with no shift yet.
+
+Notes:
+- It's **one-way** (calendar → TeamVory). Events are edited in the phone calendar, and are read-only in TeamVory.
+- Only that one calendar is read, so personal appointments never reach TeamVory. The link is stored encrypted. Anyone who has the link can see that calendar, which is another reason to keep it business-only.
+- Logging TeamVory into his iCloud account (CalDAV with an app-specific password) would also work, but means storing an Apple password. The calendar link is simpler and safer.
+- Reading the link uses the `node-ical` package (an iCal parser), which also handles repeating events.
+
+### Scheduled jobs
+
+Reminders and calendar sync run from a job that wakes up **every hour**. Vercel's free plan only runs scheduled jobs once a day, so this needs either the Pro plan or a free external trigger (e.g. a GitHub Actions schedule calling `/api/cron/hourly` with a secret). Decide in M0.
+
+---
+
 ## 7. Client decisions (confirmed)
 
 | # | Topic | Decision |
@@ -223,6 +262,11 @@ After completion, hours totals update and everyone involved gets a notification.
 | 21 | Time ranges per day | **One** availability range per day |
 | 22 | How far ahead | The owner schedules **week by week, at most 2 weeks out**. Employees change availability for this week or next week; the default week covers the rest |
 | — | Schedule layout | Grid **by shift** (rows = shifts, columns = days) is the main view; no per-person view needed |
+| 23 | Usual shift times | **12–5 PM and 5–9 PM, every day including weekends.** Changes are one-offs, mostly a slow rainy day: one employee, or the owner works half or the whole day (*Slow day* pattern, section 4) |
+| 24 | Sign-up | **Any business can sign up on its own** from the public site. The Contact page stays for questions and support |
+| 25 | Pricing | **Per business, per month.** Price not decided yet, so no prices on the site in v1 (see section 10) |
+| 26 | Availability reminders | Owner picks the start day, number of days in a row and time. Sent only to employees who haven't set availability for next week (section 6b) |
+| 27 | Calendar sync | Events added in the owner's Apple Calendar (or Google) appear in TeamVory automatically, through the calendar's link (section 6b) |
 
 **Brand colors** (from the brand sheet)
 
@@ -257,7 +301,7 @@ After completion, hours totals update and everyone involved gets a notification.
 | 11 | Weekly schedule (manual + auto) | `/manager/schedule?week=` |
 | 12 | Events | `/manager/events` |
 | 13 | Reports & exports (PDF/PNG/JPG/Word/Excel) | `/manager/reports` |
-| 14 | Business settings (swap approval, patterns, time zone) | `/manager/settings` |
+| 14 | Business settings (swap approval, availability reminders, calendar sync, time zone) | `/manager/settings` |
 | 15 | Employee dashboard | `/employee` |
 | 16 | My availability (default + this week + time off) | `/employee/availability` |
 | 17 | My schedule | `/employee/schedule` |
@@ -275,11 +319,26 @@ After completion, hours totals update and everyone involved gets a notification.
 | **M2** | Accounts | Sign up → create business, login, password reset, invite employees, role guards, active/inactive |
 | **M3** | Availability | Recurring default + weekly exceptions, manager edits on behalf, time off, manager overview |
 | **M4** | Shift config + manual schedule | Shift patterns, copy previous week, click to assign, hours totals, conflict alerts |
-| **M5** | Publish + notifications | Publish/version schedules, email on publish/change, employee "My schedule", post-publish conflict flags |
+| **M5** | Publish + notifications | Publish/version schedules, email on publish/change, employee "My schedule", post-publish conflict flags, **availability reminders** (hourly job) |
 | **M6** | Auto-scheduler | Proportional-fairness algorithm + tests, generate/regenerate, unfilled-shift report |
 | **M7** | Swaps & open shifts | Swaps, open-shift pickup, approval-mode setting, emails |
-| **M8** | Events + reports/exports | Events in planning view; PDF/PNG/JPG/Word/Excel exports |
+| **M8** | Events + reports/exports | Events in planning view, **calendar import (Apple/Google link)**; PDF/PNG/JPG/Word/Excel exports |
 | **M9** | Polish & launch | Seasons/roster screen, accessibility audit, mobile testing, client testing, deploy, handover docs |
 | **M10** | SMS (post-v1) | Twilio channel for the notifications that already exist; per-user preference for email/SMS |
 
 M1–M5 already replace the current Excel + text-message process. M6 and later make it faster.
+
+---
+
+## 10. Future features (after v1)
+
+Not needed by the first client, but likely once TeamVory is offered to more and larger businesses. The database already leaves room for each of them (every record belongs to a business, and roles live on the membership), so none needs a redesign.
+
+| Feature | What it adds | Why it may be needed |
+|---|---|---|
+| **Positions** | Tag employees and shifts with a position (cook, cashier, server…). Only people trained for a position get those shifts | Medium businesses rarely have "anyone can work any shift" |
+| **Multiple locations** | One business, several sites, each with its own shifts and staff (people can work at more than one) | Chains and businesses with a second site |
+| **More managers** | Already supported (the owner promotes managers). Later: limit a manager to certain locations or positions | Larger teams split the scheduling work |
+| **Pricing page + subscription billing** | Monthly price **per business** (decision 25), card payments (e.g. Stripe), free trial | Needed before charging new businesses; the price isn't set yet |
+| **Calendar feed for staff** | Each person gets a private calendar link so their shifts show up in Apple / Google Calendar automatically | The other direction of decision 27; employees see shifts without opening the app |
+| **SMS** | Already planned as M10 | Some staff don't read email |

@@ -228,6 +228,31 @@
   .quote small { font-style: normal; font-size: 12px; }
   .cta { text-align: center; padding: 32px 24px; background: var(--mint); }
   .sfoot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 16px 24px; background: var(--navy); color: #cbd5e1; font-size: 12px; }
+
+  /* Settings */
+  .setwrap { display: grid; grid-template-columns: 200px minmax(0, 1fr); }
+  @media (max-width: 760px) { .setwrap { grid-template-columns: 1fr; } .setnav { display: none; } }
+  .setnav { border-right: 1px solid var(--gray); padding: 14px 10px; display: grid; gap: 2px; align-content: start; }
+  .setnav span { padding: 7px 10px; border-radius: 6px; font-size: 13px; color: var(--muted); }
+  .setnav span.on { background: var(--mint); color: var(--teal-dk); font-weight: 600; }
+  .setmain { padding: 16px; display: grid; gap: 14px; }
+  .setcard { border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+  .setcard .sh { display: flex; justify-content: space-between; align-items: center; }
+  .setcard h3 { margin: 0; font-size: 15px; color: var(--navy); }
+  .setcard .hint { margin-top: 4px; }
+  .formrow { display: grid; grid-template-columns: repeat(3, minmax(0, 160px)); gap: 10px; }
+  .field select { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  .switch { font-size: 13px; display: flex; gap: 6px; align-items: center; }
+  .rmsum { background: var(--mint); border: 1px solid #99f6e4; border-radius: 6px; padding: 8px 10px; font-size: 13px; margin-top: 10px; }
+  .rmsum.off { background: var(--box); border-color: var(--line); color: var(--muted); }
+  .emailprev { border: 1px dashed var(--line); border-radius: 6px; padding: 10px; margin-top: 10px; font-size: 13px; max-width: 420px; }
+  .emailprev small { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+  .emailprev p { margin: 4px 0 8px; color: var(--muted); }
+  .howto { margin: 6px 0 10px; padding-left: 1.2em; font-size: 13px; display: grid; gap: 3px; }
+  .calrow { display: flex; gap: 8px; }
+  .calrow input { flex: 1; font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; }
+  .evrow { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--gray); padding: 7px 0; font-size: 13px; }
+  .evrow small { display: block; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -236,9 +261,9 @@
 <header class="doc">
   <div>
     <h1>TeamVory wireframes</h1>
-    <p>Layout only: real colors, fonts and icons come later. The screens are clickable. Sample week: <b>Mid season</b> (2–5 PM and 5–9 PM, 2 people each), 8 employees plus the owner.</p>
+    <p>Layout only: real colors, fonts and icons come later. The screens are clickable. Sample week: <b>Standard</b> shifts (12–5 PM and 5–9 PM, 2 people each, every day), 8 employees plus the owner.</p>
   </div>
-  <div class="jump"><a href="#schedule">1. Weekly schedule</a><a href="#availability">2. My availability</a><a href="#setup">3. Shift setup</a><a href="#dashboard">4. Dashboard</a><a href="#myschedule">5. My schedule</a><a href="#home">6. Home page</a></div>
+  <div class="jump"><a href="#schedule">1. Weekly schedule</a><a href="#availability">2. My availability</a><a href="#setup">3. Shift setup</a><a href="#dashboard">4. Dashboard</a><a href="#myschedule">5. My schedule</a><a href="#home">6. Home page</a><a href="#settings">7. Settings</a></div>
 </header>
 
 <!-- ============ SCREEN 1 ============ -->
@@ -256,7 +281,7 @@
     <div class="toolbar">
       <div class="weekpick"><button class="iconbtn" aria-label="Previous week">◀</button> Week of Jun 8 – 14, 2026 <button class="iconbtn" aria-label="Next week">▶</button></div>
       <span class="chip draft">Draft · not published</span>
-      <span class="chip">Pattern: Mid season</span>
+      <span class="chip">Pattern: Standard</span>
       <span class="spacer"></span>
       <button class="btn" id="regen">↻ Regenerate</button>
       <button class="btn">Export ▾</button>
@@ -405,7 +430,7 @@
       <button class="btn" id="ssCopy">⧉ Copy last week</button>
       <label style="font-size:13px">Pattern
         <select id="ssPattern" style="font:inherit;padding:6px;border:1px solid var(--line);border-radius:6px">
-          <option value="early">Early season</option><option value="mid" selected>Mid season</option><option value="late">Late season</option>
+          <option value="standard" selected>Standard</option><option value="slow">Slow day (rain)</option><option value="short">Short evening</option>
         </select></label>
       <button class="btn" id="ssApply">Apply to ticked days</button>
     </div>
@@ -433,14 +458,15 @@
     <h3>Notes</h3>
     <ol>
       <li>Only <b>this week and next week</b> can be set up, to match how far ahead you schedule.</li>
-      <li><b>Copy last week</b> is the usual one-click start. Use a <b>pattern</b> when the season changes.</li>
+      <li><b>Copy last week</b> is the usual one-click start. Shifts are normally <b>12–5 and 5–9 every day</b> (the <b>Standard</b> pattern).</li>
+      <li>Rain in the forecast? Click <b>🌧 Slow</b> on that day: 1 person per shift. You can then put yourself on half the day or the whole day on the Schedule page.</li>
       <li>Editing one day only changes that day (tagged <span class="pill">Edited</span>). It never changes the other days or the saved pattern.</li>
       <li>Events show on the side. You add their shifts by hand (decision 16), and they appear on that day with the event name.</li>
       <li>If a draft schedule already exists, changing a shift shows a warning and only affects the people on that shift.</li>
     </ol>
     <div class="q">
-      <h3>Question for you</h3>
-      <ol><li>Are the shift times the <b>same every day</b> of a week, or do weekends often differ (e.g. Sat 12–9)? If they often differ, patterns can store different times for Sat/Sun.</li></ol>
+      <h3>Decided</h3>
+      <ol><li>Shifts are the same every day, weekends included. Changes are one-offs, like a slow rainy day.</li></ol>
     </div>
   </div>
 </div>
@@ -462,12 +488,12 @@
         <div class="wkcard">
           <div class="h"><b>This week · Jun 1–7</b><span class="chip" style="background:var(--mint);color:var(--teal-dk);border-color:#99f6e4">Published</span></div>
           <p>14 shifts · 98 staff hours · everyone emailed Fri May 29</p>
-          <div class="today"><b>Today (Thu)</b>: 2–5 PM Hana, Dev · 5–9 PM Ben, <span style="color:var(--owner-ink)">Owner</span></div>
+          <div class="today"><b>Today (Thu)</b>: 12–5 PM Hana, Dev · 5–9 PM Ben, <span style="color:var(--owner-ink)">Owner</span></div>
           <button class="btn small">Open schedule</button>
         </div>
         <div class="wkcard">
           <div class="h"><b>Next week · Jun 8–14</b><span class="chip draft">Draft</span></div>
-          <p>Shifts set up (Mid season). Draft generated. 1 shift still needs people.</p>
+          <p>Shifts set up (Standard). Draft generated. 1 shift still needs people.</p>
           <div class="today">Not published yet. The team can't see it.</div>
           <button class="btn small primary">Finish &amp; publish</button>
         </div>
@@ -479,14 +505,15 @@
       <div class="cols3">
         <div class="mini"><h4 class="dh">Open shifts</h4>
           <div class="li"><b>Fri Jun 5, 5–9 PM</b><small>Posted by Eli · nobody picked it up yet · Eli still works it</small></div>
-          <div class="li"><b>Sun Jun 7, 2–5 PM</b><small>Posted by Fay · <span style="color:var(--teal-dk)">picked up by Cara</span></small></div>
+          <div class="li"><b>Sun Jun 7, 12–5 PM</b><small>Posted by Fay · <span style="color:var(--teal-dk)">picked up by Cara</span></small></div>
         </div>
         <div class="mini"><h4 class="dh">Upcoming time off</h4>
           <div class="li"><b>Cara</b><small>Jun 20–22 · Family trip</small></div>
           <div class="li"><b>Owner</b><small>Every Saturday (marked off)</small></div>
         </div>
         <div class="mini"><h4 class="dh">Upcoming events</h4>
-          <div class="li"><b>Sat Jun 13 · Private party</b><small>6–10 PM · 2 people needed · <span style="color:var(--bad)">no shift added yet</span></small></div>
+          <div class="li"><b>Sat Jun 13 · Private party</b> <span class="pill">From calendar</span><small>6–10 PM · <span style="color:var(--bad)">no shift added yet</span></small></div>
+          <div class="li"><b>Sat Jun 20 · Farmers market booth</b> <span class="pill">From calendar</span><small>12–6 PM · <span style="color:var(--bad)">no shift added yet</span></small></div>
         </div>
       </div>
     </div>
@@ -599,7 +626,7 @@
         <div><span class="ico"></span><b>Swaps &amp; open shifts</b><p>Staff trade or pick up shifts without group texts.</p></div>
         <div><span class="ico"></span><b>Seasonal staff</b><p>Bring returning staff back each season in a few clicks.</p></div>
         <div><span class="ico"></span><b>Exports</b><p>PDF, image, Word or Excel, ready to print or post.</p></div>
-        <div><span class="ico"></span><b>Email updates</b><p>Text messages coming soon.</p></div>
+        <div><span class="ico"></span><b>Reminders &amp; calendar sync</b><p>Automatic availability reminders. Events from your phone's calendar. Text messages coming soon.</p></div>
       </div>
     </div>
     <div class="ssec">
@@ -608,6 +635,7 @@
     <div class="cta">
       <h2>Stop building schedules cell by cell.</h2>
       <button class="btn primary">Get started</button>
+      <p style="margin:10px 0 0;font-size:13px;color:var(--muted)">Questions first? <a style="color:var(--teal-dk);font-weight:600">Contact us</a></p>
     </div>
     <div class="sfoot">
       <span class="logo" style="color:#fff">Team<b>Vory</b></span>
@@ -625,12 +653,67 @@
       <li>Contact details go in the footer and Contact page when you have them.</li>
     </ol>
     <div class="q">
-      <h3>Questions for you</h3>
+      <h3>Decided</h3>
       <ol>
-        <li>Should <b>Get started</b> let any business sign up by itself, or should it be <b>“Contact us”</b> / “Request a demo” for now while you have one client?</li>
-        <li>Do you want <b>prices</b> on the site yet? If so, is it per business per month, or per employee?</li>
+        <li><b>Get started</b> lets any business sign up on its own. <b>Contact us</b> stays in the menu, footer and bottom of the page for questions and support.</li>
+        <li>No prices on the site yet. Pricing will be per business per month, with a Pricing page added once the price is set.</li>
       </ol>
     </div>
+  </div>
+</div>
+
+<!-- ============ SCREEN 7 ============ -->
+<h2 class="screen" id="settings">7. Settings: reminders &amp; calendar sync (owner, computer)</h2>
+<p class="sub">Try it: change the reminder day or days in a row, tick the extra option, then paste any link and click <b>Connect</b>.</p>
+
+<div class="with-notes">
+  <div class="app">
+    <div class="topbar">
+      <span class="logo">Team<b>Vory</b></span>
+      <nav><span>Dashboard</span><span>Employees</span><span>Availability</span><span>Shift setup</span><span>Schedule</span><span>Events</span><span>Reports</span><span class="on">Settings</span></nav>
+      <span class="me">You (owner) ▾</span>
+    </div>
+    <div class="setwrap">
+      <div class="setnav"><span>Business</span><span>Swap approval</span><span class="on">Availability reminders</span><span class="on">Calendar sync</span><span>Shift patterns</span><span>Managers</span></div>
+      <div class="setmain">
+        <div class="setcard">
+          <div class="sh"><h3>Availability reminders</h3><label class="switch"><input type="checkbox" id="rmOn" checked> On</label></div>
+          <p class="hint">An email asking employees to add next week's availability. Only people who haven't set it get one.</p>
+          <div class="formrow">
+            <label class="field">Start on<select id="rmDay"><option>Monday</option><option>Tuesday</option><option selected>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select></label>
+            <label class="field">Days in a row<select id="rmCount"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
+            <label class="field">Time<select id="rmTime"><option>9:00 AM</option><option selected>10:00 AM</option><option>12:00 PM</option><option>5:00 PM</option><option>7:00 PM</option></select></label>
+          </div>
+          <label class="pinrow" style="font-size:13px;color:var(--ink)"><input type="checkbox" id="rmDefault"> Also remind people who only use their default week, to check it's still right</label>
+          <div class="rmsum" id="rmSum"></div>
+          <div class="emailprev">
+            <small>Email preview</small>
+            <b>Add your availability for Jun 8–14</b>
+            <p>Hi Fay, the schedule for next week is being made. Please add when you can work.</p>
+            <span class="btn small primary" style="display:inline-block">Add my availability</span>
+          </div>
+          <div style="margin-top:10px"><button class="btn small" id="rmTest">Send a test to me</button> <button class="btn small primary" id="rmSave">Save</button></div>
+        </div>
+
+        <div class="setcard">
+          <div class="sh"><h3>Calendar sync</h3><span class="chip" id="calChip">Not connected</span></div>
+          <p class="hint">Events you add in your phone's calendar show up in TeamVory by themselves, so you only enter them once.</p>
+          <div id="calBody"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>Notes</h3>
+    <ol>
+      <li><b>Reminders</b>: you choose the start day, how many days in a row and the time. Example: Wednesday + 2 days = Wednesday and Thursday.</li>
+      <li>Only employees <b>missing next week's availability</b> get it. Having a default week counts as set. Day 2 only goes to whoever still hasn't done it.</li>
+      <li>It's only a reminder. There's still no deadline, and the dashboard shows who's missing.</li>
+      <li><b>Calendar sync</b> reads one calendar (e.g. “TeamVory events”) through its link, every hour or when you tap <b>Sync now</b>. Personal appointments in other calendars are never read.</li>
+      <li>Synced events show up in <b>Events</b> and on the dashboard with a <span class="pill">From calendar</span> tag. You still add the staffing shifts yourself, and the dashboard reminds you if an event has none.</li>
+      <li>Changes go one way: edit or delete the event in your phone, and TeamVory updates on the next sync.</li>
+    </ol>
   </div>
 </div>
 
@@ -643,7 +726,7 @@
   var DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   var DATES = [8, 9, 10, 11, 12, 13, 14];
   var SHIFTS = [
-    { key: "A", label: "Afternoon", time: "2–5 PM", hours: 3, need: 2 },
+    { key: "A", label: "Afternoon", time: "12–5 PM", hours: 5, need: 2 },
     { key: "E", label: "Evening", time: "5–9 PM", hours: 4, need: 2 }
   ];
   // Availability per day: B = both shifts, A = afternoon, E = evening, - = none
@@ -923,12 +1006,12 @@
   var DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   var DATES = [8, 9, 10, 11, 12, 13, 14];
   var PATTERNS = {
-    early: { name: "Early season", shifts: [[12, 17, 2], [17, 21, 2]] },
-    mid:   { name: "Mid season",   shifts: [[14, 17, 2], [17, 21, 2]] },
-    late:  { name: "Late season",  shifts: [[14, 17, 2], [17, 20, 2]] }
+    standard: { name: "Standard",        shifts: [[12, 17, 2], [17, 21, 2]] },
+    slow:     { name: "Slow day (rain)", shifts: [[12, 17, 1], [17, 21, 1]] },
+    short:    { name: "Short evening",   shifts: [[12, 17, 2], [17, 20, 2]] }
   };
   function fromPattern(k) { return PATTERNS[k].shifts.map(function (s) { return { start: s[0], end: s[1], need: s[2] }; }); }
-  var ss = DAYS.map(function () { return { shifts: fromPattern("mid"), edited: false, ticked: false }; });
+  var ss = DAYS.map(function () { return { shifts: fromPattern("standard"), edited: false, ticked: false }; });
 
   function timeSel(v, attr) {
     var h = "<select " + attr + ">";
@@ -938,7 +1021,7 @@
   function renderSS() {
     var h = "", total = 0;
     ss.forEach(function (d, i) {
-      h += "<div class='ssday" + (d.edited ? " edited" : "") + "'><div class='h'><label><input type='checkbox' data-tick='" + i + "'" + (d.ticked ? " checked" : "") + ">" + DAYS[i] + " " + DATES[i] + "</label>" + (d.edited ? "<span class='pill'>Edited</span>" : "") + "</div>";
+      h += "<div class='ssday" + (d.edited ? " edited" : "") + "'><div class='h'><label><input type='checkbox' data-tick='" + i + "'" + (d.ticked ? " checked" : "") + ">" + DAYS[i] + " " + DATES[i] + "</label>" + (d.edited ? "<span class='pill'>Edited</span>" : "<button class='link' data-slow='" + i + "' title='Slow day: 1 person per shift'>🌧 Slow</button>") + "</div>";
       d.shifts.forEach(function (s, j) {
         total += (s.end - s.start) * s.need;
         h += "<div class='ssshift" + (s.event ? " event" : "") + "'>" + (s.event ? "<b style='font-size:11px'>" + s.event + "</b><br>" : "") +
@@ -955,7 +1038,7 @@
       pats += "<div class='pat'><b>" + p.name + "</b><small>" + p.shifts.map(function (s) { return hs(s[0]) + "–" + hs(s[1]) + " ×" + s[2]; }).join(" · ") + "</small> <button class='link' style='float:right'>Edit</button></div>";
     });
     $("ssPatterns").innerHTML = pats;
-    $("ssAlerts").innerHTML = "<span class='alert ok'>Set up from <b>Mid season</b>. A draft schedule exists for this week.</span>" +
+    $("ssAlerts").innerHTML = "<span class='alert ok'>Set up from <b>Standard</b>. A draft schedule exists for this week.</span>" +
       (ss.some(function (d) { return d.edited; }) ? "<span class='alert owner' style='background:var(--warn-bg);color:var(--warn);border-color:#fed7aa'>You changed shifts after the draft was made. Only people on changed shifts are affected; regenerate or fix them on the Schedule page.</span>" : "");
   }
   function pos(v) { var p = v.split(":"); return [+p[0], +p[1]]; }
@@ -970,13 +1053,14 @@
     if (ds.inc) { var p = pos(ds.inc); ss[p[0]].shifts[p[1]].need++; touch(p[0]); }
     else if (ds.dec) { var q = pos(ds.dec), s = ss[q[0]].shifts[q[1]]; if (s.need > 1) { s.need--; touch(q[0]); } }
     else if (ds.del) { var r = pos(ds.del); ss[r[0]].shifts.splice(r[1], 1); touch(r[0]); }
+    else if (ds.slow !== undefined) { ss[+ds.slow].shifts = fromPattern("slow"); touch(+ds.slow); toast(DAYS[+ds.slow] + " set to Slow day: 1 person per shift. Other days unchanged."); }
     else if (ds.addshift !== undefined) { ss[+ds.addshift].shifts.push({ start: 18, end: 22, need: 1 }); touch(+ds.addshift); }
     else if (b.id === "ssApply") {
       var k = $("ssPattern").value, n = 0;
       ss.forEach(function (d) { if (d.ticked) { d.shifts = fromPattern(k); d.edited = false; n++; } });
       renderSS(); toast(n ? PATTERNS[k].name + " applied to " + n + " day" + (n > 1 ? "s" : "") + ". Other days unchanged." : "Tick the days to apply it to first.");
     }
-    else if (b.id === "ssCopy") { ss.forEach(function (d) { d.shifts = fromPattern("mid"); d.edited = false; }); renderSS(); toast("Copied last week's shifts (Jun 1–7)."); }
+    else if (b.id === "ssCopy") { ss.forEach(function (d) { d.shifts = fromPattern("standard"); d.edited = false; }); renderSS(); toast("Copied last week's shifts (Jun 1–7)."); }
     else if (b.id === "ssAll" || b.id === "ssNone") { ss.forEach(function (d) { d.ticked = b.id === "ssAll"; }); renderSS(); }
     else if (b.id === "ssEvent") { ss[5].shifts.push({ start: 18, end: 22, need: 2, event: "Private party" }); touch(5); b.outerHTML = "<small style='color:var(--teal-dk)'>✓ Shift added on Sat</small>"; }
     else if (ds.sweek !== undefined) toast("Wireframe: only this week and next week are offered.");
@@ -989,11 +1073,12 @@
 
   // ---------- 4. Dashboard ----------
   var items = [
-    { kind: "bad", text: "Next week: Sat Jun 13, 2–5 PM needs 1 more person", sub: "Nobody is available, and you're off Saturdays", act: "Open schedule" },
+    { kind: "bad", text: "Next week: Sat Jun 13, 12–5 PM needs 1 more person", sub: "Nobody is available, and you're off Saturdays", act: "Open schedule" },
     { kind: "warn", text: "Ben changed his availability: not available Fri Jun 5, 5–9 PM", sub: "He's on that shift in the published schedule. It stays until you change it.", act: "Fix shift" },
-    { kind: "info", text: "Swap request: Ana ⇄ Gus", sub: "Ana's Wed Jun 3, 2–5 PM for Gus's Sat Jun 6, 5–9 PM · Gus accepted", act: "approve" },
+    { kind: "info", text: "Swap request: Ana ⇄ Gus", sub: "Ana's Wed Jun 3, 12–5 PM for Gus's Sat Jun 6, 5–9 PM · Gus accepted", act: "approve" },
     { kind: "warn", text: "Open shift in 1 day: Fri Jun 5, 5–9 PM (Eli)", sub: "Nobody has picked it up. Eli is still on it.", act: "See who can work" },
-    { kind: "bad", text: "Event on Sat Jun 13 has no shift yet", sub: "Private party, 6–10 PM, 2 people", act: "Add event shift" }
+    { kind: "bad", text: "Event on Sat Jun 13 has no shift yet", sub: "Private party, 6–10 PM · from your calendar", act: "Add event shift" },
+    { kind: "info", text: "Fay hasn't added availability for next week", sub: "Reminder emailed Wed and today. Gus added his after the first one.", act: "Enter it for her" }
   ];
   function renderDB() {
     var h = "";
@@ -1018,11 +1103,11 @@
 
   // ---------- 5. Employee schedule & open shifts ----------
   var mine = [
-    { day: "Mon Jun 1", time: "2–5 PM", h: 3, with: "Ana", past: true },
+    { day: "Mon Jun 1", time: "12–5 PM", h: 5, with: "Ana", past: true },
     { day: "Wed Jun 3", time: "5–9 PM", h: 4, with: "Ben", past: true },
     { day: "Thu Jun 4", time: "5–9 PM", h: 4, with: "Ben, Owner", today: true },
-    { day: "Sat Jun 6", time: "2–5 PM", h: 3, with: "Ana" },
-    { day: "Sun Jun 7", time: "2–5 PM", h: 3, with: "Eli", picked: true }
+    { day: "Sat Jun 6", time: "12–5 PM", h: 5, with: "Ana" },
+    { day: "Sun Jun 7", time: "12–5 PM", h: 5, with: "Eli", picked: true }
   ];
   var menuAt = -1;
   function renderMS() {
@@ -1044,7 +1129,7 @@
     { day: "Fri Jun 5", time: "5–9 PM", by: "Eli", soon: "Tomorrow" },
     { day: "Sun Jun 7", time: "5–9 PM", by: "Gus" }
   ];
-  var req = { from: "Gus", theirs: "Sat Jun 6 · 5–9 PM", yours: "Sat Jun 6 · 2–5 PM", state: "pending" };
+  var req = { from: "Gus", theirs: "Sat Jun 6 · 5–9 PM", yours: "Sat Jun 6 · 12–5 PM", state: "pending" };
   function renderOS() {
     var h = "<p class='hint'>Shifts coworkers can't work. Only ones that fit your availability are shown. First to pick it up gets it.</p>";
     open.forEach(function (o, i) {
@@ -1063,12 +1148,12 @@
 
   var swapChoice = -1;
   var swapOpts = [
-    { who: "Ana", when: "Fri Jun 5 · 2–5 PM" },
+    { who: "Ana", when: "Fri Jun 5 · 12–5 PM" },
     { who: "Eli", when: "Sun Jun 7 · 5–9 PM" },
     { who: "Hana", when: "Sat Jun 6 · 5–9 PM" }
   ];
   function renderSW() {
-    var h = "<div class='shiftcard' style='background:var(--box)'><small>Your shift</small><b>Sat Jun 6 · 2–5 PM</b></div>" +
+    var h = "<div class='shiftcard' style='background:var(--box)'><small>Your shift</small><b>Sat Jun 6 · 12–5 PM</b></div>" +
       "<p class='hint'>Pick the shift you'd take instead. Only shifts that work for both of you are listed.</p>";
     swapOpts.forEach(function (o, i) {
       h += "<div class='opt" + (swapChoice === i ? " sel" : "") + "' data-opt='" + i + "'><input type='radio'" + (swapChoice === i ? " checked" : "") + " tabindex='-1'><div><b>" + o.when + "</b><small>" + o.who + "'s shift</small></div></div>";
@@ -1093,6 +1178,70 @@
     else if (d.sendswap !== undefined && swapChoice >= 0) { toast("Request sent to " + swapOpts[swapChoice].who + "."); swapChoice = -1; renderSW(); }
   });
   renderMS(); renderOS(); renderSW();
+})();
+</script>
+<script>
+(function () {
+  function $(id) { return document.getElementById(id); }
+  var toastT;
+  function toast(msg) { var t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove("show"); }, 2600); }
+  var WD = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  var MISSING = ["Fay", "Gus"], DEFAULT_ONLY = ["Ana", "Ben", "Cara", "Dev", "Eli", "Hana"];
+
+  function renderRM() {
+    var on = $("rmOn").checked, start = WD.indexOf($("rmDay").value), n = +$("rmCount").value;
+    var days = []; for (var i = 0; i < n; i++) days.push(WD[(start + i) % 7]);
+    var dayText = days.length === 1 ? days[0] : days.slice(0, -1).join(", ") + " and " + days[days.length - 1];
+    var who = $("rmDefault").checked ? MISSING.concat(DEFAULT_ONLY) : MISSING;
+    var el = $("rmSum");
+    el.className = "rmsum" + (on ? "" : " off");
+    el.innerHTML = on
+      ? "Sends every <b>" + dayText + "</b> at <b>" + $("rmTime").value + "</b>, about the following week.<br>" +
+        "This week it would go to <b>" + who.length + " of 8</b>: " + who.join(", ") +
+        ($("rmDefault").checked ? " <small>(" + DEFAULT_ONLY.length + " of them only to check their default week)</small>" : " <small>(no availability for Jun 8–14 yet)</small>")
+      : "Reminders are off. Nobody gets an email.";
+  }
+  ["rmOn", "rmDay", "rmCount", "rmTime", "rmDefault"].forEach(function (id) { $(id).addEventListener("change", renderRM); });
+
+  var connected = false;
+  var EVENTS = [
+    ["Sat Jun 13", "Private party", "6–10 PM"],
+    ["Sat Jun 20", "Farmers market booth", "12–6 PM"],
+    ["Fri Jul 3", "Fireworks night", "5–11 PM"]
+  ];
+  function renderCal() {
+    var h;
+    if (!connected) {
+      h = "<b style='font-size:13px'>How to get your calendar's link (iPhone)</b><ol class='howto'>" +
+        "<li>In the <b>Calendar</b> app, make a calendar just for business events, e.g. “TeamVory events”.</li>" +
+        "<li>Tap <b>Calendars</b>, then ⓘ next to it, and turn on <b>Public Calendar</b>.</li>" +
+        "<li>Tap <b>Share Link…</b> → <b>Copy</b>, and paste it here.</li></ol>" +
+        "<p class='hint'>Using Google Calendar? Copy the calendar's <i>secret address in iCal format</i> instead.</p>" +
+        "<div class='calrow'><input id='calUrl' placeholder='webcal://p01-caldav.icloud.com/published/2/…'><button class='btn primary' id='calConnect'>Connect</button></div>";
+    } else {
+      h = "<div style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px'><span><b>TeamVory events</b> (Apple Calendar) · last checked just now · checks every hour</span>" +
+        "<span><button class='btn small' id='calSync'>↻ Sync now</button> <button class='btn small' id='calOff'>Disconnect</button></span></div>" +
+        "<div style='margin-top:10px'>" + EVENTS.map(function (e) {
+          return "<div class='evrow'><div><b>" + e[0] + " · " + e[1] + "</b><small>" + e[2] + "</small></div><span class='pill'>From calendar</span></div>";
+        }).join("") + "</div><p class='hint' style='margin-top:6px'>To change or delete one of these, edit it in your phone's calendar.</p>";
+    }
+    $("calBody").innerHTML = h;
+    $("calChip").textContent = connected ? "Connected" : "Not connected";
+    $("calChip").style.cssText = connected ? "background:var(--mint);color:var(--teal-dk);border-color:#99f6e4" : "";
+  }
+
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("button"); if (!b) return;
+    if (b.id === "rmTest") toast("Wireframe: a test reminder would be emailed to you.");
+    else if (b.id === "rmSave") toast("Reminder settings saved.");
+    else if (b.id === "calConnect") {
+      if (!$("calUrl").value.trim()) { toast("Paste the calendar link first."); return; }
+      connected = true; renderCal(); toast("Connected. Found 3 upcoming events.");
+    }
+    else if (b.id === "calSync") toast("Checked just now. No changes.");
+    else if (b.id === "calOff") { connected = false; renderCal(); toast("Disconnected. Events already synced stay in TeamVory."); }
+  });
+  renderRM(); renderCal();
 })();
 </script>
 </body>

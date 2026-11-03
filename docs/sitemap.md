@@ -75,7 +75,7 @@ flowchart TD
 | Manager | Weekly schedule | `/manager/schedule?week=` | Owner, Manager | Assign by hand or generate; hour totals vs fair target; publish |
 | Manager | Events | `/manager/events` | Owner, Manager | Create / edit / delete; shown in the planning view |
 | Manager | Reports & exports | `/manager/reports` | Owner, Manager | Hours by employee; download PDF, PNG, JPG, Word, Excel |
-| Manager | Business settings | `/manager/settings` | Owner | Business info, time zone, swap approval mode |
+| Manager | Business settings | `/manager/settings` | Owner | Business info, time zone, swap approval mode, availability reminders, calendar sync |
 | Employee | Dashboard | `/employee` | Employee | Next shifts, hours this week, open shifts I can take, my pending requests |
 | Employee | My availability | `/employee/availability` | Employee | Default week, this week's changes, time off |
 | Employee | My schedule | `/employee/schedule` | Employee | Published shifts and total hours |
@@ -93,3 +93,5 @@ flowchart TD
 | Renamed *Shift Swaps* → **Shift requests**, with **Open shifts** | Open-shift pickup without acceptance (decision 11) |
 | Added **Privacy Policy** and **Terms** | Needed for a public service |
 | Removed availability **deadline** settings | No deadline (decision 6) |
+| Added **Availability reminders** and **Calendar sync** to Business settings | Decisions 26 and 27 |
+| No **Pricing** page in v1 | Price per business per month, not decided yet (decision 25) |

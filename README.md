@@ -13,16 +13,16 @@ It replaces the usual routine of collecting availability by text message, typing
 | Milestone | | Status |
 |---|---|---|
 | Plan | Requirements, architecture, database, permissions, user flows | ✅ Done |
-| Wireframes | Six key screens, clickable | ✅ Done |
+| Wireframes | Seven key screens, clickable | ✅ Done |
 | M0 | Project setup | ⏳ Next |
 | M1 | Public website | |
 | M2 | Accounts (sign up, log in, invitations, roles) | |
 | M3 | Availability (default week, weekly changes, time off) | |
 | M4 | Shift setup and manual scheduling | |
-| M5 | Publishing and email | |
+| M5 | Publishing, email and availability reminders | |
 | M6 | Auto-scheduler | |
 | M7 | Swaps and open shifts | |
-| M8 | Events and exports (PDF, PNG, JPG, Word, Excel) | |
+| M8 | Events, phone-calendar import and exports (PDF, PNG, JPG, Word, Excel) | |
 | M9 | Polish and launch | |
 | M10 | SMS notifications | |
 
@@ -33,7 +33,11 @@ It replaces the usual routine of collecting availability by text message, typing
 - **Availability.** A default week, changes for one week only, and time off with no approval step.
 - **Seasonal shift patterns.** Shift times change with the season (for example *Early*, *Mid* and *Late season*). Setting up a week takes one click.
 - **Swaps and open shifts.** Employees trade shifts or pick up open ones, with optional manager approval.
+- **Availability reminders.** Emails on the days the owner picks, only to employees who haven't added next week's availability.
+- **Calendar sync.** Events added in the owner's Apple or Google Calendar show up in TeamVory automatically.
 - **Exports.** PDF, PNG, JPG, Word and Excel.
+
+Future features (positions, multiple locations, billing and more) are listed in the [technical plan](docs/technical-plan.md#10-future-features-after-v1).
 
 ## Planned stack
 
