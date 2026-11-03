@@ -1,0 +1,54 @@
+# TeamVory
+
+*Your team, perfectly organized.*
+
+TeamVory is a web app for employee scheduling in small and seasonal businesses. Employees enter their availability once, on their phone. The owner builds a fair weekly schedule in minutes, either by assigning shifts by hand or by clicking **Generate**. Then they publish it, and everyone gets an email.
+
+It replaces the usual routine of collecting availability by text message, typing it into Excel and building the schedule cell by cell.
+
+## Status
+
+🟡 **Planning and design.** The technical plan and wireframes are done. Building starts with milestone M0 (project setup).
+
+| Milestone | | Status |
+|---|---|---|
+| Plan | Requirements, architecture, database, permissions, user flows | ✅ Done |
+| Wireframes | Six key screens, clickable | ✅ Done |
+| M0 | Project setup | ⏳ Next |
+| M1 | Public website | |
+| M2 | Accounts (sign up, log in, invitations, roles) | |
+| M3 | Availability (default week, weekly changes, time off) | |
+| M4 | Shift setup and manual scheduling | |
+| M5 | Publishing and email | |
+| M6 | Auto-scheduler | |
+| M7 | Swaps and open shifts | |
+| M8 | Events and exports (PDF, PNG, JPG, Word, Excel) | |
+| M9 | Polish and launch | |
+| M10 | SMS notifications | |
+
+## Main features
+
+- **Fair auto-scheduling.** Hours are shared in proportion to each person's availability. **Regenerate** gives a different but equally fair schedule.
+- **Owner as backup.** The owner picks their own shifts and automatically covers any shift nobody else can work.
+- **Availability.** A default week, changes for one week only, and time off with no approval step.
+- **Seasonal shift patterns.** Shift times change with the season (for example *Early*, *Mid* and *Late season*). Setting up a week takes one click.
+- **Swaps and open shifts.** Employees trade shifts or pick up open ones, with optional manager approval.
+- **Exports.** PDF, PNG, JPG, Word and Excel.
+
+## Planned stack
+
+Next.js + TypeScript · Tailwind CSS + shadcn/ui · PostgreSQL + Prisma · Auth.js · Resend (email) · Vitest + Playwright · Vercel + Neon
+
+## Documentation
+
+| Document | What's in it |
+|---|---|
+| [Technical plan](docs/technical-plan.md) | Stack, data model, scheduling algorithm, decisions and milestones |
+| [Architecture](docs/architecture.md) | How the system is put together |
+| [Database](docs/database.md) | Tables and relationships (ERD) |
+| [Permissions](docs/permissions.md) | What owners, managers and employees can do |
+| [User flows](docs/user-flows.md) | Step-by-step flows for each task |
+| [Sitemap](docs/sitemap.md) | Every page in the app |
+| [Plan overview](docs/teamvory-plan.html) | One-page visual summary (download and open in a browser) |
+| [Wireframes](docs/wireframes/index.html) | Clickable wireframes (download and open in a browser) |
+| [Brand](brand/README.md) | Logo files, colors and fonts |

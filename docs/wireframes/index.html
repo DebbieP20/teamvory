@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TeamVory wireframes</title>
+<style>
+  :root {
+    --navy: #0B1F44; --teal: #14B8A6; --teal-dk: #0F766E; --gray: #E2E8F0; --mint: #E6FFFA;
+    --ink: #1f2937; --muted: #64748b; --line: #cbd5e1; --box: #f1f5f9; --warn: #b45309; --warn-bg: #fff7ed;
+    --bad: #b91c1c; --bad-bg: #fef2f2; --owner: #ede9fe; --owner-ink: #5b21b6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: #fafbfc; }
+  button { font: inherit; cursor: pointer; }
+  .page { max-width: 1320px; margin: 0 auto; padding: 24px; }
+  header.doc { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; border-bottom: 1px solid var(--gray); padding-bottom: 16px; }
+  header.doc h1 { margin: 0; font-size: 22px; color: var(--navy); }
+  header.doc p { margin: 4px 0 0; color: var(--muted); max-width: 70ch; }
+  .jump a { margin-left: 14px; color: var(--teal-dk); font-weight: 600; text-decoration: none; }
+  h2.screen { margin: 36px 0 4px; font-size: 18px; color: var(--navy); }
+  .sub { margin: 0 0 14px; color: var(--muted); }
+
+  /* Layout: wireframe + notes */
+  .with-notes { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 20px; align-items: start; }
+  @media (max-width: 1100px) { .with-notes { grid-template-columns: 1fr; } }
+  .notes { background: #fffbea; border: 1px solid #f3e3a1; border-radius: 8px; padding: 12px 14px; font-size: 13px; }
+  .notes h3 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #8a6d0b; }
+  .notes ol { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+  .notes .q { margin-top: 12px; border-top: 1px dashed #e6d48a; padding-top: 10px; }
+  .pin-n { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #facc15; color: #422006; font-size: 11px; font-weight: 700; vertical-align: 1px; }
+
+  /* App frame */
+  .app { background: #fff; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+  .topbar { display: flex; align-items: center; gap: 18px; background: var(--navy); color: #fff; padding: 10px 16px; }
+  .logo { font-weight: 700; letter-spacing: .01em; }
+  .logo b { color: var(--teal); }
+  .topbar nav { display: flex; gap: 4px; flex-wrap: wrap; font-size: 13px; }
+  .topbar nav span { padding: 4px 9px; border-radius: 6px; color: #cbd5e1; }
+  .topbar nav span.on { background: rgba(255,255,255,.12); color: #fff; }
+  .topbar .me { margin-left: auto; font-size: 13px; color: #cbd5e1; }
+
+  .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 16px; border-bottom: 1px solid var(--gray); }
+  .weekpick { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 15px; }
+  .iconbtn { border: 1px solid var(--line); background: #fff; border-radius: 6px; width: 28px; height: 28px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--box); color: var(--muted); border: 1px solid var(--line); }
+  .chip.draft { background: var(--warn-bg); color: var(--warn); border-color: #fed7aa; }
+  .spacer { flex: 1; }
+  .btn { border: 1px solid var(--line); background: #fff; border-radius: 7px; padding: 7px 12px; font-weight: 600; }
+  .btn.primary { background: var(--teal); border-color: var(--teal); color: var(--navy); }
+  .btn.dark { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .btn.small { padding: 4px 9px; font-size: 12px; }
+
+  .alerts { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--gray); background: #fcfcfd; }
+  .alert { font-size: 13px; padding: 5px 10px; border-radius: 6px; border: 1px solid; }
+  .alert.bad { background: var(--bad-bg); color: var(--bad); border-color: #fecaca; }
+  .alert.owner { background: var(--owner); color: var(--owner-ink); border-color: #ddd6fe; }
+  .alert.ok { background: var(--mint); color: var(--teal-dk); border-color: #99f6e4; }
+
+  .body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; }
+  @media (max-width: 900px) { .body { grid-template-columns: 1fr; } }
+  .gridwrap { padding: 16px; overflow-x: auto; border-right: 1px solid var(--gray); }
+  table.week { border-collapse: separate; border-spacing: 6px; width: 100%; min-width: 760px; table-layout: fixed; }
+  table.week th { font-size: 12px; color: var(--muted); font-weight: 600; text-align: left; padding: 0 4px; }
+  table.week th.rowh { width: 82px; }
+  table.week th .d { display: block; color: var(--ink); font-size: 13px; }
+  td.cell { vertical-align: top; background: var(--box); border: 1px solid var(--line); border-radius: 8px; padding: 6px; height: 104px; }
+  td.cell.short { border-color: #fca5a5; background: var(--bad-bg); }
+  td.cell .need { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; margin-bottom: 4px; }
+  td.cell.short .need { color: var(--bad); font-weight: 600; }
+  .rowlabel { font-size: 12px; font-weight: 600; color: var(--ink); padding: 6px 4px; vertical-align: top; }
+  .rowlabel small { display: block; font-weight: 400; color: var(--muted); }
+  .person { display: flex; align-items: center; gap: 4px; background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; font-size: 12px; margin-bottom: 4px; }
+  .person.owner { background: var(--owner); border-color: #ddd6fe; color: var(--owner-ink); }
+  .person .nm { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .person .tag { font-size: 10px; text-transform: uppercase; letter-spacing: .03em; }
+  .person button { border: 0; background: none; padding: 0 2px; color: var(--muted); font-size: 12px; line-height: 1; }
+  .person button.pinon { color: var(--navy); }
+  .add { width: 100%; border: 1px dashed #94a3b8; background: transparent; border-radius: 6px; font-size: 12px; color: var(--muted); padding: 3px; }
+  .add:hover { border-color: var(--teal-dk); color: var(--teal-dk); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 6px 6px 0; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; border: 1px solid var(--line); }
+
+  aside.side { padding: 14px 16px; }
+  aside.side h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .hrs { display: grid; gap: 9px; }
+  .hr .top { display: flex; justify-content: space-between; font-size: 13px; }
+  .hr .top span:last-child { color: var(--muted); font-size: 12px; }
+  .bar { position: relative; height: 8px; background: var(--box); border-radius: 4px; margin-top: 3px; }
+  .bar .fill { position: absolute; inset: 0 auto 0 0; background: var(--teal); border-radius: 4px; }
+  .bar .tgt { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--navy); }
+  .hr.owner .fill { background: #a78bfa; }
+  .off { color: var(--bad); }
+
+  /* Picker panel */
+  .picker { border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-bottom: 16px; background: #fff; box-shadow: 0 4px 14px rgba(15,23,42,.08); }
+  .picker .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-weight: 600; }
+  .picker .ph button { border: 0; background: none; font-size: 16px; color: var(--muted); }
+  .cand { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; text-align: left; border: 1px solid var(--gray); background: #fff; border-radius: 6px; padding: 6px 8px; margin-bottom: 5px; font-size: 13px; }
+  .cand:hover:not(:disabled) { border-color: var(--teal-dk); background: var(--mint); }
+  .cand small { color: var(--muted); }
+  .cand.unavail { background: var(--box); color: var(--muted); }
+  .cand.unavail small { color: var(--warn); }
+  .confirm { background: var(--warn-bg); border: 1px solid #fed7aa; border-radius: 6px; padding: 8px; font-size: 12px; color: #7c2d12; margin-bottom: 6px; }
+  .confirm .acts { display: flex; gap: 6px; margin-top: 6px; }
+  .person.agreed { border-color: #fdba74; }
+  .person .tag.warn { color: var(--warn); }
+  .wk2 { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 8px; }
+  .wk2 button { flex: 1; border: 0; background: #fff; padding: 6px 0; font-size: 12px; }
+  .wk2 button[aria-pressed="true"] { background: var(--navy); color: #fff; font-weight: 600; }
+  .pinrow { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; margin-top: 4px; }
+
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--navy); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+
+  /* Phones */
+  .phones { display: flex; gap: 22px; flex-wrap: wrap; }
+  .phone { width: 320px; border: 10px solid #1e293b; border-radius: 34px; background: #fff; overflow: hidden; box-shadow: 0 6px 20px rgba(15,23,42,.12); display: flex; flex-direction: column; height: 660px; }
+  .phone .cap { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8px; width: 320px; }
+  .ph-top { background: var(--navy); color: #fff; padding: 12px 14px 0; }
+  .ph-top .row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+  .ph-top h4 { margin: 8px 0 8px; font-size: 17px; }
+  .tabs { display: flex; gap: 0; }
+  .tabs span { flex: 1; text-align: center; font-size: 12px; padding: 8px 0; color: #cbd5e1; border-bottom: 3px solid transparent; }
+  .tabs span.on { color: #fff; border-color: var(--teal); font-weight: 600; }
+  .ph-body { flex: 1; overflow-y: auto; padding: 12px; background: #fafbfc; }
+  .ph-foot { border-top: 1px solid var(--gray); display: flex; justify-content: space-around; padding: 8px 0 10px; font-size: 11px; color: var(--muted); background: #fff; }
+  .ph-foot span.on { color: var(--teal-dk); font-weight: 700; }
+  .hint { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
+  .banner { font-size: 12px; background: var(--warn-bg); color: var(--warn); border: 1px solid #fed7aa; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; }
+  .dayrow { background: #fff; border: 1px solid var(--gray); border-radius: 10px; padding: 8px 10px; margin-bottom: 7px; }
+  .dayrow .h { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 13px; }
+  .dayrow .h small { font-weight: 400; color: var(--muted); }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; margin-top: 6px; }
+  .seg button { flex: 1; border: 0; background: #fff; padding: 5px 0; font-size: 12px; border-right: 1px solid var(--line); }
+  .seg button:last-child { border-right: 0; }
+  .seg button[aria-pressed="true"] { background: var(--mint); color: var(--teal-dk); font-weight: 700; }
+  .times { display: flex; gap: 6px; align-items: center; margin-top: 6px; font-size: 12px; }
+  .times select { font: inherit; padding: 3px; border: 1px solid var(--line); border-radius: 5px; background: #fff; }
+  .pill { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding: 1px 6px; border-radius: 999px; background: var(--mint); color: var(--teal-dk); }
+  .pill.gray { background: var(--box); color: var(--muted); }
+  .link { border: 0; background: none; color: var(--teal-dk); font-size: 12px; font-weight: 600; padding: 0; }
+  .savebar { position: sticky; bottom: -12px; background: linear-gradient(transparent, #fafbfc 30%); padding: 14px 0 0; }
+  .savebar .btn { width: 100%; }
+  .field { display: grid; gap: 3px; font-size: 12px; margin-bottom: 8px; }
+  .field input { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; }
+  .tolist .item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid var(--gray); border-radius: 10px; padding: 8px 10px; margin-bottom: 7px; font-size: 13px; }
+  .tolist .item small { display: block; color: var(--muted); }
+  .card { background: #fff; border: 1px solid var(--gray); border-radius: 10px; padding: 10px; margin-bottom: 10px; }
+  .card h5 { margin: 0 0 8px; font-size: 13px; }
+  .warnline { font-size: 12px; color: var(--warn); margin-top: 6px; }
+
+  /* Shift setup */
+  .ssdays { display: grid; grid-template-columns: repeat(7, minmax(118px, 1fr)); gap: 6px; min-width: 860px; }
+  .ssday { background: var(--box); border: 1px solid var(--line); border-radius: 8px; padding: 6px; }
+  .ssday.edited { border-color: var(--teal); }
+  .ssday .h { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+  .ssday .h label { display: flex; gap: 4px; align-items: center; }
+  .ssshift { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 5px; margin-bottom: 5px; font-size: 12px; }
+  .ssshift.event { border-color: #93c5fd; background: #eff6ff; }
+  .ssshift select { font: inherit; font-size: 11px; padding: 1px; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+  .ssshift .r { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-top: 4px; }
+  .step { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 5px; }
+  .step button { border: 0; background: none; width: 20px; }
+  .step b { min-width: 16px; text-align: center; }
+  .pat { border: 1px solid var(--gray); border-radius: 6px; padding: 6px 8px; margin-bottom: 6px; font-size: 12px; }
+  .pat b { display: block; font-size: 13px; }
+  .pat small { color: var(--muted); }
+  .evt { font-size: 13px; border: 1px solid #93c5fd; background: #eff6ff; border-radius: 6px; padding: 8px; }
+  .evt small { color: var(--muted); }
+
+  /* Dashboard */
+  .weeks2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 760px) { .weeks2, .cols3 { grid-template-columns: 1fr !important; } }
+  .wkcard { border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  .wkcard .h { display: flex; justify-content: space-between; align-items: center; }
+  .wkcard p { margin: 6px 0; color: var(--muted); font-size: 13px; }
+  .wkcard .today { background: var(--box); border-radius: 6px; padding: 6px 8px; font-size: 13px; margin-bottom: 8px; }
+  .dh { margin: 18px 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; border-radius: 10px; background: var(--bad); color: #fff; font-size: 11px; padding: 0 6px; }
+  .att { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-left-width: 4px; border-radius: 8px; padding: 9px 12px; margin-bottom: 7px; font-size: 13px; }
+  .att.bad { border-left-color: var(--bad); }
+  .att.warn { border-left-color: #f59e0b; }
+  .att.info { border-left-color: var(--teal); }
+  .att .t { flex: 1; }
+  .att .t small { display: block; color: var(--muted); }
+  .cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .mini { border: 1px solid var(--gray); border-radius: 8px; padding: 0 12px 8px; }
+  .li { font-size: 13px; padding: 6px 0; border-top: 1px solid var(--gray); }
+  .li:first-of-type { border-top: 0; }
+  .li small { display: block; color: var(--muted); }
+
+  /* Employee schedule */
+  .shiftcard { background: #fff; border: 1px solid var(--gray); border-radius: 10px; padding: 9px 10px; margin-bottom: 7px; font-size: 13px; position: relative; }
+  .shiftcard .top { display: flex; justify-content: space-between; align-items: center; }
+  .shiftcard small { display: block; color: var(--muted); }
+  .shiftcard.posted { border-color: #fed7aa; background: var(--warn-bg); }
+  .menu { position: absolute; right: 8px; top: 34px; background: #fff; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 16px rgba(15,23,42,.12); z-index: 2; overflow: hidden; }
+  .menu button { display: block; width: 100%; text-align: left; border: 0; background: #fff; padding: 8px 12px; font-size: 13px; }
+  .menu button:hover { background: var(--mint); }
+  .sumline { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 10px; }
+  .sec { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 12px 0 6px; }
+  .opt { display: flex; gap: 8px; align-items: center; background: #fff; border: 1px solid var(--gray); border-radius: 10px; padding: 8px 10px; margin-bottom: 7px; font-size: 13px; cursor: pointer; }
+  .opt.sel { border-color: var(--teal); background: var(--mint); }
+  .opt small { display: block; color: var(--muted); }
+
+  /* Public site */
+  .site { font-size: 14px; }
+  .snav { display: flex; align-items: center; gap: 18px; padding: 14px 24px; border-bottom: 1px solid var(--gray); }
+  .snav a { color: var(--ink); font-size: 13px; }
+  .hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; padding: 40px 24px; align-items: center; background: var(--navy); color: #fff; }
+  @media (max-width: 760px) { .hero, .steps3, .feat { grid-template-columns: 1fr !important; } }
+  .hero h1 { font-size: 34px; line-height: 1.15; margin: 0 0 12px; }
+  .hero p { color: #cbd5e1; max-width: 46ch; }
+  .hero small { display: block; margin-top: 10px; color: #94a3b8; }
+  .ph-img { height: 220px; border: 2px dashed #475569; border-radius: 10px; display: grid; place-items: center; color: #94a3b8; font-size: 13px; }
+  .ssec { padding: 32px 24px; }
+  .ssec.alt { background: var(--box); }
+  .ssec h2, .cta h2 { margin: 0 0 16px; font-size: 22px; color: var(--navy); }
+  .steps3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .steps3 p, .feat p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+  .num { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--teal); color: var(--navy); font-weight: 700; margin-bottom: 6px; }
+  .steps3 b, .feat b { display: block; }
+  .feat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .feat > div { background: #fff; border: 1px solid var(--gray); border-radius: 8px; padding: 12px; }
+  .ico { display: block; width: 28px; height: 28px; border-radius: 7px; background: var(--mint); border: 1px solid #99f6e4; margin-bottom: 8px; }
+  .quote { border-left: 4px solid var(--teal); padding: 6px 14px; font-size: 16px; color: var(--muted); font-style: italic; }
+  .quote small { font-style: normal; font-size: 12px; }
+  .cta { text-align: center; padding: 32px 24px; background: var(--mint); }
+  .sfoot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 16px 24px; background: var(--navy); color: #cbd5e1; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="doc">
+  <div>
+    <h1>TeamVory wireframes</h1>
+    <p>Layout only: real colors, fonts and icons come later. The screens are clickable. Sample week: <b>Mid season</b> (2–5 PM and 5–9 PM, 2 people each), 8 employees plus the owner.</p>
+  </div>
+  <div class="jump"><a href="#schedule">1. Weekly schedule</a><a href="#availability">2. My availability</a><a href="#setup">3. Shift setup</a><a href="#dashboard">4. Dashboard</a><a href="#myschedule">5. My schedule</a><a href="#home">6. Home page</a></div>
+</header>
+
+<!-- ============ SCREEN 1 ============ -->
+<h2 class="screen" id="schedule">1. Weekly schedule (manager, computer)</h2>
+<p class="sub">Try it: click <b>Regenerate</b>, remove someone with ×, click <b>+ Assign</b> on a shift, or pin with 📌.</p>
+
+<div class="with-notes">
+  <div class="app">
+    <div class="topbar">
+      <span class="logo">Team<b>Vory</b></span>
+      <nav><span>Dashboard</span><span>Employees</span><span>Availability</span><span>Shift setup</span><span class="on">Schedule</span><span>Events</span><span>Reports</span><span>Settings</span></nav>
+      <span class="me">You (owner) ▾</span>
+    </div>
+
+    <div class="toolbar">
+      <div class="weekpick"><button class="iconbtn" aria-label="Previous week">◀</button> Week of Jun 8 – 14, 2026 <button class="iconbtn" aria-label="Next week">▶</button></div>
+      <span class="chip draft">Draft · not published</span>
+      <span class="chip">Pattern: Mid season</span>
+      <span class="spacer"></span>
+      <button class="btn" id="regen">↻ Regenerate</button>
+      <button class="btn">Export ▾</button>
+      <button class="btn primary" id="publish">Publish &amp; email team</button>
+    </div>
+
+    <div class="alerts" id="alerts"></div>
+
+    <div class="body">
+      <div class="gridwrap">
+        <table class="week" id="week"></table>
+        <div class="legend">
+          <span><i style="background:#fff"></i>Employee</span>
+          <span><i style="background:var(--owner);border-color:#ddd6fe"></i>Owner</span>
+          <span>📌 Pinned: Regenerate keeps it</span>
+          <span><i style="background:#fff;border-color:#fdba74"></i>Agreed: added though marked not available</span>
+          <span><i style="background:var(--bad-bg);border-color:#fca5a5"></i>Needs more people</span>
+        </div>
+      </div>
+      <aside class="side">
+        <div id="picker"></div>
+        <h3>Hours this week</h3>
+        <div class="hrs" id="hrs"></div>
+        <p class="hint" style="margin-top:10px">Bar = hours given. Line = fair target (based on how much each person is available). The owner has no target.</p>
+      </aside>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>Notes</h3>
+    <ol>
+      <li>Owner's own shifts (purple, 📌) are placed first and are never moved by <b>Regenerate</b>.</li>
+      <li>After employees are scheduled, empty spots go to the owner, labelled <b>covering</b>. Here, Thursday evening has only one employee available.</li>
+      <li><b>Saturday afternoon</b> stays red. Only one employee is available, and the owner marked Saturday off.</li>
+      <li>The <b>+ Assign</b> list puts the people furthest below their target at the top. People marked not available are listed last with the reason.</li>
+      <li>Picking someone marked not available asks first. If you've agreed with them (e.g. by phone), the shift is tagged <b>agreed</b>. <b>Regenerate</b> never does this on its own.</li>
+      <li>Nothing goes to employees until <b>Publish</b>. Then everyone gets an email.</li>
+    </ol>
+    <div class="q">
+      <h3>Decided</h3>
+      <ol>
+        <li>The manager can add someone marked not available after agreeing with them, with a confirmation first.</li>
+        <li>The grid by shift is the only layout. No per-person view.</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SCREEN 2 ============ -->
+<h2 class="screen" id="availability">2. My availability (employee, phone)</h2>
+<p class="sub">The same screen with its three tabs side by side. Example employee: Cara.</p>
+
+<div class="with-notes">
+  <div class="phones">
+    <!-- Default week -->
+    <div>
+      <div class="phone">
+        <div class="ph-top">
+          <div class="row"><span class="logo">Team<b>Vory</b></span><span>Cara ▾</span></div>
+          <h4>My availability</h4>
+          <div class="tabs"><span class="on">Default week</span><span>This week</span><span>Time off</span></div>
+        </div>
+        <div class="ph-body" id="defweek">
+          <p class="hint">When you can usually work. Set it once; it's used for every week unless you change a week.</p>
+        </div>
+        <div class="ph-foot"><span>Home</span><span>Schedule</span><span class="on">Availability</span><span>Shifts</span><span>Profile</span></div>
+      </div>
+      <div class="cap">A · Default week</div>
+    </div>
+
+    <!-- This week -->
+    <div>
+      <div class="phone">
+        <div class="ph-top">
+          <div class="row"><span class="logo">Team<b>Vory</b></span><span>Cara ▾</span></div>
+          <h4>My availability</h4>
+          <div class="tabs"><span>Default week</span><span class="on">This week</span><span>Time off</span></div>
+        </div>
+        <div class="ph-body" id="thisweek"></div>
+        <div class="ph-foot"><span>Home</span><span>Schedule</span><span class="on">Availability</span><span>Shifts</span><span>Profile</span></div>
+      </div>
+      <div class="cap">B · One week only</div>
+    </div>
+
+    <!-- Time off -->
+    <div>
+      <div class="phone">
+        <div class="ph-top">
+          <div class="row"><span class="logo">Team<b>Vory</b></span><span>Cara ▾</span></div>
+          <h4>My availability</h4>
+          <div class="tabs"><span>Default week</span><span>This week</span><span class="on">Time off</span></div>
+        </div>
+        <div class="ph-body">
+          <p class="hint">Days you can't work at all. No approval needed: your manager sees it right away.</p>
+          <div class="tolist" id="tolist"></div>
+          <div class="card">
+            <h5>Add time off</h5>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <label class="field">From<input type="date" id="toFrom" value="2026-07-03"></label>
+              <label class="field">To<input type="date" id="toTo" value="2026-07-05"></label>
+            </div>
+            <label class="field">Note (optional)<input id="toNote" placeholder="e.g. Wedding"></label>
+            <button class="btn primary" style="width:100%" id="toAdd">Add time off</button>
+            <div class="warnline" id="toWarn"></div>
+          </div>
+        </div>
+        <div class="ph-foot"><span>Home</span><span>Schedule</span><span class="on">Availability</span><span>Shifts</span><span>Profile</span></div>
+      </div>
+      <div class="cap">C · Time off</div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>Notes</h3>
+    <ol>
+      <li><b>Default week</b> is entered once. Each day is <i>Off</i>, <i>All day</i> or <i>Custom</i> times, because shift times change by season.</li>
+      <li><b>This week</b> covers only this week and next week, because the owner schedules at most 2 weeks out. It starts as a copy of the default (grey). Changing a day only affects that week and shows a <span class="pill">Changed</span> tag with <b>Reset</b>.</li>
+      <li>If the week is already published, the change still saves. The manager sees a conflict, and the shift stays until they fix it.</li>
+      <li><b>Time off</b> needs no approval. If it overlaps a published shift, Cara is told to post the shift as open or talk to the manager.</li>
+      <li>The owner uses the same screen, but his default week starts as <i>All day</i> every day. He only marks his days off.</li>
+    </ol>
+    <div class="q">
+      <h3>Decided</h3>
+      <ol>
+        <li>One time range per day.</li>
+        <li>Changes for this week and next week only. Time off can be any future date.</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SCREEN 3 ============ -->
+<h2 class="screen" id="setup">3. Shift setup (manager, computer)</h2>
+<p class="sub">Try it: tick some days and apply a pattern, change start/end times, use − / + for people needed, add or remove a shift.</p>
+
+<div class="with-notes">
+  <div class="app">
+    <div class="topbar">
+      <span class="logo">Team<b>Vory</b></span>
+      <nav><span>Dashboard</span><span>Employees</span><span>Availability</span><span class="on">Shift setup</span><span>Schedule</span><span>Events</span><span>Reports</span><span>Settings</span></nav>
+      <span class="me">You (owner) ▾</span>
+    </div>
+    <div class="toolbar">
+      <div class="wk2" style="margin:0;min-width:330px"><button aria-pressed="false" data-sweek>This week · Jun 1–7</button><button aria-pressed="true" data-sweek>Next week · Jun 8–14</button></div>
+      <span class="spacer"></span>
+      <button class="btn" id="ssCopy">⧉ Copy last week</button>
+      <label style="font-size:13px">Pattern
+        <select id="ssPattern" style="font:inherit;padding:6px;border:1px solid var(--line);border-radius:6px">
+          <option value="early">Early season</option><option value="mid" selected>Mid season</option><option value="late">Late season</option>
+        </select></label>
+      <button class="btn" id="ssApply">Apply to ticked days</button>
+    </div>
+    <div class="alerts" id="ssAlerts"></div>
+    <div class="body">
+      <div class="gridwrap">
+        <div class="ssdays" id="ssDays"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 6px 0;flex-wrap:wrap;gap:8px">
+          <span>Staff hours needed: <b id="ssTotal"></b></span>
+          <span><button class="btn small" id="ssAll">Tick all days</button> <button class="btn small" id="ssNone">Untick all</button> <button class="btn dark">Next: build schedule →</button></span>
+        </div>
+      </div>
+      <aside class="side">
+        <h3>Saved patterns</h3>
+        <div id="ssPatterns"></div>
+        <button class="btn small" style="margin-top:6px">+ New pattern</button>
+        <button class="btn small" style="margin-top:6px">Save this week as a pattern</button>
+        <h3 style="margin-top:18px">Events this week</h3>
+        <div class="evt"><b>Sat Jun 13 · Private party</b><br><small>6–10 PM · Back patio · needs staff</small><br><button class="link" id="ssEvent">+ Add event shift (2 people)</button></div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>Notes</h3>
+    <ol>
+      <li>Only <b>this week and next week</b> can be set up, to match how far ahead you schedule.</li>
+      <li><b>Copy last week</b> is the usual one-click start. Use a <b>pattern</b> when the season changes.</li>
+      <li>Editing one day only changes that day (tagged <span class="pill">Edited</span>). It never changes the other days or the saved pattern.</li>
+      <li>Events show on the side. You add their shifts by hand (decision 16), and they appear on that day with the event name.</li>
+      <li>If a draft schedule already exists, changing a shift shows a warning and only affects the people on that shift.</li>
+    </ol>
+    <div class="q">
+      <h3>Question for you</h3>
+      <ol><li>Are the shift times the <b>same every day</b> of a week, or do weekends often differ (e.g. Sat 12–9)? If they often differ, patterns can store different times for Sat/Sun.</li></ol>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SCREEN 4 ============ -->
+<h2 class="screen" id="dashboard">4. Dashboard (manager, computer)</h2>
+<p class="sub">What the owner sees first on Thursday, Jun 4. Try approving or declining a swap, or dismissing an item.</p>
+
+<div class="with-notes">
+  <div class="app">
+    <div class="topbar">
+      <span class="logo">Team<b>Vory</b></span>
+      <nav><span class="on">Dashboard</span><span>Employees</span><span>Availability</span><span>Shift setup</span><span>Schedule</span><span>Events</span><span>Reports</span><span>Settings</span></nav>
+      <span class="me">You (owner) ▾</span>
+    </div>
+    <div style="padding:16px">
+      <h3 style="margin:0 0 12px;font-size:18px;color:var(--navy)">Good afternoon</h3>
+      <div class="weeks2">
+        <div class="wkcard">
+          <div class="h"><b>This week · Jun 1–7</b><span class="chip" style="background:var(--mint);color:var(--teal-dk);border-color:#99f6e4">Published</span></div>
+          <p>14 shifts · 98 staff hours · everyone emailed Fri May 29</p>
+          <div class="today"><b>Today (Thu)</b>: 2–5 PM Hana, Dev · 5–9 PM Ben, <span style="color:var(--owner-ink)">Owner</span></div>
+          <button class="btn small">Open schedule</button>
+        </div>
+        <div class="wkcard">
+          <div class="h"><b>Next week · Jun 8–14</b><span class="chip draft">Draft</span></div>
+          <p>Shifts set up (Mid season). Draft generated. 1 shift still needs people.</p>
+          <div class="today">Not published yet. The team can't see it.</div>
+          <button class="btn small primary">Finish &amp; publish</button>
+        </div>
+      </div>
+
+      <h4 class="dh">Needs your attention <span class="count" id="dbCount"></span></h4>
+      <div id="dbItems"></div>
+
+      <div class="cols3">
+        <div class="mini"><h4 class="dh">Open shifts</h4>
+          <div class="li"><b>Fri Jun 5, 5–9 PM</b><small>Posted by Eli · nobody picked it up yet · Eli still works it</small></div>
+          <div class="li"><b>Sun Jun 7, 2–5 PM</b><small>Posted by Fay · <span style="color:var(--teal-dk)">picked up by Cara</span></small></div>
+        </div>
+        <div class="mini"><h4 class="dh">Upcoming time off</h4>
+          <div class="li"><b>Cara</b><small>Jun 20–22 · Family trip</small></div>
+          <div class="li"><b>Owner</b><small>Every Saturday (marked off)</small></div>
+        </div>
+        <div class="mini"><h4 class="dh">Upcoming events</h4>
+          <div class="li"><b>Sat Jun 13 · Private party</b><small>6–10 PM · 2 people needed · <span style="color:var(--bad)">no shift added yet</span></small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>Notes</h3>
+    <ol>
+      <li>The top two cards match how you work: <b>this week</b> (running) and <b>next week</b> (being built).</li>
+      <li><b>Needs your attention</b> only lists things you need to act on, with the button to fix each one. When it's empty it says “All clear”.</li>
+      <li>Swap approvals only appear if <b>Settings → Swap approval</b> is set to “Manager approves”.</li>
+      <li>An availability change after publishing shows here as a conflict. The schedule never changes by itself.</li>
+      <li>Open shifts: the person who posted it stays on the schedule until someone picks it up.</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ============ SCREEN 5 ============ -->
+<h2 class="screen" id="myschedule">5. My schedule &amp; open shifts (employee, phone)</h2>
+<p class="sub">Example employee: Cara. Try “Pick up” on an open shift, Accept or Decline the swap, or tap a shift's ⋯ menu.</p>
+
+<div class="with-notes">
+  <div class="phones">
+    <div>
+      <div class="phone">
+        <div class="ph-top">
+          <div class="row"><span class="logo">Team<b>Vory</b></span><span>Cara ▾</span></div>
+          <h4>My schedule</h4>
+          <div class="tabs"><span class="on">This week</span><span>Next week</span><span>Whole team</span></div>
+        </div>
+        <div class="ph-body" id="msList"></div>
+        <div class="ph-foot"><span>Home</span><span class="on">Schedule</span><span>Availability</span><span>Shifts</span><span>Profile</span></div>
+      </div>
+      <div class="cap">A · My shifts</div>
+    </div>
+
+    <div>
+      <div class="phone">
+        <div class="ph-top">
+          <div class="row"><span class="logo">Team<b>Vory</b></span><span>Cara ▾</span></div>
+          <h4>Shifts</h4>
+          <div class="tabs"><span class="on">Open shifts</span><span>Requests</span></div>
+        </div>
+        <div class="ph-body" id="osList"></div>
+        <div class="ph-foot"><span>Home</span><span>Schedule</span><span>Availability</span><span class="on">Shifts</span><span>Profile</span></div>
+      </div>
+      <div class="cap">B · Open shifts &amp; requests</div>
+    </div>
+
+    <div>
+      <div class="phone">
+        <div class="ph-top">
+          <div class="row"><span class="logo">Team<b>Vory</b></span><span>Cara ▾</span></div>
+          <h4>Ask to swap</h4>
+          <div class="tabs"><span class="on">Step 2 of 2</span></div>
+        </div>
+        <div class="ph-body" id="swList"></div>
+        <div class="ph-foot"><span>Home</span><span>Schedule</span><span>Availability</span><span class="on">Shifts</span><span>Profile</span></div>
+      </div>
+      <div class="cap">C · Swap: pick a coworker's shift</div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>Notes</h3>
+    <ol>
+      <li>Each shift shows <b>who you work with</b>. Employees see coworkers' names and shifts only, never their hours, availability or contact details.</li>
+      <li><b>⋯ on a shift</b> → <i>Ask to swap</i> or <i>Post as open shift</i>.</li>
+      <li><b>Open shifts</b> only lists shifts Cara can actually work (available, not already working then). First to tap <b>Pick up</b> gets it, no one has to accept.</li>
+      <li><b>Swap</b>: only coworker shifts that work for <i>both</i> people are listed. The coworker must accept, then the manager approves if that setting is on.</li>
+      <li><b>Whole team</b> tab shows the published grid, read-only, same layout as the manager's.</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ============ SCREEN 6 ============ -->
+<h2 class="screen" id="home">6. Public home page (computer)</h2>
+<p class="sub">The marketing site for offering TeamVory as a service. On phones the sections stack in one column.</p>
+
+<div class="with-notes">
+  <div class="app site">
+    <div class="snav">
+      <span class="logo" style="color:var(--navy)">Team<b>Vory</b></span>
+      <span class="spacer"></span>
+      <a>How it works</a><a>About</a><a>Contact</a><a>Log in</a>
+      <button class="btn primary">Get started</button>
+    </div>
+    <div class="hero">
+      <div>
+        <h1>Your team, perfectly organized.</h1>
+        <p>Your staff enter their availability once. You get a fair weekly schedule in minutes, not hours of texts and spreadsheets.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary">Get started</button><button class="btn">See how it works</button></div>
+        <small>Built for small and seasonal teams.</small>
+      </div>
+      <div class="ph-img">[ Screenshot: weekly schedule grid ]</div>
+    </div>
+    <div class="ssec">
+      <h2>How it works</h2>
+      <div class="steps3">
+        <div><span class="num">1</span><b>Your team sets availability</b><p>Once, on their phone. They only change the weeks that are different.</p></div>
+        <div><span class="num">2</span><b>Generate a fair schedule</b><p>Hours are shared fairly based on who can work when. Or assign shifts yourself.</p></div>
+        <div><span class="num">3</span><b>Publish and you're done</b><p>Everyone gets an email. Swaps and open shifts are handled in the app.</p></div>
+      </div>
+    </div>
+    <div class="ssec alt">
+      <h2>Everything a small team needs</h2>
+      <div class="feat">
+        <div><span class="ico"></span><b>Fair auto-scheduling</b><p>One click, and regenerate until it looks right.</p></div>
+        <div><span class="ico"></span><b>Availability &amp; time off</b><p>A default week, plus changes for just one week.</p></div>
+        <div><span class="ico"></span><b>Swaps &amp; open shifts</b><p>Staff trade or pick up shifts without group texts.</p></div>
+        <div><span class="ico"></span><b>Seasonal staff</b><p>Bring returning staff back each season in a few clicks.</p></div>
+        <div><span class="ico"></span><b>Exports</b><p>PDF, image, Word or Excel, ready to print or post.</p></div>
+        <div><span class="ico"></span><b>Email updates</b><p>Text messages coming soon.</p></div>
+      </div>
+    </div>
+    <div class="ssec">
+      <div class="quote">“[Quote from the first client, once they've used it for a season]”<br><small>— Name, Business</small></div>
+    </div>
+    <div class="cta">
+      <h2>Stop building schedules cell by cell.</h2>
+      <button class="btn primary">Get started</button>
+    </div>
+    <div class="sfoot">
+      <span class="logo" style="color:#fff">Team<b>Vory</b></span>
+      <span>How it works · About · Contact · Privacy · Terms</span>
+      <span>[Contact email &amp; social links: coming soon]</span>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>Notes</h3>
+    <ol>
+      <li>Short and plain: one headline (your tagline), three steps, six features.</li>
+      <li>The screenshot will be a real image of the app once it's built.</li>
+      <li>The quote is a placeholder until the first client has used it.</li>
+      <li>Contact details go in the footer and Contact page when you have them.</li>
+    </ol>
+    <div class="q">
+      <h3>Questions for you</h3>
+      <ol>
+        <li>Should <b>Get started</b> let any business sign up by itself, or should it be <b>“Contact us”</b> / “Request a demo” for now while you have one client?</li>
+        <li>Do you want <b>prices</b> on the site yet? If so, is it per business per month, or per employee?</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  // ---------- Sample data ----------
+  var DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  var DATES = [8, 9, 10, 11, 12, 13, 14];
+  var SHIFTS = [
+    { key: "A", label: "Afternoon", time: "2–5 PM", hours: 3, need: 2 },
+    { key: "E", label: "Evening", time: "5–9 PM", hours: 4, need: 2 }
+  ];
+  // Availability per day: B = both shifts, A = afternoon, E = evening, - = none
+  var OWNER = { id: "owner", name: "You (owner)", owner: true, avail: "BBBBB-B", offReason: "Day off" };
+  var PEOPLE = [
+    { id: "ana",  name: "Ana",  avail: "BBB-BEB" },
+    { id: "ben",  name: "Ben",  avail: "EEEEE--" },
+    { id: "cara", name: "Cara", avail: "--BABBB" },
+    { id: "dev",  name: "Dev",  avail: "AA-AA--" },
+    { id: "eli",  name: "Eli",  avail: "B-B-B-B" },
+    { id: "fay",  name: "Fay",  avail: "-----EB" },
+    { id: "gus",  name: "Gus",  avail: "EE--E-E" },
+    { id: "hana", name: "Hana", avail: "AAAA---" }
+  ];
+  var ALL = PEOPLE.concat([OWNER]);
+  var byId = {}; ALL.forEach(function (p) { byId[p.id] = p; });
+
+  function canWork(p, d, s) { var c = p.avail[d]; return c === "B" || c === s; }
+  function slotKey(d, s) { return d + s; }
+
+  // assignments: { "0E": [{id, pinned, covering}] }
+  var asg = {};
+  var seed = 7;
+  function rng() { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }
+
+  function eachSlot(fn) { for (var d = 0; d < 7; d++) SHIFTS.forEach(function (s) { fn(d, s); }); }
+  function list(d, s) { var k = slotKey(d, s.key); return asg[k] || (asg[k] = []); }
+  function hoursOf(id) { var h = 0; eachSlot(function (d, s) { list(d, s).forEach(function (a) { if (a.id === id) h += s.hours; }); }); return h; }
+
+  var targets = {};
+  function computeTargets() {
+    var needed = 0, elig = {}, sum = 0;
+    eachSlot(function (d, s) {
+      var pinned = list(d, s).filter(function (a) { return a.pinned; }).length;
+      var open = Math.max(0, s.need - pinned);
+      needed += open * s.hours;
+      if (open) PEOPLE.forEach(function (p) { if (canWork(p, d, s.key)) elig[p.id] = (elig[p.id] || 0) + s.hours; });
+    });
+    PEOPLE.forEach(function (p) { sum += elig[p.id] || 0; });
+    PEOPLE.forEach(function (p) { targets[p.id] = Math.min(elig[p.id] || 0, sum ? needed * (elig[p.id] || 0) / sum : 0); });
+  }
+
+  function generate() {
+    // 0. keep pinned
+    eachSlot(function (d, s) { asg[slotKey(d, s.key)] = list(d, s).filter(function (a) { return a.pinned; }); });
+    computeTargets();
+    var given = {}; PEOPLE.forEach(function (p) { given[p.id] = 0; });
+    // 1. hardest slots first
+    var slots = [];
+    eachSlot(function (d, s) {
+      var n = PEOPLE.filter(function (p) { return canWork(p, d, s.key); }).length;
+      slots.push({ d: d, s: s, n: n, r: rng() });
+    });
+    slots.sort(function (a, b) { return a.n - b.n || a.r - b.r; });
+    // 2. give each spot to the person furthest below target
+    slots.forEach(function (x) {
+      var L = list(x.d, x.s);
+      while (L.length < x.s.need) {
+        var c = PEOPLE.filter(function (p) { return canWork(p, x.d, x.s.key) && !L.some(function (a) { return a.id === p.id; }); });
+        if (!c.length) break;
+        c.forEach(function (p) { p._r = rng(); });
+        c.sort(function (a, b) { return (targets[b.id] - given[b.id]) - (targets[a.id] - given[a.id]) || a._r - b._r; });
+        L.push({ id: c[0].id }); given[c[0].id] += x.s.hours;
+      }
+    });
+    // 3. owner covers gaps
+    eachSlot(function (d, s) {
+      var L = list(d, s);
+      if (L.length < s.need && canWork(OWNER, d, s.key) && !L.some(function (a) { return a.id === "owner"; })) L.push({ id: "owner", covering: true });
+    });
+  }
+
+  // ---------- Rendering ----------
+  var openSlot = null, confirmPick = null;
+  function fmtH(h) { return (Math.round(h * 10) / 10).toString().replace(/\.0$/, ""); }
+
+  function render() {
+    computeTargets();
+    var t = document.getElementById("week");
+    var h = "<tr><th class='rowh'></th>";
+    DAYS.forEach(function (d, i) { h += "<th><span class='d'>" + d + "</span>Jun " + DATES[i] + "</th>"; });
+    h += "</tr>";
+    SHIFTS.forEach(function (s) {
+      h += "<tr><td class='rowlabel'>" + s.label + "<small>" + s.time + " · " + s.need + " people</small></td>";
+      for (var d = 0; d < 7; d++) {
+        var L = list(d, s), short = L.length < s.need;
+        h += "<td class='cell" + (short ? " short" : "") + "'><div class='need'><span>" + L.length + "/" + s.need + "</span>" + (short ? "<span>needs " + (s.need - L.length) + "</span>" : "") + "</div>";
+        L.forEach(function (a, i) {
+          var p = byId[a.id];
+          h += "<div class='person" + (p.owner ? " owner" : "") + (a.override ? " agreed" : "") + "'><span class='nm'>" + (p.owner ? "Owner" : p.name) + "</span>" +
+            (a.covering ? "<span class='tag'>covering</span>" : "") +
+            (a.override ? "<span class='tag warn' title='Marked not available, added after agreeing with them'>agreed</span>" : "") +
+            "<button title='" + (a.pinned ? "Unpin" : "Pin: keep when regenerating") + "' class='" + (a.pinned ? "pinon" : "") + "' data-pin='" + d + s.key + ":" + i + "'>" + (a.pinned ? "📌" : "⚲") + "</button>" +
+            "<button title='Remove' data-rm='" + d + s.key + ":" + i + "'>×</button></div>";
+        });
+        if (L.length < s.need) h += "<button class='add' data-add='" + d + s.key + "'>+ Assign</button>";
+        h += "</td>";
+      }
+      h += "</tr>";
+    });
+    t.innerHTML = h;
+
+    // Alerts
+    var unfilled = [], cover = 0;
+    eachSlot(function (d, s) {
+      var L = list(d, s);
+      if (L.length < s.need) unfilled.push(DAYS[d] + " " + s.time + " needs " + (s.need - L.length) + " more" + (canWork(OWNER, d, s.key) ? "" : ", nobody available (owner off)"));
+      L.forEach(function (a) { if (a.covering) cover++; });
+    });
+    var al = "";
+    unfilled.forEach(function (u) { al += "<span class='alert bad'>⚠ " + u + "</span>"; });
+    if (cover) al += "<span class='alert owner'>Owner covering " + cover + " shift" + (cover > 1 ? "s" : "") + " nobody else could take</span>";
+    if (!unfilled.length) al += "<span class='alert ok'>✓ Every shift is filled</span>";
+    document.getElementById("alerts").innerHTML = al;
+
+    // Hours
+    var hr = "";
+    var maxH = 0; ALL.forEach(function (p) { maxH = Math.max(maxH, hoursOf(p.id), targets[p.id] || 0); });
+    maxH = Math.max(maxH, 1);
+    PEOPLE.slice().sort(function (a, b) { return a.name < b.name ? -1 : 1; }).forEach(function (p) {
+      var g = hoursOf(p.id), tg = targets[p.id];
+      hr += "<div class='hr'><div class='top'><span>" + p.name + "</span><span>" + fmtH(g) + " h · target " + fmtH(tg) + "</span></div>" +
+        "<div class='bar'><div class='fill' style='width:" + (g / maxH * 100) + "%'></div><div class='tgt' style='left:" + (tg / maxH * 100) + "%'></div></div></div>";
+    });
+    var og = hoursOf("owner");
+    hr += "<div class='hr owner'><div class='top'><span>Owner</span><span>" + fmtH(og) + " h · backup, Sat off</span></div><div class='bar'><div class='fill' style='width:" + (og / maxH * 100) + "%'></div></div></div>";
+    document.getElementById("hrs").innerHTML = hr;
+
+    renderPicker();
+  }
+
+  function renderPicker() {
+    var el = document.getElementById("picker");
+    if (!openSlot) { el.innerHTML = ""; return; }
+    var d = +openSlot[0], s = SHIFTS.filter(function (x) { return x.key === openSlot[1]; })[0];
+    var L = list(d, s);
+    var rows = ALL.filter(function (p) { return !L.some(function (a) { return a.id === p.id; }); }).map(function (p) {
+      var ok = canWork(p, d, s.key);
+      var gap = p.owner ? null : targets[p.id] - hoursOf(p.id);
+      return { p: p, ok: ok, gap: gap };
+    });
+    rows.sort(function (a, b) { return (b.ok - a.ok) || ((a.p.owner ? 1 : 0) - (b.p.owner ? 1 : 0)) || ((b.gap || 0) - (a.gap || 0)); });
+    var h = "<div class='picker'><div class='ph'><span>Assign · " + DAYS[d] + " Jun " + DATES[d] + ", " + s.time + "</span><button data-close>×</button></div>";
+    rows.forEach(function (r) {
+      var nm = r.p.owner ? "Owner" : r.p.name;
+      var why = !r.ok ? (r.p.owner ? r.p.offReason : "Not available " + DAYS[d] + " " + s.label.toLowerCase())
+        : r.p.owner ? "Backup" : r.gap > 0.05 ? fmtH(r.gap) + " h below target" : "At or above target";
+      if (confirmPick === r.p.id) {
+        h += "<div class='confirm'><b>" + nm + "</b> marked " + (r.p.owner ? "this day off" : "this time not available") +
+          ". Only add them if you've agreed (e.g. by phone). The shift will be tagged <b>agreed</b>." +
+          "<div class='acts'><button class='btn small dark' data-agree='" + r.p.id + "'>We agreed, assign</button><button class='btn small' data-nevermind>Cancel</button></div></div>";
+        return;
+      }
+      h += "<button class='cand" + (r.ok ? "" : " unavail") + "' " + (r.ok ? "data-pick" : "data-ask") + "='" + r.p.id + "'><span>" + nm + "</span><small>" + (r.ok ? "" : "⚠ ") + why + "</small></button>";
+    });
+    h += "<label class='pinrow'><input type='checkbox' id='pinpick'> Pin (keep when regenerating)</label></div>";
+    el.innerHTML = h;
+  }
+
+  var toastT;
+  function toast(msg) { var t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove("show"); }, 2600); }
+
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.rm) { var p = b.dataset.rm.split(":"); asg[p[0]].splice(+p[1], 1); render(); }
+    else if (b.dataset.pin) { var q = b.dataset.pin.split(":"), a = asg[q[0]][+q[1]]; a.pinned = !a.pinned; a.covering = false; render(); }
+    else if (b.dataset.add) { openSlot = b.dataset.add; confirmPick = null; renderPicker(); }
+    else if (b.hasAttribute("data-close")) { openSlot = null; confirmPick = null; renderPicker(); }
+    else if (b.dataset.ask) { confirmPick = b.dataset.ask; renderPicker(); }
+    else if (b.hasAttribute("data-nevermind")) { confirmPick = null; renderPicker(); }
+    else if (b.dataset.agree) {
+      asg[openSlot].push({ id: b.dataset.agree, override: true, pinned: true }); openSlot = null; confirmPick = null; render();
+      toast("Assigned and tagged “agreed”. It's pinned so Regenerate keeps it.");
+    }
+    else if (b.dataset.pick) {
+      var pin = document.getElementById("pinpick").checked;
+      asg[openSlot].push({ id: b.dataset.pick, pinned: pin }); openSlot = null; render();
+    }
+    else if (b.id === "regen") { openSlot = null; generate(); render(); toast("New draft generated. Pinned shifts were kept."); }
+    else if (b.id === "publish") toast("Wireframe: this would publish the schedule and email all 9 people.");
+  });
+
+  // Owner pins his own shifts, then the first draft is generated
+  asg[slotKey(0, "E")] = [{ id: "owner", pinned: true }];
+  asg[slotKey(4, "A")] = [{ id: "owner", pinned: true }];
+  generate(); render();
+
+  // ---------- Availability phones ----------
+  var TIMES = []; for (var m = 10 * 60; m <= 22 * 60; m += 30) TIMES.push(m);
+  function tlabel(m) { var h = Math.floor(m / 60), mm = m % 60, ap = h >= 12 ? "PM" : "AM", hh = h > 12 ? h - 12 : h; return hh + (mm ? ":" + ("0" + mm).slice(-2) : "") + " " + ap; }
+  function timeSel(v) { return "<select>" + TIMES.map(function (t) { return "<option" + (t === v ? " selected" : "") + ">" + tlabel(t) + "</option>"; }).join("") + "</select>"; }
+  function summary(x) { return x.mode === "off" ? "Not available" : x.mode === "all" ? "All day" : tlabel(x.from) + " – " + tlabel(x.to); }
+
+  var FULL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  var def = [
+    { mode: "off" }, { mode: "off" }, { mode: "all" },
+    { mode: "custom", from: 14 * 60, to: 17 * 60 },
+    { mode: "all" }, { mode: "all" }, { mode: "all" }
+  ];
+
+  function dayEditor(x, idx, attr) {
+    return "<div class='seg'>" + [["off", "Off"], ["all", "All day"], ["custom", "Custom"]].map(function (o) {
+      return "<button " + attr + "='" + idx + ":" + o[0] + "' aria-pressed='" + (x.mode === o[0]) + "'>" + o[1] + "</button>";
+    }).join("") + "</div>" + (x.mode === "custom" ? "<div class='times'>From " + timeSel(x.from) + " to " + timeSel(x.to) + "</div>" : "");
+  }
+
+  function renderDef() {
+    var h = "<p class='hint'>When you can usually work. Set it once; it's used for every week unless you change that week.</p>";
+    def.forEach(function (x, i) {
+      h += "<div class='dayrow'><div class='h'>" + FULL[i] + "<small>" + summary(x) + "</small></div>" + dayEditor(x, i, "data-def") + "</div>";
+    });
+    h += "<div class='savebar'><button class='btn primary'>Save default week</button></div>";
+    document.getElementById("defweek").innerHTML = h;
+  }
+
+  var wk = def.map(function () { return null; }); // null = use default
+  wk[1] = { mode: "custom", from: 17 * 60, to: 21 * 60 };
+  var editing = 1;
+  function renderWeek() {
+    var h = "<div class='wk2'><button aria-pressed='true'>This week · Jun 8–14</button><button aria-pressed='false' data-nextwk>Next week · Jun 15–21</button></div>" +
+      "<div class='banner'>This week's schedule is published. If a change clashes with one of your shifts, your manager is told. The shift stays yours until they change it.</div>" +
+      "<p class='hint'>Tap a day to change it for this week only.</p>";
+    def.forEach(function (d0, i) {
+      var x = wk[i] || d0, changed = !!wk[i];
+      h += "<div class='dayrow' data-wkday='" + i + "' style='cursor:pointer'><div class='h'><span>" + DAYS[i] + " Jun " + DATES[i] + " " +
+        (changed ? "<span class='pill'>Changed</span>" : "<span class='pill gray'>Default</span>") + "</span><small>" + summary(x) + "</small></div>";
+      if (editing === i) {
+        h += dayEditor(x, i, "data-wk");
+        h += "<div style='display:flex;justify-content:space-between;margin-top:6px'>" + (changed ? "<button class='link' data-reset='" + i + "'>Reset to default</button>" : "<span></span>") + "<button class='link' data-done>Done</button></div>";
+      }
+      h += "</div>";
+    });
+    document.getElementById("thisweek").innerHTML = h;
+  }
+
+  var timeOff = [{ from: "Jun 20", to: "Jun 22", note: "Family trip" }];
+  function renderTO() {
+    var h = "";
+    timeOff.forEach(function (t, i) {
+      h += "<div class='item'><div>" + t.from + (t.to !== t.from ? " – " + t.to : "") + "<small>" + (t.note || "No note") + "</small></div><button class='link' data-todel='" + i + "'>Remove</button></div>";
+    });
+    document.getElementById("tolist").innerHTML = h || "<p class='hint'>No time off yet.</p>";
+  }
+  function md(v) { var p = v.split("-"); return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+p[1] - 1] + " " + (+p[2]); }
+
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (b && b.dataset.def) { var p = b.dataset.def.split(":"); def[+p[0]] = p[1] === "custom" ? { mode: "custom", from: 14 * 60, to: 21 * 60 } : { mode: p[1] }; renderDef(); renderWeek(); return; }
+    if (b && b.dataset.wk) { var q = b.dataset.wk.split(":"); wk[+q[0]] = q[1] === "custom" ? { mode: "custom", from: 14 * 60, to: 21 * 60 } : { mode: q[1] }; renderWeek(); return; }
+    if (b && b.dataset.reset) { wk[+b.dataset.reset] = null; renderWeek(); return; }
+    if (b && b.hasAttribute("data-done")) { editing = -1; renderWeek(); return; }
+    if (b && b.hasAttribute("data-nextwk")) { toast("Wireframe: next week looks the same. Weeks after that use the default week."); return; }
+    if (b && b.dataset.todel) { timeOff.splice(+b.dataset.todel, 1); renderTO(); return; }
+    if (b && b.id === "toAdd") {
+      var f = document.getElementById("toFrom").value, t = document.getElementById("toTo").value;
+      if (!f || !t) return;
+      timeOff.push({ from: md(f), to: md(t), note: document.getElementById("toNote").value });
+      document.getElementById("toWarn").textContent = "Added. You're scheduled Fri Jul 3, 5–9 PM. Post it as an open shift or talk to your manager.";
+      renderTO(); return;
+    }
+    var row = e.target.closest("[data-wkday]");
+    if (row && !b && e.target.tagName !== "SELECT") { editing = +row.dataset.wkday; renderWeek(); }
+  });
+
+  renderDef(); renderWeek(); renderTO();
+})();
+</script>
+<script>
+(function () {
+  var toastT;
+  function toast(msg) { var t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove("show"); }, 2600); }
+  function $(id) { return document.getElementById(id); }
+  function hl(h) { var x = h > 12 ? h - 12 : h; return x + (h >= 12 ? " PM" : " AM"); }
+  function hs(h) { return h > 12 ? h - 12 : h; }
+
+  // ---------- 3. Shift setup ----------
+  var DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  var DATES = [8, 9, 10, 11, 12, 13, 14];
+  var PATTERNS = {
+    early: { name: "Early season", shifts: [[12, 17, 2], [17, 21, 2]] },
+    mid:   { name: "Mid season",   shifts: [[14, 17, 2], [17, 21, 2]] },
+    late:  { name: "Late season",  shifts: [[14, 17, 2], [17, 20, 2]] }
+  };
+  function fromPattern(k) { return PATTERNS[k].shifts.map(function (s) { return { start: s[0], end: s[1], need: s[2] }; }); }
+  var ss = DAYS.map(function () { return { shifts: fromPattern("mid"), edited: false, ticked: false }; });
+
+  function timeSel(v, attr) {
+    var h = "<select " + attr + ">";
+    for (var t = 9; t <= 23; t++) h += "<option value='" + t + "'" + (t === v ? " selected" : "") + ">" + hl(t) + "</option>";
+    return h + "</select>";
+  }
+  function renderSS() {
+    var h = "", total = 0;
+    ss.forEach(function (d, i) {
+      h += "<div class='ssday" + (d.edited ? " edited" : "") + "'><div class='h'><label><input type='checkbox' data-tick='" + i + "'" + (d.ticked ? " checked" : "") + ">" + DAYS[i] + " " + DATES[i] + "</label>" + (d.edited ? "<span class='pill'>Edited</span>" : "") + "</div>";
+      d.shifts.forEach(function (s, j) {
+        total += (s.end - s.start) * s.need;
+        h += "<div class='ssshift" + (s.event ? " event" : "") + "'>" + (s.event ? "<b style='font-size:11px'>" + s.event + "</b><br>" : "") +
+          timeSel(s.start, "data-st='" + i + ":" + j + "'") + " – " + timeSel(s.end, "data-en='" + i + ":" + j + "'") +
+          "<div class='r'><span class='step'><button data-dec='" + i + ":" + j + "'>−</button><b>" + s.need + "</b><button data-inc='" + i + ":" + j + "'>+</button></span><small style='color:var(--muted)'>people</small><button class='link' data-del='" + i + ":" + j + "' title='Remove shift'>×</button></div></div>";
+      });
+      h += "<button class='add' data-addshift='" + i + "'>+ Add shift</button></div>";
+    });
+    $("ssDays").innerHTML = h;
+    $("ssTotal").textContent = total + " h";
+    var pats = "";
+    Object.keys(PATTERNS).forEach(function (k) {
+      var p = PATTERNS[k];
+      pats += "<div class='pat'><b>" + p.name + "</b><small>" + p.shifts.map(function (s) { return hs(s[0]) + "–" + hs(s[1]) + " ×" + s[2]; }).join(" · ") + "</small> <button class='link' style='float:right'>Edit</button></div>";
+    });
+    $("ssPatterns").innerHTML = pats;
+    $("ssAlerts").innerHTML = "<span class='alert ok'>Set up from <b>Mid season</b>. A draft schedule exists for this week.</span>" +
+      (ss.some(function (d) { return d.edited; }) ? "<span class='alert owner' style='background:var(--warn-bg);color:var(--warn);border-color:#fed7aa'>You changed shifts after the draft was made. Only people on changed shifts are affected; regenerate or fix them on the Schedule page.</span>" : "");
+  }
+  function pos(v) { var p = v.split(":"); return [+p[0], +p[1]]; }
+  function touch(i) { ss[i].edited = true; renderSS(); }
+
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("button");
+    var cb = e.target.dataset && e.target.dataset.tick;
+    if (cb !== undefined) { ss[+cb].ticked = e.target.checked; return; }
+    if (!b) return;
+    var ds = b.dataset;
+    if (ds.inc) { var p = pos(ds.inc); ss[p[0]].shifts[p[1]].need++; touch(p[0]); }
+    else if (ds.dec) { var q = pos(ds.dec), s = ss[q[0]].shifts[q[1]]; if (s.need > 1) { s.need--; touch(q[0]); } }
+    else if (ds.del) { var r = pos(ds.del); ss[r[0]].shifts.splice(r[1], 1); touch(r[0]); }
+    else if (ds.addshift !== undefined) { ss[+ds.addshift].shifts.push({ start: 18, end: 22, need: 1 }); touch(+ds.addshift); }
+    else if (b.id === "ssApply") {
+      var k = $("ssPattern").value, n = 0;
+      ss.forEach(function (d) { if (d.ticked) { d.shifts = fromPattern(k); d.edited = false; n++; } });
+      renderSS(); toast(n ? PATTERNS[k].name + " applied to " + n + " day" + (n > 1 ? "s" : "") + ". Other days unchanged." : "Tick the days to apply it to first.");
+    }
+    else if (b.id === "ssCopy") { ss.forEach(function (d) { d.shifts = fromPattern("mid"); d.edited = false; }); renderSS(); toast("Copied last week's shifts (Jun 1–7)."); }
+    else if (b.id === "ssAll" || b.id === "ssNone") { ss.forEach(function (d) { d.ticked = b.id === "ssAll"; }); renderSS(); }
+    else if (b.id === "ssEvent") { ss[5].shifts.push({ start: 18, end: 22, need: 2, event: "Private party" }); touch(5); b.outerHTML = "<small style='color:var(--teal-dk)'>✓ Shift added on Sat</small>"; }
+    else if (ds.sweek !== undefined) toast("Wireframe: only this week and next week are offered.");
+  });
+  document.addEventListener("change", function (e) {
+    var d = e.target.dataset || {};
+    if (d.st || d.en) { var p = pos(d.st || d.en), s = ss[p[0]].shifts[p[1]]; s[d.st ? "start" : "end"] = +e.target.value; if (s.end <= s.start) s.end = s.start + 1; touch(p[0]); }
+  });
+  renderSS();
+
+  // ---------- 4. Dashboard ----------
+  var items = [
+    { kind: "bad", text: "Next week: Sat Jun 13, 2–5 PM needs 1 more person", sub: "Nobody is available, and you're off Saturdays", act: "Open schedule" },
+    { kind: "warn", text: "Ben changed his availability: not available Fri Jun 5, 5–9 PM", sub: "He's on that shift in the published schedule. It stays until you change it.", act: "Fix shift" },
+    { kind: "info", text: "Swap request: Ana ⇄ Gus", sub: "Ana's Wed Jun 3, 2–5 PM for Gus's Sat Jun 6, 5–9 PM · Gus accepted", act: "approve" },
+    { kind: "warn", text: "Open shift in 1 day: Fri Jun 5, 5–9 PM (Eli)", sub: "Nobody has picked it up. Eli is still on it.", act: "See who can work" },
+    { kind: "bad", text: "Event on Sat Jun 13 has no shift yet", sub: "Private party, 6–10 PM, 2 people", act: "Add event shift" }
+  ];
+  function renderDB() {
+    var h = "";
+    items.forEach(function (it, i) {
+      h += "<div class='att " + it.kind + "'><div class='t'>" + it.text + "<small>" + it.sub + "</small></div>" +
+        (it.act === "approve" ? "<button class='btn small primary' data-db='" + i + ":ok'>Approve</button><button class='btn small' data-db='" + i + ":no'>Decline</button>"
+          : "<button class='btn small' data-db='" + i + ":go'>" + it.act + "</button>") +
+        "<button class='link' data-db='" + i + ":x' title='Dismiss' style='color:var(--muted)'>✕</button></div>";
+    });
+    $("dbItems").innerHTML = h || "<div class='att info'><div class='t'>All clear. Nothing needs you right now.</div></div>";
+    $("dbCount").textContent = items.length || "";
+    $("dbCount").style.display = items.length ? "" : "none";
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("button"); if (!b || !b.dataset.db) return;
+    var p = b.dataset.db.split(":"), i = +p[0];
+    if (p[1] === "go") { toast("Wireframe: would open the right page for this."); return; }
+    var msg = { ok: "Swap approved. Ana and Gus were emailed.", no: "Swap declined. Ana and Gus were emailed.", x: "Dismissed." }[p[1]];
+    items.splice(i, 1); renderDB(); toast(msg);
+  });
+  renderDB();
+
+  // ---------- 5. Employee schedule & open shifts ----------
+  var mine = [
+    { day: "Mon Jun 1", time: "2–5 PM", h: 3, with: "Ana", past: true },
+    { day: "Wed Jun 3", time: "5–9 PM", h: 4, with: "Ben", past: true },
+    { day: "Thu Jun 4", time: "5–9 PM", h: 4, with: "Ben, Owner", today: true },
+    { day: "Sat Jun 6", time: "2–5 PM", h: 3, with: "Ana" },
+    { day: "Sun Jun 7", time: "2–5 PM", h: 3, with: "Eli", picked: true }
+  ];
+  var menuAt = -1;
+  function renderMS() {
+    var tot = 0; mine.forEach(function (s) { tot += s.h; });
+    var h = "<div class='sumline'><b>Jun 1 – 7</b><span>" + mine.length + " shifts · " + tot + " h</span></div>";
+    mine.forEach(function (s, i) {
+      h += "<div class='shiftcard" + (s.posted ? " posted" : "") + "' style='" + (s.past ? "opacity:.55" : "") + "'><div class='top'><b>" + s.day + " · " + s.time + "</b>" +
+        (s.today ? "<span class='pill'>Today</span>" : "") + (s.past ? "" : "<button class='link' data-ms='" + i + "' style='font-size:16px;color:var(--muted)'>⋯</button>") + "</div>" +
+        "<small>With " + s.with + (s.picked ? " · you picked this up" : "") + "</small>" +
+        (s.posted ? "<small style='color:var(--warn)'>Posted as open. You're still on it until someone picks it up.</small>" : "");
+      if (menuAt === i) h += "<div class='menu'><button data-swap='" + i + "'>⇄ Ask to swap</button><button data-post='" + i + "'>📣 Post as open shift</button><button data-mclose>Cancel</button></div>";
+      h += "</div>";
+    });
+    h += "<p class='hint' style='margin-top:10px'>Next week (Jun 8–14) isn't published yet. You'll get an email when it is.</p>";
+    $("msList").innerHTML = h;
+  }
+
+  var open = [
+    { day: "Fri Jun 5", time: "5–9 PM", by: "Eli", soon: "Tomorrow" },
+    { day: "Sun Jun 7", time: "5–9 PM", by: "Gus" }
+  ];
+  var req = { from: "Gus", theirs: "Sat Jun 6 · 5–9 PM", yours: "Sat Jun 6 · 2–5 PM", state: "pending" };
+  function renderOS() {
+    var h = "<p class='hint'>Shifts coworkers can't work. Only ones that fit your availability are shown. First to pick it up gets it.</p>";
+    open.forEach(function (o, i) {
+      h += "<div class='shiftcard'><div class='top'><b>" + o.day + " · " + o.time + "</b>" + (o.soon ? "<span class='pill' style='background:var(--warn-bg);color:var(--warn)'>" + o.soon + "</span>" : "") + "</div><small>Posted by " + o.by + "</small>" +
+        (o.taken ? "<div class='warnline' style='color:var(--teal-dk)'>✓ It's yours. It's now on your schedule.</div>" : "<button class='btn small primary' style='margin-top:6px' data-pick2='" + i + "'>Pick up</button>") + "</div>";
+    });
+    h += "<div class='sec'>Requests for you</div>";
+    if (req.state === "pending") {
+      h += "<div class='shiftcard'><b>" + req.from + " wants to swap</b><small>You take: " + req.theirs + "</small><small>" + req.from + " takes: " + req.yours + "</small>" +
+        "<div style='display:flex;gap:6px;margin-top:6px'><button class='btn small primary' data-req='ok'>Accept</button><button class='btn small' data-req='no'>Decline</button></div></div>";
+    } else {
+      h += "<div class='shiftcard'><small>" + (req.state === "ok" ? "Accepted. Waiting for the manager to approve. Your schedule changes once approved." : "Declined. " + req.from + " was told.") + "</small></div>";
+    }
+    $("osList").innerHTML = h;
+  }
+
+  var swapChoice = -1;
+  var swapOpts = [
+    { who: "Ana", when: "Fri Jun 5 · 2–5 PM" },
+    { who: "Eli", when: "Sun Jun 7 · 5–9 PM" },
+    { who: "Hana", when: "Sat Jun 6 · 5–9 PM" }
+  ];
+  function renderSW() {
+    var h = "<div class='shiftcard' style='background:var(--box)'><small>Your shift</small><b>Sat Jun 6 · 2–5 PM</b></div>" +
+      "<p class='hint'>Pick the shift you'd take instead. Only shifts that work for both of you are listed.</p>";
+    swapOpts.forEach(function (o, i) {
+      h += "<div class='opt" + (swapChoice === i ? " sel" : "") + "' data-opt='" + i + "'><input type='radio'" + (swapChoice === i ? " checked" : "") + " tabindex='-1'><div><b>" + o.when + "</b><small>" + o.who + "'s shift</small></div></div>";
+    });
+    h += "<label class='field' style='margin-top:6px'>Message (optional)<input placeholder='e.g. Doctor appointment'></label>" +
+      "<div class='savebar'><button class='btn primary' data-sendswap" + (swapChoice < 0 ? " disabled style='opacity:.5'" : "") + ">Send request" + (swapChoice < 0 ? "" : " to " + swapOpts[swapChoice].who) + "</button></div>" +
+      "<p class='hint' style='margin-top:8px'>They need to accept. Then it's done, or it waits for the manager if approval is turned on.</p>";
+    $("swList").innerHTML = h;
+  }
+
+  document.addEventListener("click", function (e) {
+    var o = e.target.closest && e.target.closest("[data-opt]");
+    if (o) { swapChoice = +o.dataset.opt; renderSW(); return; }
+    var b = e.target.closest && e.target.closest("button"); if (!b) return;
+    var d = b.dataset;
+    if (d.ms !== undefined) { menuAt = menuAt === +d.ms ? -1 : +d.ms; renderMS(); }
+    else if (d.mclose !== undefined) { menuAt = -1; renderMS(); }
+    else if (d.post !== undefined) { mine[+d.post].posted = true; menuAt = -1; renderMS(); toast("Posted. Coworkers who can work it were notified."); }
+    else if (d.swap !== undefined) { menuAt = -1; renderMS(); toast("Opens “Ask to swap” (phone C)."); }
+    else if (d.pick2 !== undefined) { open[+d.pick2].taken = true; renderOS(); toast("Picked up. The manager and " + open[+d.pick2].by + " were told."); }
+    else if (d.req) { req.state = d.req; renderOS(); }
+    else if (d.sendswap !== undefined && swapChoice >= 0) { toast("Request sent to " + swapOpts[swapChoice].who + "."); swapChoice = -1; renderSW(); }
+  });
+  renderMS(); renderOS(); renderSW();
+})();
+</script>
+</body>
+</html>

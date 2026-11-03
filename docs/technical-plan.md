@@ -1,0 +1,285 @@
+# TeamVory — Technical Plan
+
+> Brand: **TeamVory**, "Your team, perfectly organized." Brand sheet: `brand/teamvory-brand-sheet.png`.
+> Source: *Dynamic Work Schedule Website Application* (requirements document) + client answers (section 7).
+
+---
+
+## 1. Tech stack
+
+| Layer | Choice | Why |
+|---|---|---|
+| Framework | **Next.js (App Router) + TypeScript** | One codebase for the public site, auth, manager app and employee app. Server components keep pages fast. |
+| Styling / UI | **Tailwind CSS + shadcn/ui** | Accessible components (dialogs, forms, tables) that look good on phones and desktops. |
+| Database | **PostgreSQL** (hosted on Neon or Supabase) | Relational data (businesses → employees → shifts) fits SQL well. |
+| ORM | **Prisma** | Type-safe queries and easy migrations. |
+| Auth | **Auth.js (NextAuth)** with email + password and magic-link invitations | Supports sign-up, login, password recovery and invite links. |
+| Validation | **Zod** | One schema validates both forms and server actions. |
+| Email | **Resend + React Email** | Notification emails built as templates. Free tier is enough for 10 employees. |
+| SMS (later) | **Twilio** | Employees already use text messages. Added after v1 through the same notification layer. |
+| Exports | **@react-pdf/renderer** (PDF), **satori + resvg** (PNG), **sharp** (JPG), **docx** (Word .docx), **exceljs** (Excel .xlsx) | Covers all five formats the manager asked for. |
+| Dates / time zone | **date-fns + date-fns-tz**, zone `America/New_York` | Switches automatically between EDT (summer) and EST (winter). |
+| Testing | **Vitest** (unit, especially the scheduler) + **Playwright** (end-to-end) | Covers the testing list in spec section 6. |
+| Hosting | **Vercel** (app) + Neon (DB) | Free/cheap at this size, with automatic deploys from GitHub. |
+
+---
+
+## 2. Project structure
+
+```
+teamvory/
+├── app/
+│   ├── (public)/            # Home, How it works, About, Contact
+│   ├── (auth)/              # Sign up, Login, Forgot password, Accept invite
+│   ├── manager/             # Dashboard, Employees, Availability, Shifts,
+│   │                        #   Schedule, Events, Reports, Settings
+│   ├── employee/            # Dashboard, My availability, My schedule,
+│   │                        #   Shift requests, Profile
+│   └── api/                 # Export downloads
+├── components/              # Shared UI (WeekCalendar, ShiftCard, etc.)
+├── lib/
+│   ├── scheduler/           # Auto-scheduling algorithm (pure TS, unit-tested)
+│   ├── auth/                # Session + role guards
+│   ├── notifications/       # Channel-agnostic sender (email now, SMS later)
+│   └── exports/             # pdf / png / jpg / docx / xlsx generators
+├── prisma/schema.prisma
+└── docs/
+```
+
+---
+
+## 3. Database design
+
+> **Superseded by `database.md`** (full ERD, constraints and indexes). See also `architecture.md` and `permissions.md`. The list below is the original draft.
+
+Every business-owned table has a `businessId`, and every query filters by it. This keeps the data isolated (NFR "Data isolation") and makes multi-business support possible later with no redesign.
+
+```
+User            id, email, passwordHash, name, phone, createdAt
+Business        id, name, timezone ("America/New_York"), weekStartsOn (MONDAY),
+                logoUrl,
+                swapApprovalMode (AUTO | MANAGER_APPROVAL),
+                openShiftPickup (bool)
+Membership      id, userId, businessId, role (OWNER | MANAGER | EMPLOYEE),
+                status (INVITED | ACTIVE | INACTIVE),
+                schedulingMode (FAIR_SHARE | BACKUP | NOT_SCHEDULED),
+                colorTag, maxHoursPerWeek? (optional, unused by default)
+Season          id, businessId, name ("Summer 2027"), startDate, endDate
+SeasonRoster    seasonId, membershipId — who is working this season
+Invitation      id, businessId, email, role, token, expiresAt, acceptedAt
+
+Week            id, businessId, startDate (always a Monday),
+                status (CONFIGURING | DRAFT | PUBLISHED)
+
+AvailabilityTemplate  id, membershipId, dayOfWeek, startTime, endTime
+                (recurring default availability)
+AvailabilityOverride  id, membershipId, weekId, date, startTime?, endTime?,
+                type (AVAILABLE | UNAVAILABLE),
+                enteredById (the employee themselves OR the manager)
+TimeOff         id, membershipId, startDate, endDate, note?,
+                enteredById (employee or manager) — no approval step
+
+ShiftPattern    id, businessId, name ("Early season", "Mid season"),
+                shifts (JSON: [{start:"12:00", end:"17:00", required:2}, ...])
+Shift           id, weekId, date, startTime, endTime, requiredCount,
+                eventId?, notes
+
+Schedule        id, weekId, version, status (DRAFT | PUBLISHED | SUPERSEDED),
+                generatedBy (MANUAL | AUTO), seed?, publishedAt, publishedById
+Assignment      id, scheduleId, shiftId, membershipId,
+                pinned (bool: placed by hand, kept by Generate/Regenerate),
+                override (bool: manager assigned someone marked not available,
+                          after agreeing with them; see section 5)
+                UNIQUE(scheduleId, shiftId, membershipId)
+
+ShiftRequest    id, assignmentId, requesterId,
+                type (SWAP | COVERAGE),
+                targetMembershipId?, targetAssignmentId?,
+                status (OPEN | PENDING_APPROVAL | COMPLETED | REJECTED | CANCELLED),
+                pickedUpById?, reason, resolvedAt
+
+Event           id, businessId, title, date, startTime, endTime,
+                location, notes, requiresStaffing (bool)
+
+Notification    id, userId, channel (EMAIL | SMS), type,
+                dedupeKey UNIQUE, sentAt
+AuditLog        id, businessId, actorId, action, entity, before, after, at
+```
+
+**How availability is resolved for a given week:** start from the employee's `AvailabilityTemplate`, then apply that week's `AvailabilityOverride` rows, then remove any `TimeOff`. There is **no deadline**: employees (or the manager on their behalf) can change availability at any time.
+
+**How far ahead (decision 22):** the owner schedules one week at a time, at most two weeks out. So week-by-week changes ("This week") are offered for the **current week and next week only**. Anything further ahead is covered by the default week, or by time off, which can be any future date. Availability is **one time range per day** (decision 21).
+
+**Availability change after publishing:** when someone changes availability for a week that is already published and it conflicts with one of their shifts, the change is still saved. The shift is flagged as a conflict on the manager's dashboard, and the manager gets one notification. The published schedule does **not** change by itself.
+
+**Seasons:** at the start of a season the manager opens a "Season roster" screen and checks who is back. Returning employees become ACTIVE. Everyone else stays INACTIVE, keeping their history and default availability, and can be reactivated in a later season. Inactive employees can't log in to the employee area and are never scheduled.
+
+**Preventing silent overwrites (NFR "Reliability"):** `Schedule` and `Assignment` rows carry a version number. A save sent with an out-of-date version is rejected and the manager is shown "This schedule changed since you opened it."
+
+---
+
+## 4. Shift configuration (changes by month)
+
+The shift times aren't fixed. They change during the season based on sales (e.g. `12–5 / 5–9` early in the season, then `2–5 / 5–9` or `2–5 / 5–8`). So:
+
+- The manager saves named **Shift patterns**, for example:
+  - *Early season*: 12:00–17:00 ×2, 17:00–21:00 ×2
+  - *Mid season*: 14:00–17:00 ×2, 17:00–21:00 ×2
+  - *Late season*: 14:00–17:00 ×2, 17:00–20:00 ×2
+- When setting up a week, the manager either **copies last week** (the default, one click) or **applies a pattern** to some or all days, then edits single days as needed.
+- Editing one day never changes the others or the saved pattern (the spec rule "changes to an individual day shall not unintentionally modify other days").
+
+---
+
+## 5. Auto-scheduling algorithm
+
+A pure TypeScript function, kept separate from the UI so it is easy to test:
+
+```
+generateSchedule(shifts, employees, availability, rules, seed) → {
+  assignments, unfilledShifts, warnings, hoursByEmployee, targetByEmployee
+}
+```
+
+**The owner works shifts too** (client decision 19). Each person has a *scheduling mode*:
+- **Fair share** (employees): gets a share of the hours in proportion to their availability.
+- **Backup** (the owner, by default): not part of the fair split. He picks his own shifts each week and is the fallback for any shift nobody else can cover.
+- **Not scheduled**: never given shifts (for example a manager who doesn't work the floor).
+
+The owner's default availability is every shift, every day, so he only marks the days he takes off (time off or a weekly exception). A "half day" for him is one of the day's shifts, e.g. only 2–5 or only 5–9, since each is its own shift.
+
+**Hard rules (the auto-scheduler never breaks these):**
+1. Only assign an employee who is available for the **entire** shift.
+2. No overlapping shifts for the same person.
+3. No one is assigned twice to the same shift.
+4. Inactive employees and time off are excluded.
+
+**Manager override (decision 20):** rules 1 and 4 (time off) are hard rules for the auto-scheduler only. When assigning by hand, the manager *can* add someone who marked themselves not available, for the special case where they called the employee and agreed on it. The app asks first ("Ben marked himself not available Thu 5–9 PM. Only add him if you've agreed. Assign anyway?"). The assignment is saved with `override = true`, shown with an *agreed* tag, recorded in the audit log, and not flagged as a conflict afterwards. Rules 2 and 3 (overlaps, double booking) and inactive employees are never overridable.
+
+**Fairness = proportional to availability** (client decision):
+
+```
+eligibleHours(e) = total hours of this week's shifts that e is available for
+target(e)        = totalHoursNeeded × eligibleHours(e) / Σ eligibleHours(all)
+```
+
+For example, if Ana can cover 30 hours of shifts and Ben only 15, Ana's target is about twice Ben's. A target is never more than what the person can actually work.
+
+Only *fair share* people are counted in `eligibleHours` and `target`, and `totalHoursNeeded` excludes the slots already pinned (for example the shifts the owner put himself on).
+
+**Steps:**
+0. Keep every **pinned** assignment (the owner's own shifts, or anything placed by hand and pinned). Generate and Regenerate never move them.
+1. Compute `target(e)` for everyone in *fair share* mode.
+2. Sort shift slots by difficulty (fewest available people first), so hard-to-fill shifts get filled before the easy ones use everyone up.
+3. For each slot, choose the eligible employee with the largest **gap** between `target(e)` and the hours assigned so far. Break ties randomly using `seed`, which is how **Regenerate** gives a different but equally fair schedule.
+4. Improvement pass: swap pairs of assignments whenever that moves people closer to their targets.
+5. **Owner fills the gaps:** any slot still empty goes to the *backup* person (the owner) if he is available and not already on an overlapping shift. These are labelled "Owner covering" in the draft so he can see why he was added.
+6. Return the shifts that are still unfilled ("Tue 17:00–21:00 needs 1 more, nobody available, owner already working"), and each person's hours compared with their target.
+
+Typical size (about 10 people, 4 shifts × 7 days = 28 shifts, 56 slots) runs in a few milliseconds.
+
+---
+
+## 6. Shift swaps, coverage and open shifts
+
+The manager chooses one setting in **Business settings → Swap approval**:
+- **Automatic**: an eligible swap or pickup completes immediately.
+- **Manager approval**: it goes to `PENDING_APPROVAL` and the manager approves it with one click.
+
+Two request types:
+- **Swap** (trade shifts with a specific person): the other employee must accept, because their own shift changes too.
+- **Coverage / open shift**: the employee posts their shift as open. Every eligible employee (available, no overlap, active) sees it in **Open shifts** and can **pick it up with no further acceptance**. The first valid pickup wins, enforced with a database transaction so two people can't take the same shift.
+
+Until someone picks up the shift, the original employee is still assigned and still responsible. The manager sees open shifts on the dashboard, especially ones within 24 hours.
+
+After completion, hours totals update and everyone involved gets a notification.
+
+---
+
+## 7. Client decisions (confirmed)
+
+| # | Topic | Decision |
+|---|---|---|
+| 1 | Fairness | Hours **proportional to availability** |
+| 2 | Shift rules | No fixed min/max hours. Shift times and staffing change by month, set by the owner → **shift patterns** (section 4) |
+| 3 | Positions | None. Any employee can work any shift |
+| 4 | Seniority | None |
+| 5 | Legal / overtime limits | None |
+| 6 | Availability deadline | **No deadline.** Employees can update any time, with no extra steps for the manager |
+| 7 | Recurring availability | Yes. Default weekly availability plus per-week exceptions |
+| 8 | Manager enters for employee | Yes, alongside employees entering their own |
+| 9 | Time off | Separate from weekly availability. **No approval:** the employee adds it to the calendar and the manager sees it |
+| 10 | Swap approval | Manager setting: automatic or manager approval |
+| 11 | Open shifts | Any eligible employee can pick up with no acceptance step, and no time limit before the shift starts |
+| 12 | Exports | **PDF, PNG, JPG, Word (.docx), Excel (.xlsx)** |
+| 13 | SMS | Yes, after v1 |
+| 14 | Week / time zone | Week starts **Monday**; Eastern Time (`America/New_York`, handles EDT/EST) |
+| 15 | Seasonal staff | Inactive between seasons; returning staff reactivated, others stay inactive |
+| 16 | Event staffing | Manager adds shifts by hand |
+| 17 | Brand | **TeamVory**, tagline "Your team, perfectly organized." Colors below |
+| 18 | Contact page | Form, with messages emailed to you |
+| 19 | Owner on the schedule | **Yes.** The owner schedules himself every week and chooses his own days off. He can work one shift of a day (e.g. 2–5 or 5–9) instead of the whole day. When no employee is available for a shift, the owner covers it (*backup* mode, section 5) |
+| 20 | Assigning someone marked not available | **Allowed for the manager, with a confirmation.** Rare: only after the manager and employee agree (e.g. by phone). The auto-scheduler never does it |
+| 21 | Time ranges per day | **One** availability range per day |
+| 22 | How far ahead | The owner schedules **week by week, at most 2 weeks out**. Employees change availability for this week or next week; the default week covers the rest |
+| — | Schedule layout | Grid **by shift** (rows = shifts, columns = days) is the main view; no per-person view needed |
+
+**Brand colors** (from the brand sheet)
+
+| Token | Hex | Use |
+|---|---|---|
+| Deep Navy | `#0B1F44` | Text, headers, dark backgrounds |
+| Teal Accent | `#14B8A6` | Buttons, links, highlights (on navy or as fills; for small text on white use a darker teal such as `#0F766E` to meet contrast) |
+| Soft Gray | `#E2E8F0` | Borders, dividers, quiet backgrounds |
+| Mint Tint | `#E6FFFA` | Selected states, soft highlight panels |
+
+**Fonts:** Poppins SemiBold for the logo and headings, DM Sans for body text and the app interface (both free on Google Fonts).
+
+**Logo files:** redrawn as vector files from the brand sheet. See `brand/README.md` for the full list and where each file is used.
+
+**Still open**
+- **Contact email/phone and social links.** On hold until the client has created them; they'll be sent over when ready. The Contact page form is built anyway, and the details live in one config file (`lib/site-config.ts`), so adding them later takes one edit.
+
+---
+
+## 8. Pages
+
+| # | Page | Route |
+|---|---|---|
+| 1–4 | Home, How it works, About us, Contact | `/`, `/how-it-works`, `/about`, `/contact` |
+| — | Privacy Policy, Terms | `/privacy`, `/terms` |
+| 5–7 | Sign up, Log in, Password recovery | `/signup`, `/login`, `/forgot-password` |
+| — | Accept invitation | `/invite/[token]` |
+| 8 | Manager dashboard (conflicts, open shifts, who hasn't updated availability, events) | `/manager` |
+| 9 | Employees + season roster | `/manager/employees` |
+| 10 | Availability overview (+ edit on behalf, time-off calendar) | `/manager/availability?week=` |
+| — | Shift configuration + patterns | `/manager/shifts?week=` |
+| 11 | Weekly schedule (manual + auto) | `/manager/schedule?week=` |
+| 12 | Events | `/manager/events` |
+| 13 | Reports & exports (PDF/PNG/JPG/Word/Excel) | `/manager/reports` |
+| 14 | Business settings (swap approval, patterns, time zone) | `/manager/settings` |
+| 15 | Employee dashboard | `/employee` |
+| 16 | My availability (default + this week + time off) | `/employee/availability` |
+| 17 | My schedule | `/employee/schedule` |
+| 18 | Shift requests + Open shifts | `/employee/requests` |
+| 19 | My profile | `/employee/profile` |
+
+---
+
+## 9. Milestones
+
+| # | Milestone | Deliverable |
+|---|---|---|
+| **M0** | Setup | Repo, Next.js, Tailwind, Prisma, DB, CI, deploy preview |
+| **M1** | Public website | Home, How it works, About, Contact form (emailed to you), Privacy/Terms, TeamVory brand |
+| **M2** | Accounts | Sign up → create business, login, password reset, invite employees, role guards, active/inactive |
+| **M3** | Availability | Recurring default + weekly exceptions, manager edits on behalf, time off, manager overview |
+| **M4** | Shift config + manual schedule | Shift patterns, copy previous week, click to assign, hours totals, conflict alerts |
+| **M5** | Publish + notifications | Publish/version schedules, email on publish/change, employee "My schedule", post-publish conflict flags |
+| **M6** | Auto-scheduler | Proportional-fairness algorithm + tests, generate/regenerate, unfilled-shift report |
+| **M7** | Swaps & open shifts | Swaps, open-shift pickup, approval-mode setting, emails |
+| **M8** | Events + reports/exports | Events in planning view; PDF/PNG/JPG/Word/Excel exports |
+| **M9** | Polish & launch | Seasons/roster screen, accessibility audit, mobile testing, client testing, deploy, handover docs |
+| **M10** | SMS (post-v1) | Twilio channel for the notifications that already exist; per-user preference for email/SMS |
+
+M1–M5 already replace the current Excel + text-message process. M6 and later make it faster.

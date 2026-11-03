@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Next.js / build output
+.next/
+out/
+build/
+dist/
+
+# Environment variables (secrets: never commit)
+.env
+.env*.local
+
+# Tests
+coverage/
+playwright-report/
+test-results/
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db
+Zone.Identifier
+*:Zone.Identifier
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
