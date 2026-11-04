@@ -55,7 +55,6 @@ erDiagram
         boolean reminderEnabled
         enum reminderStartDay "MON to SUN"
         int reminderDays "days in a row"
-        time reminderTime
         boolean reminderIncludeDefaultOnly
         datetime createdAt
     }

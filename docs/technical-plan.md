@@ -20,7 +20,7 @@
 | Exports | **@react-pdf/renderer** (PDF), **satori + resvg** (PNG), **sharp** (JPG), **docx** (Word .docx), **exceljs** (Excel .xlsx) | Covers all five formats the manager asked for. |
 | Dates / time zone | **date-fns + date-fns-tz**, zone `America/New_York` | Switches automatically between EDT (summer) and EST (winter). |
 | Testing | **Vitest** (unit, especially the scheduler) + **Playwright** (end-to-end) | Covers the testing list in spec section 6. |
-| Hosting | **Vercel** (app) + Neon (DB) | Free/cheap at this size, with automatic deploys from GitHub. |
+| Hosting | **Vercel** (app) + Neon (DB) | Automatic deploys from GitHub. Free plan while building and testing; Vercel's free plan is for non-commercial use only, so a paid plan or another host is chosen before launch (decision 28). |
 
 ---
 
@@ -61,7 +61,7 @@ Business        id, name, timezone ("America/New_York"), weekStartsOn (MONDAY),
                 swapApprovalMode (AUTO | MANAGER_APPROVAL),
                 openShiftPickup (bool),
                 reminderEnabled, reminderStartDay (MON–SUN), reminderDays (1–7),
-                reminderTime ("10:00"), reminderIncludeDefaultOnly (bool)
+                reminderIncludeDefaultOnly (bool)
 Membership      id, userId, businessId, role (OWNER | MANAGER | EMPLOYEE),
                 status (INVITED | ACTIVE | INACTIVE),
                 schedulingMode (FAIR_SHARE | BACKUP | NOT_SCHEDULED),
@@ -207,8 +207,9 @@ After completion, hours totals update and everyone involved gets a notification.
 
 In **Settings → Availability reminders** the owner chooses:
 - **Start day** (e.g. Wednesday) and **how many days in a row** to send it (e.g. 2 → Wednesday and Thursday)
-- **Time** of day (business time zone)
 - On/off
+
+Reminders go out with the **daily morning job** (around 9 AM Eastern), so there's no time-of-day setting.
 
 Each reminder day, an email goes to **active employees who haven't set their availability for next week**. "Set" means they have a default week saved or have entered changes for next week. People who already have it get nothing, and the reminder stops for a person as soon as they enter it (so day 2 only reaches whoever is still missing). One extra option, off by default: *also remind people who only use their default week, to check it's still right*.
 
@@ -220,7 +221,7 @@ So the owner doesn't type each event twice, TeamVory **reads events from his App
 
 1. In Apple Calendar he makes a calendar just for business events (e.g. "TeamVory events") and turns on **Public Calendar** to get its link (`webcal://…`). Google Calendar has the same thing: the calendar's *secret address in iCal format*.
 2. He pastes the link into **Settings → Calendar sync**.
-3. TeamVory checks the link every hour (and when he taps **Sync now**). New events appear in *Events* and on the dashboard, tagged *From calendar*. Edited or deleted events are updated too, matched by the event's unique ID (`externalUid`).
+3. TeamVory checks the link **once a day**, plus **whenever the owner opens the Dashboard or Events page** (if it's been more than a few minutes) and when he taps **Sync now**. New events appear in *Events* and on the dashboard, tagged *From calendar*. Edited or deleted events are updated too, matched by the event's unique ID (`externalUid`).
 4. As before, he adds the staffing shifts for an event by hand (decision 16). The dashboard flags events with no shift yet.
 
 Notes:
@@ -231,7 +232,7 @@ Notes:
 
 ### Scheduled jobs
 
-Reminders and calendar sync run from a job that wakes up **every hour**. Vercel's free plan only runs scheduled jobs once a day, so this needs either the Pro plan or a free external trigger (e.g. a GitHub Actions schedule calling `/api/cron/hourly` with a secret). Decide in M0.
+One **Vercel Cron job runs once a day in the morning** (`/api/cron/daily`, protected by a secret). It sends that day's availability reminders, syncs every connected calendar and retries failed emails. This fits Vercel's free plan, which only allows daily jobs and may start them any time within the chosen hour. Hourly jobs aren't needed (decision 28).
 
 ---
 
@@ -265,8 +266,9 @@ Reminders and calendar sync run from a job that wakes up **every hour**. Vercel'
 | 23 | Usual shift times | **12–5 PM and 5–9 PM, every day including weekends.** Changes are one-offs, mostly a slow rainy day: one employee, or the owner works half or the whole day (*Slow day* pattern, section 4) |
 | 24 | Sign-up | **Any business can sign up on its own** from the public site. The Contact page stays for questions and support |
 | 25 | Pricing | **Per business, per month.** Price not decided yet, so no prices on the site in v1 (see section 10) |
-| 26 | Availability reminders | Owner picks the start day, number of days in a row and time. Sent only to employees who haven't set availability for next week (section 6b) |
-| 27 | Calendar sync | Events added in the owner's Apple Calendar (or Google) appear in TeamVory automatically, through the calendar's link (section 6b) |
+| 26 | Availability reminders | Owner picks the start day and number of days in a row; sent each morning with the daily job. Sent only to employees who haven't set availability for next week (section 6b) |
+| 27 | Calendar sync | Events added in the owner's Apple Calendar (or Google) appear in TeamVory automatically, through the calendar's link: synced daily, plus on demand (section 6b) |
+| 28 | Hosting and cost | **Build and test on free plans** (Vercel Hobby, Neon free). Scheduled jobs run once a day, so no paid plan is needed for features. Vercel's free plan doesn't allow commercial use, so **before launch (M9)** choose Vercel Pro (~$20/month) or another host whose free plan allows it, and include hosting in the monthly price. SMS stays after v1 (Twilio charges per message) |
 
 **Brand colors** (from the brand sheet)
 
@@ -319,11 +321,11 @@ Reminders and calendar sync run from a job that wakes up **every hour**. Vercel'
 | **M2** | Accounts | Sign up → create business, login, password reset, invite employees, role guards, active/inactive |
 | **M3** | Availability | Recurring default + weekly exceptions, manager edits on behalf, time off, manager overview |
 | **M4** | Shift config + manual schedule | Shift patterns, copy previous week, click to assign, hours totals, conflict alerts |
-| **M5** | Publish + notifications | Publish/version schedules, email on publish/change, employee "My schedule", post-publish conflict flags, **availability reminders** (hourly job) |
+| **M5** | Publish + notifications | Publish/version schedules, email on publish/change, employee "My schedule", post-publish conflict flags, **availability reminders** (daily job) |
 | **M6** | Auto-scheduler | Proportional-fairness algorithm + tests, generate/regenerate, unfilled-shift report |
 | **M7** | Swaps & open shifts | Swaps, open-shift pickup, approval-mode setting, emails |
 | **M8** | Events + reports/exports | Events in planning view, **calendar import (Apple/Google link)**; PDF/PNG/JPG/Word/Excel exports |
-| **M9** | Polish & launch | Seasons/roster screen, accessibility audit, mobile testing, client testing, deploy, handover docs |
+| **M9** | Polish & launch | Seasons/roster screen, accessibility audit, mobile testing, client testing, **choose production hosting (decision 28)**, deploy, handover docs |
 | **M10** | SMS (post-v1) | Twilio channel for the notifications that already exist; per-user preference for email/SMS |
 
 M1–M5 already replace the current Excel + text-message process. M6 and later make it faster.

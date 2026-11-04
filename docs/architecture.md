@@ -26,7 +26,7 @@ flowchart LR
     EM --> E
     TV -->|Contact form messages| EM
     EM --> INBOX
-    CAL -.->|Events, read every hour| TV
+    CAL -.->|Events, read daily and on demand| TV
 ```
 
 ## 2. Containers (what runs where)
@@ -50,7 +50,7 @@ flowchart TB
                 AUTHZ["Permission checks<br/>requireRole(), scoped queries"]
             end
         end
-        CRON["Scheduled jobs<br/>hourly: availability reminders, calendar sync<br/>daily: retry failed notifications"]
+        CRON["Vercel Cron, once a day (morning)<br/>availability reminders, calendar sync,<br/>retry failed notifications"]
     end
 
     DB[("PostgreSQL<br/>Neon")]

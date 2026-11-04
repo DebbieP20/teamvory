@@ -246,8 +246,9 @@ footer { font-size: var(--s-1); color: var(--muted); border-top: 1px solid var(-
       <tr><td>Usual shift times</td><td>12–5 PM and 5–9 PM every day, weekends included. A slow rainy day gets one employee, or the owner works half or the whole day.</td></tr>
       <tr><td>Sign-up</td><td>Any business can sign up on its own. The Contact page stays for questions and support.</td></tr>
       <tr><td>Pricing</td><td>Per business, per month. Price not decided yet, so no prices on the site at first.</td></tr>
-      <tr><td>Availability reminders</td><td>The owner picks the day, how many days in a row and the time. Only employees missing next week's availability get it.</td></tr>
-      <tr><td>Calendar sync</td><td>Events the owner adds in Apple Calendar (or Google) appear in TeamVory automatically, through the calendar's link.</td></tr>
+      <tr><td>Availability reminders</td><td>The owner picks the day and how many days in a row. Sent each morning. Only employees missing next week's availability get it.</td></tr>
+      <tr><td>Calendar sync</td><td>Events the owner adds in Apple Calendar (or Google) appear in TeamVory automatically, through the calendar's link. Synced daily and whenever the owner opens the dashboard.</td></tr>
+      <tr><td>Hosting cost</td><td>Free plans while building and testing. Before launch, choose a paid plan (about $20/month) or a free host that allows business use, and include it in the price. SMS stays for later.</td></tr>
       <tr><td>How far ahead</td><td>Week by week, at most 2 weeks out. Employees change this week or next week; the default week covers the rest.</td></tr>
     </tbody>
   </table>
@@ -345,7 +346,7 @@ target(person)        = hoursNeeded × eligibleHours(person) ÷ Σ eligibleHours
       <tr><td>Exports</td><td>react-pdf, satori + resvg, sharp, docx, exceljs</td><td>PDF, PNG, JPG, Word, Excel</td></tr>
       <tr><td>Dates</td><td>date-fns-tz</td><td>Switches between EDT and EST automatically</td></tr>
       <tr><td>Tests</td><td>Vitest + Playwright</td><td>Scheduler unit tests and full user flows</td></tr>
-      <tr><td>Hosting</td><td>Vercel + Neon</td><td>Free or low-cost at this size</td></tr>
+      <tr><td>Hosting</td><td>Vercel + Neon</td><td>Free while building and testing; paid plan or another host chosen before launch</td></tr>
     </tbody>
   </table>
   </div>
@@ -376,7 +377,7 @@ flowchart LR
     EM --> E
     TV -->|Contact form messages| EM
     EM --> INBOX
-    CAL -.->|Events, read every hour| TV
+    CAL -.->|Events, read daily and on demand| TV
 </script></figure></div>
   <h3>What runs where</h3>
   <div class="scroll"><figure class="diagram" aria-label="Container diagram"><div class="dg" id="dg-2"><p class="dg-note">Loading diagram… (needs an internet connection)</p></div><script type="text/x-mermaid" data-for="dg-2">
@@ -398,7 +399,7 @@ flowchart TB
                 AUTHZ["Permission checks<br/>requireRole(), scoped queries"]
             end
         end
-        CRON["Scheduled jobs<br/>hourly: availability reminders, calendar sync<br/>daily: retry failed notifications"]
+        CRON["Vercel Cron, once a day (morning)<br/>availability reminders, calendar sync,<br/>retry failed notifications"]
     end
 
     DB[("PostgreSQL<br/>Neon")]

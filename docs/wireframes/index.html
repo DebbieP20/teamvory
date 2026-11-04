@@ -240,7 +240,7 @@
   .setcard .sh { display: flex; justify-content: space-between; align-items: center; }
   .setcard h3 { margin: 0; font-size: 15px; color: var(--navy); }
   .setcard .hint { margin-top: 4px; }
-  .formrow { display: grid; grid-template-columns: repeat(3, minmax(0, 160px)); gap: 10px; }
+  .formrow { display: grid; grid-template-columns: repeat(2, minmax(0, 160px)); gap: 10px; }
   .field select { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
   .switch { font-size: 13px; display: flex; gap: 6px; align-items: center; }
   .rmsum { background: var(--mint); border: 1px solid #99f6e4; border-radius: 6px; padding: 8px 10px; font-size: 13px; margin-top: 10px; }
@@ -682,7 +682,6 @@
           <div class="formrow">
             <label class="field">Start on<select id="rmDay"><option>Monday</option><option>Tuesday</option><option selected>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select></label>
             <label class="field">Days in a row<select id="rmCount"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
-            <label class="field">Time<select id="rmTime"><option>9:00 AM</option><option selected>10:00 AM</option><option>12:00 PM</option><option>5:00 PM</option><option>7:00 PM</option></select></label>
           </div>
           <label class="pinrow" style="font-size:13px;color:var(--ink)"><input type="checkbox" id="rmDefault"> Also remind people who only use their default week, to check it's still right</label>
           <div class="rmsum" id="rmSum"></div>
@@ -707,10 +706,10 @@
   <div class="notes">
     <h3>Notes</h3>
     <ol>
-      <li><b>Reminders</b>: you choose the start day, how many days in a row and the time. Example: Wednesday + 2 days = Wednesday and Thursday.</li>
+      <li><b>Reminders</b>: you choose the start day and how many days in a row. They go out each morning. Example: Wednesday + 2 days = Wednesday and Thursday.</li>
       <li>Only employees <b>missing next week's availability</b> get it. Having a default week counts as set. Day 2 only goes to whoever still hasn't done it.</li>
       <li>It's only a reminder. There's still no deadline, and the dashboard shows who's missing.</li>
-      <li><b>Calendar sync</b> reads one calendar (e.g. “TeamVory events”) through its link, every hour or when you tap <b>Sync now</b>. Personal appointments in other calendars are never read.</li>
+      <li><b>Calendar sync</b> reads one calendar (e.g. “TeamVory events”) through its link once a day, whenever you open the Dashboard or Events, and when you tap <b>Sync now</b>. Personal appointments in other calendars are never read.</li>
       <li>Synced events show up in <b>Events</b> and on the dashboard with a <span class="pill">From calendar</span> tag. You still add the staffing shifts yourself, and the dashboard reminds you if an event has none.</li>
       <li>Changes go one way: edit or delete the event in your phone, and TeamVory updates on the next sync.</li>
     </ol>
@@ -1196,12 +1195,12 @@
     var el = $("rmSum");
     el.className = "rmsum" + (on ? "" : " off");
     el.innerHTML = on
-      ? "Sends every <b>" + dayText + "</b> at <b>" + $("rmTime").value + "</b>, about the following week.<br>" +
+      ? "Sends every <b>" + dayText + "</b> morning (around 9 AM), about the following week.<br>" +
         "This week it would go to <b>" + who.length + " of 8</b>: " + who.join(", ") +
         ($("rmDefault").checked ? " <small>(" + DEFAULT_ONLY.length + " of them only to check their default week)</small>" : " <small>(no availability for Jun 8–14 yet)</small>")
       : "Reminders are off. Nobody gets an email.";
   }
-  ["rmOn", "rmDay", "rmCount", "rmTime", "rmDefault"].forEach(function (id) { $(id).addEventListener("change", renderRM); });
+  ["rmOn", "rmDay", "rmCount", "rmDefault"].forEach(function (id) { $(id).addEventListener("change", renderRM); });
 
   var connected = false;
   var EVENTS = [
@@ -1219,7 +1218,7 @@
         "<p class='hint'>Using Google Calendar? Copy the calendar's <i>secret address in iCal format</i> instead.</p>" +
         "<div class='calrow'><input id='calUrl' placeholder='webcal://p01-caldav.icloud.com/published/2/…'><button class='btn primary' id='calConnect'>Connect</button></div>";
     } else {
-      h = "<div style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px'><span><b>TeamVory events</b> (Apple Calendar) · last checked just now · checks every hour</span>" +
+      h = "<div style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px'><span><b>TeamVory events</b> (Apple Calendar) · last checked just now · checks daily and when you open Events</span>" +
         "<span><button class='btn small' id='calSync'>↻ Sync now</button> <button class='btn small' id='calOff'>Disconnect</button></span></div>" +
         "<div style='margin-top:10px'>" + EVENTS.map(function (e) {
           return "<div class='evrow'><div><b>" + e[0] + " · " + e[1] + "</b><small>" + e[2] + "</small></div><span class='pill'>From calendar</span></div>";
