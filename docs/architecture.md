@@ -15,7 +15,6 @@ flowchart LR
     EM["Email service<br/>(Resend)"]
     SMS["SMS service<br/>(Twilio, after v1)"]
     INBOX["Site owner's inbox"]
-    CAL["Owner's phone calendar<br/>(Apple / Google, calendar link)"]
 
     V -->|Reads public site, sends contact form| TV
     O -->|Sets up shifts, builds and publishes schedules| TV
@@ -26,7 +25,6 @@ flowchart LR
     EM --> E
     TV -->|Contact form messages| EM
     EM --> INBOX
-    CAL -.->|Events, read daily and on demand| TV
 ```
 
 ## 2. Containers (what runs where)
@@ -50,7 +48,7 @@ flowchart TB
                 AUTHZ["Permission checks<br/>requireRole(), scoped queries"]
             end
         end
-        CRON["Vercel Cron, once a day (morning)<br/>availability reminders, calendar sync,<br/>retry failed notifications"]
+        CRON["Vercel Cron, once a day (morning)<br/>availability reminders,<br/>retry failed notifications"]
     end
 
     DB[("PostgreSQL<br/>Neon")]

@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+/* TeamVory brand (see brand/README.md) */
+@theme {
+  --color-navy: #0b1f44;
+  --color-teal: #14b8a6;
+  /* Darker teal for links and small text on white (meets contrast) */
+  --color-teal-dark: #0f766e;
+  --color-soft-gray: #e2e8f0;
+  --color-mint: #e6fffa;
+
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  @apply bg-white font-sans text-navy antialiased;
+}
+
+h1,
+h2,
+h3 {
+  @apply font-heading font-semibold;
+}

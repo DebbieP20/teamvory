@@ -8,13 +8,13 @@ It replaces the usual routine of collecting availability by text message, typing
 
 ## Status
 
-🟡 **Planning and design.** The technical plan and wireframes are done. Building starts with milestone M0 (project setup).
+🟡 **M0: project setup in progress.** The technical plan and wireframes are done.
 
 | Milestone | | Status |
 |---|---|---|
 | Plan | Requirements, architecture, database, permissions, user flows | ✅ Done |
 | Wireframes | Seven key screens, clickable | ✅ Done |
-| M0 | Project setup | ⏳ Next |
+| M0 | Project setup | 🚧 In progress |
 | M1 | Public website | |
 | M2 | Accounts (sign up, log in, invitations, roles) | |
 | M3 | Availability (default week, weekly changes, time off) | |
@@ -22,7 +22,7 @@ It replaces the usual routine of collecting availability by text message, typing
 | M5 | Publishing, email and availability reminders | |
 | M6 | Auto-scheduler | |
 | M7 | Swaps and open shifts | |
-| M8 | Events, phone-calendar import and exports (PDF, PNG, JPG, Word, Excel) | |
+| M8 | Events and exports (PDF, PNG, JPG, Word, Excel) | |
 | M9 | Polish and launch | |
 | M10 | SMS notifications | |
 
@@ -34,14 +34,48 @@ It replaces the usual routine of collecting availability by text message, typing
 - **Seasonal shift patterns.** Shift times change with the season (for example *Early*, *Mid* and *Late season*). Setting up a week takes one click.
 - **Swaps and open shifts.** Employees trade shifts or pick up open ones, with optional manager approval.
 - **Availability reminders.** Emails on the days the owner picks, only to employees who haven't added next week's availability.
-- **Calendar sync.** Events added in the owner's Apple or Google Calendar show up in TeamVory automatically.
 - **Exports.** PDF, PNG, JPG, Word and Excel.
 
-Future features (positions, multiple locations, billing and more) are listed in the [technical plan](docs/technical-plan.md#10-future-features-after-v1).
+Future features (positions, multiple locations, billing, calendar sync and more) are listed in the [technical plan](docs/technical-plan.md#10-future-features-after-v1).
 
 ## Planned stack
 
 Next.js + TypeScript · Tailwind CSS + shadcn/ui · PostgreSQL + Prisma · Auth.js · Resend (email) · Vitest + Playwright · Vercel + Neon
+
+## Run it locally
+
+You need [Node.js](https://nodejs.org/) 22 or later and [PostgreSQL](https://www.postgresql.org/) 16.
+
+**One-time database setup** (Ubuntu / WSL):
+
+```bash
+sudo apt-get install -y postgresql && sudo service postgresql start
+sudo -u postgres psql -c "CREATE ROLE teamvory LOGIN PASSWORD 'teamvory' CREATEDB;"
+sudo -u postgres createdb -O teamvory teamvory
+```
+
+**Then:**
+
+```bash
+cp .env.example .env # and set DATABASE_URL (the local value is in the file)
+npm install          # install dependencies (also generates the Prisma client)
+npm run dev          # start the app at http://localhost:3000
+```
+
+Check that the app can reach the database at http://localhost:3000/api/health.
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Development server with live reload |
+| `npm run lint` | Check code style |
+| `npm run typecheck` | Check TypeScript types |
+| `npm test` | Unit tests (Vitest) |
+| `npm run build` | Production build |
+| `npm run db:migrate` | Apply database changes (Prisma Migrate) |
+| `npm run db:studio` | Browse the database in a web page (Prisma Studio) |
+| `npm run test:e2e` | Browser tests on desktop and phone sizes (Playwright; run `npm run build` first) |
+
+GitHub Actions runs all of these on every pull request.
 
 ## Documentation
 

@@ -512,8 +512,8 @@
           <div class="li"><b>Owner</b><small>Every Saturday (marked off)</small></div>
         </div>
         <div class="mini"><h4 class="dh">Upcoming events</h4>
-          <div class="li"><b>Sat Jun 13 · Private party</b> <span class="pill">From calendar</span><small>6–10 PM · <span style="color:var(--bad)">no shift added yet</span></small></div>
-          <div class="li"><b>Sat Jun 20 · Farmers market booth</b> <span class="pill">From calendar</span><small>12–6 PM · <span style="color:var(--bad)">no shift added yet</span></small></div>
+          <div class="li"><b>Sat Jun 13 · Private party</b><small>6–10 PM · <span style="color:var(--bad)">no shift added yet</span></small></div>
+          <div class="li"><b>Sat Jun 20 · Farmers market booth</b><small>12–6 PM · <span style="color:var(--bad)">no shift added yet</span></small></div>
         </div>
       </div>
     </div>
@@ -626,7 +626,7 @@
         <div><span class="ico"></span><b>Swaps &amp; open shifts</b><p>Staff trade or pick up shifts without group texts.</p></div>
         <div><span class="ico"></span><b>Seasonal staff</b><p>Bring returning staff back each season in a few clicks.</p></div>
         <div><span class="ico"></span><b>Exports</b><p>PDF, image, Word or Excel, ready to print or post.</p></div>
-        <div><span class="ico"></span><b>Reminders &amp; calendar sync</b><p>Automatic availability reminders. Events from your phone's calendar. Text messages coming soon.</p></div>
+        <div><span class="ico"></span><b>Availability reminders</b><p>Automatic emails to staff who haven't added their availability. Text messages coming soon.</p></div>
       </div>
     </div>
     <div class="ssec">
@@ -695,7 +695,7 @@
         </div>
 
         <div class="setcard">
-          <div class="sh"><h3>Calendar sync</h3><span class="chip" id="calChip">Not connected</span></div>
+          <div class="sh"><h3>Calendar sync <span class="chip draft" style="vertical-align:2px">On hold: not in v1</span></h3><span class="chip" id="calChip">Not connected</span></div>
           <p class="hint">Events you add in your phone's calendar show up in TeamVory by themselves, so you only enter them once.</p>
           <div id="calBody"></div>
         </div>
@@ -709,7 +709,7 @@
       <li><b>Reminders</b>: you choose the start day and how many days in a row. They go out each morning. Example: Wednesday + 2 days = Wednesday and Thursday.</li>
       <li>Only employees <b>missing next week's availability</b> get it. Having a default week counts as set. Day 2 only goes to whoever still hasn't done it.</li>
       <li>It's only a reminder. There's still no deadline, and the dashboard shows who's missing.</li>
-      <li><b>Calendar sync</b> reads one calendar (e.g. “TeamVory events”) through its link once a day, whenever you open the Dashboard or Events, and when you tap <b>Sync now</b>. Personal appointments in other calendars are never read.</li>
+      <li><b>Calendar sync is on hold</b> until you talk with the client. If it goes ahead: it reads one calendar (e.g. “TeamVory events”) through its link once a day, whenever you open the Dashboard or Events, and when you tap <b>Sync now</b>. Personal appointments in other calendars are never read.</li>
       <li>Synced events show up in <b>Events</b> and on the dashboard with a <span class="pill">From calendar</span> tag. You still add the staffing shifts yourself, and the dashboard reminds you if an event has none.</li>
       <li>Changes go one way: edit or delete the event in your phone, and TeamVory updates on the next sync.</li>
     </ol>
@@ -1076,7 +1076,7 @@
     { kind: "warn", text: "Ben changed his availability: not available Fri Jun 5, 5–9 PM", sub: "He's on that shift in the published schedule. It stays until you change it.", act: "Fix shift" },
     { kind: "info", text: "Swap request: Ana ⇄ Gus", sub: "Ana's Wed Jun 3, 12–5 PM for Gus's Sat Jun 6, 5–9 PM · Gus accepted", act: "approve" },
     { kind: "warn", text: "Open shift in 1 day: Fri Jun 5, 5–9 PM (Eli)", sub: "Nobody has picked it up. Eli is still on it.", act: "See who can work" },
-    { kind: "bad", text: "Event on Sat Jun 13 has no shift yet", sub: "Private party, 6–10 PM · from your calendar", act: "Add event shift" },
+    { kind: "bad", text: "Event on Sat Jun 13 has no shift yet", sub: "Private party, 6–10 PM, 2 people", act: "Add event shift" },
     { kind: "info", text: "Fay hasn't added availability for next week", sub: "Reminder emailed Wed and today. Gus added his after the first one.", act: "Enter it for her" }
   ];
   function renderDB() {
