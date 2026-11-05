@@ -247,7 +247,7 @@ footer { font-size: var(--s-1); color: var(--muted); border-top: 1px solid var(-
       <tr><td>Sign-up</td><td>Any business can sign up on its own. The Contact page stays for questions and support.</td></tr>
       <tr><td>Pricing</td><td>Per business, per month. Price not decided yet, so no prices on the site at first.</td></tr>
       <tr><td>Availability reminders</td><td>The owner picks the day and how many days in a row. Sent each morning. Only employees missing next week's availability get it.</td></tr>
-      <tr><td>Calendar sync</td><td>Events the owner adds in Apple Calendar (or Google) appear in TeamVory automatically, through the calendar's link. Synced daily and whenever the owner opens the dashboard.</td></tr>
+      <tr><td>Calendar sync</td><td>On hold. The owner will talk with the client about pros and cons first.</td></tr>
       <tr><td>Hosting cost</td><td>Free plans while building and testing. Before launch, choose a paid plan (about $20/month) or a free host that allows business use, and include it in the price. SMS stays for later.</td></tr>
       <tr><td>How far ahead</td><td>Week by week, at most 2 weeks out. Employees change this week or next week; the default week covers the rest.</td></tr>
     </tbody>
@@ -366,7 +366,6 @@ flowchart LR
     EM["Email service<br/>(Resend)"]
     SMS["SMS service<br/>(Twilio, after v1)"]
     INBOX["Site owner's inbox"]
-    CAL["Owner's phone calendar<br/>(Apple / Google, calendar link)"]
 
     V -->|Reads public site, sends contact form| TV
     O -->|Sets up shifts, builds and publishes schedules| TV
@@ -377,7 +376,6 @@ flowchart LR
     EM --> E
     TV -->|Contact form messages| EM
     EM --> INBOX
-    CAL -.->|Events, read daily and on demand| TV
 </script></figure></div>
   <h3>What runs where</h3>
   <div class="scroll"><figure class="diagram" aria-label="Container diagram"><div class="dg" id="dg-2"><p class="dg-note">Loading diagram… (needs an internet connection)</p></div><script type="text/x-mermaid" data-for="dg-2">
@@ -399,7 +397,7 @@ flowchart TB
                 AUTHZ["Permission checks<br/>requireRole(), scoped queries"]
             end
         end
-        CRON["Vercel Cron, once a day (morning)<br/>availability reminders, calendar sync,<br/>retry failed notifications"]
+        CRON["Vercel Cron, once a day (morning)<br/>availability reminders,<br/>retry failed notifications"]
     end
 
     DB[("PostgreSQL<br/>Neon")]
@@ -577,8 +575,6 @@ erDiagram
         string location
         string notes
         boolean requiresStaffing
-        enum source "MANUAL or CALENDAR"
-        string externalUid "optional"
     }
     SCHEDULE {
         uuid id PK
@@ -707,7 +703,7 @@ erDiagram
     <li class="cut"><span class="id">M5</span><div><div class="t">Publish + email</div><div class="d">Versioned schedules, email on publish and changes, My schedule, availability reminders</div></div></li>
     <li><span class="id">M6</span><div><div class="t">Auto-scheduler</div><div class="d">Fairness algorithm with tests, generate and regenerate, unfilled-shift report</div></div></li>
     <li><span class="id">M7</span><div><div class="t">Swaps + open shifts</div><div class="d">Requests, pickups, approval setting, notifications</div></div></li>
-    <li><span class="id">M8</span><div><div class="t">Events + exports</div><div class="d">Events in the planning view, import from the owner's phone calendar; PDF, PNG, JPG, Word, Excel</div></div></li>
+    <li><span class="id">M8</span><div><div class="t">Events + exports</div><div class="d">Events in the planning view; PDF, PNG, JPG, Word, Excel</div></div></li>
     <li><span class="id">M9</span><div><div class="t">Polish + launch</div><div class="d">Season roster, accessibility and mobile checks, client testing, handover</div></div></li>
     <li><span class="id">M10</span><div><div class="t">SMS</div><div class="d">Text notifications, with each user choosing email or SMS</div></div></li>
   </ol>
@@ -731,6 +727,7 @@ erDiagram
     <div><b>Multiple locations</b><span class="def">One business with several sites, each with its own shifts and staff.</span></div>
     <div><b>More managers</b><span class="def">Already supported. Later, a manager can be limited to certain locations or positions.</span></div>
     <div><b>Pricing page + billing</b><span class="def">A monthly price per business, card payments and a free trial. The price isn't set yet.</span></div>
+    <div><b>Calendar sync</b><span class="def">Events from the owner's Apple or Google Calendar appear in TeamVory automatically. On hold until discussed with the client.</span></div>
     <div><b>Calendar feed for staff</b><span class="def">Each person's shifts appear in their Apple or Google Calendar automatically.</span></div>
     <div><b>SMS</b><span class="def">Already planned as M10.</span></div>
   </div>

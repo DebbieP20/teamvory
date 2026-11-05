@@ -102,8 +102,8 @@ ShiftRequest    id, assignmentId, requesterId,
 
 Event           id, businessId, title, date, startTime, endTime,
                 location, notes, requiresStaffing (bool),
-                source (MANUAL | CALENDAR), calendarFeedId?, externalUid?
-CalendarFeed    id, businessId, name, url (encrypted), lastSyncedAt, lastError?
+                (on hold: source, calendarFeedId, externalUid + a CalendarFeed
+                 table, only if calendar sync goes ahead; section 6b)
 
 Notification    id, userId, channel (EMAIL | SMS), type,
                 dedupeKey UNIQUE, sentAt
@@ -201,7 +201,7 @@ After completion, hours totals update and everyone involved gets a notification.
 
 ---
 
-## 6b. Availability reminders and calendar sync
+## 6b. Availability reminders (and calendar sync, on hold)
 
 ### Availability reminders (decision 26)
 
@@ -215,7 +215,9 @@ Each reminder day, an email goes to **active employees who haven't set their ava
 
 This is only a nudge. There is still no deadline (decision 6). Each send is saved in the notification outbox with a `dedupeKey` like `avail-reminder:{weekStart}:{userId}:{date}`, so nobody gets the same reminder twice. The dashboard's "who hasn't updated availability" list uses the same rule.
 
-### Importing events from the owner's phone calendar (decision 27)
+### Importing events from the owner's phone calendar (decision 27, ON HOLD)
+
+> **On hold** until the client decides (pros and cons to be discussed). Not part of any milestone yet. The design below is kept so it can be added later without changes to the rest of the app.
 
 So the owner doesn't type each event twice, TeamVory **reads events from his Apple (or Google) Calendar**:
 
@@ -232,7 +234,7 @@ Notes:
 
 ### Scheduled jobs
 
-One **Vercel Cron job runs once a day in the morning** (`/api/cron/daily`, protected by a secret). It sends that day's availability reminders, syncs every connected calendar and retries failed emails. This fits Vercel's free plan, which only allows daily jobs and may start them any time within the chosen hour. Hourly jobs aren't needed (decision 28).
+One **Vercel Cron job runs once a day in the morning** (`/api/cron/daily`, protected by a secret). It sends that day's availability reminders and retries failed emails (and would also sync calendars, if calendar sync goes ahead). This fits Vercel's free plan, which only allows daily jobs and may start them any time within the chosen hour. Hourly jobs aren't needed (decision 28).
 
 ---
 
@@ -267,7 +269,7 @@ One **Vercel Cron job runs once a day in the morning** (`/api/cron/daily`, prote
 | 24 | Sign-up | **Any business can sign up on its own** from the public site. The Contact page stays for questions and support |
 | 25 | Pricing | **Per business, per month.** Price not decided yet, so no prices on the site in v1 (see section 10) |
 | 26 | Availability reminders | Owner picks the start day and number of days in a row; sent each morning with the daily job. Sent only to employees who haven't set availability for next week (section 6b) |
-| 27 | Calendar sync | Events added in the owner's Apple Calendar (or Google) appear in TeamVory automatically, through the calendar's link: synced daily, plus on demand (section 6b) |
+| 27 | Calendar sync | **On hold**: the owner will discuss pros and cons with the client first. Design kept in section 6b; not in any milestone |
 | 28 | Hosting and cost | **Build and test on free plans** (Vercel Hobby, Neon free). Scheduled jobs run once a day, so no paid plan is needed for features. Vercel's free plan doesn't allow commercial use, so **before launch (M9)** choose Vercel Pro (~$20/month) or another host whose free plan allows it, and include hosting in the monthly price. SMS stays after v1 (Twilio charges per message) |
 
 **Brand colors** (from the brand sheet)
@@ -303,7 +305,7 @@ One **Vercel Cron job runs once a day in the morning** (`/api/cron/daily`, prote
 | 11 | Weekly schedule (manual + auto) | `/manager/schedule?week=` |
 | 12 | Events | `/manager/events` |
 | 13 | Reports & exports (PDF/PNG/JPG/Word/Excel) | `/manager/reports` |
-| 14 | Business settings (swap approval, availability reminders, calendar sync, time zone) | `/manager/settings` |
+| 14 | Business settings (swap approval, availability reminders, time zone) | `/manager/settings` |
 | 15 | Employee dashboard | `/employee` |
 | 16 | My availability (default + this week + time off) | `/employee/availability` |
 | 17 | My schedule | `/employee/schedule` |
@@ -324,7 +326,7 @@ One **Vercel Cron job runs once a day in the morning** (`/api/cron/daily`, prote
 | **M5** | Publish + notifications | Publish/version schedules, email on publish/change, employee "My schedule", post-publish conflict flags, **availability reminders** (daily job) |
 | **M6** | Auto-scheduler | Proportional-fairness algorithm + tests, generate/regenerate, unfilled-shift report |
 | **M7** | Swaps & open shifts | Swaps, open-shift pickup, approval-mode setting, emails |
-| **M8** | Events + reports/exports | Events in planning view, **calendar import (Apple/Google link)**; PDF/PNG/JPG/Word/Excel exports |
+| **M8** | Events + reports/exports | Events in planning view; PDF/PNG/JPG/Word/Excel exports |
 | **M9** | Polish & launch | Seasons/roster screen, accessibility audit, mobile testing, client testing, **choose production hosting (decision 28)**, deploy, handover docs |
 | **M10** | SMS (post-v1) | Twilio channel for the notifications that already exist; per-user preference for email/SMS |
 
@@ -342,5 +344,6 @@ Not needed by the first client, but likely once TeamVory is offered to more and 
 | **Multiple locations** | One business, several sites, each with its own shifts and staff (people can work at more than one) | Chains and businesses with a second site |
 | **More managers** | Already supported (the owner promotes managers). Later: limit a manager to certain locations or positions | Larger teams split the scheduling work |
 | **Pricing page + subscription billing** | Monthly price **per business** (decision 25), card payments (e.g. Stripe), free trial | Needed before charging new businesses; the price isn't set yet |
+| **Calendar sync (owner's calendar → Events)** | Events added in the owner's Apple or Google Calendar appear in TeamVory automatically (design in section 6b) | **On hold** until discussed with the client (decision 27) |
 | **Calendar feed for staff** | Each person gets a private calendar link so their shifts show up in Apple / Google Calendar automatically | The other direction of decision 27; employees see shifts without opening the app |
 | **SMS** | Already planned as M10 | Some staff don't read email |

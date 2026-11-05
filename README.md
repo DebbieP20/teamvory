@@ -22,7 +22,7 @@ It replaces the usual routine of collecting availability by text message, typing
 | M5 | Publishing, email and availability reminders | |
 | M6 | Auto-scheduler | |
 | M7 | Swaps and open shifts | |
-| M8 | Events, phone-calendar import and exports (PDF, PNG, JPG, Word, Excel) | |
+| M8 | Events and exports (PDF, PNG, JPG, Word, Excel) | |
 | M9 | Polish and launch | |
 | M10 | SMS notifications | |
 
@@ -34,10 +34,9 @@ It replaces the usual routine of collecting availability by text message, typing
 - **Seasonal shift patterns.** Shift times change with the season (for example *Early*, *Mid* and *Late season*). Setting up a week takes one click.
 - **Swaps and open shifts.** Employees trade shifts or pick up open ones, with optional manager approval.
 - **Availability reminders.** Emails on the days the owner picks, only to employees who haven't added next week's availability.
-- **Calendar sync.** Events added in the owner's Apple or Google Calendar show up in TeamVory automatically.
 - **Exports.** PDF, PNG, JPG, Word and Excel.
 
-Future features (positions, multiple locations, billing and more) are listed in the [technical plan](docs/technical-plan.md#10-future-features-after-v1).
+Future features (positions, multiple locations, billing, calendar sync and more) are listed in the [technical plan](docs/technical-plan.md#10-future-features-after-v1).
 
 ## Planned stack
 
