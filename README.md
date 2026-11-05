@@ -8,13 +8,13 @@ It replaces the usual routine of collecting availability by text message, typing
 
 ## Status
 
-🟡 **Planning and design.** The technical plan and wireframes are done. Building starts with milestone M0 (project setup).
+🟡 **M0: project setup in progress.** The technical plan and wireframes are done.
 
 | Milestone | | Status |
 |---|---|---|
 | Plan | Requirements, architecture, database, permissions, user flows | ✅ Done |
 | Wireframes | Seven key screens, clickable | ✅ Done |
-| M0 | Project setup | ⏳ Next |
+| M0 | Project setup | 🚧 In progress |
 | M1 | Public website | |
 | M2 | Accounts (sign up, log in, invitations, roles) | |
 | M3 | Availability (default week, weekly changes, time off) | |
@@ -42,6 +42,26 @@ Future features (positions, multiple locations, billing and more) are listed in 
 ## Planned stack
 
 Next.js + TypeScript · Tailwind CSS + shadcn/ui · PostgreSQL + Prisma · Auth.js · Resend (email) · Vitest + Playwright · Vercel + Neon
+
+## Run it locally
+
+You need [Node.js](https://nodejs.org/) 22 or later.
+
+```bash
+npm install          # install dependencies
+npm run dev          # start the app at http://localhost:3000
+```
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Development server with live reload |
+| `npm run lint` | Check code style |
+| `npm run typecheck` | Check TypeScript types |
+| `npm test` | Unit tests (Vitest) |
+| `npm run build` | Production build |
+| `npm run test:e2e` | Browser tests on desktop and phone sizes (Playwright; run `npm run build` first) |
+
+GitHub Actions runs all of these on every pull request.
 
 ## Documentation
 

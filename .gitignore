@@ -1,26 +1,35 @@
 # Dependencies
-node_modules/
+/node_modules
+/.pnp
+.pnp.*
 
 # Next.js / build output
-.next/
-out/
-build/
-dist/
+/.next/
+/out/
+/build
+*.tsbuildinfo
+next-env.d.ts
 
-# Environment variables (secrets: never commit)
-.env
-.env*.local
+# Environment variables (secrets: never commit). The example file is safe to commit.
+.env*
+!.env.example
 
 # Tests
-coverage/
-playwright-report/
-test-results/
+/coverage
+/playwright-report/
+/test-results/
+/blob-report/
+/playwright/.cache/
+
+# Vercel
+.vercel
 
 # Logs and OS files
+npm-debug.log*
 *.log
+*.pem
 .DS_Store
 Thumbs.db
-Zone.Identifier
 *:Zone.Identifier
 
 # Editors
