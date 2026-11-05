@@ -44,12 +44,25 @@ Next.js + TypeScript · Tailwind CSS + shadcn/ui · PostgreSQL + Prisma · Auth.
 
 ## Run it locally
 
-You need [Node.js](https://nodejs.org/) 22 or later.
+You need [Node.js](https://nodejs.org/) 22 or later and [PostgreSQL](https://www.postgresql.org/) 16.
+
+**One-time database setup** (Ubuntu / WSL):
 
 ```bash
-npm install          # install dependencies
+sudo apt-get install -y postgresql && sudo service postgresql start
+sudo -u postgres psql -c "CREATE ROLE teamvory LOGIN PASSWORD 'teamvory' CREATEDB;"
+sudo -u postgres createdb -O teamvory teamvory
+```
+
+**Then:**
+
+```bash
+cp .env.example .env # and set DATABASE_URL (the local value is in the file)
+npm install          # install dependencies (also generates the Prisma client)
 npm run dev          # start the app at http://localhost:3000
 ```
+
+Check that the app can reach the database at http://localhost:3000/api/health.
 
 | Command | What it does |
 |---|---|
@@ -58,6 +71,8 @@ npm run dev          # start the app at http://localhost:3000
 | `npm run typecheck` | Check TypeScript types |
 | `npm test` | Unit tests (Vitest) |
 | `npm run build` | Production build |
+| `npm run db:migrate` | Apply database changes (Prisma Migrate) |
+| `npm run db:studio` | Browse the database in a web page (Prisma Studio) |
 | `npm run test:e2e` | Browser tests on desktop and phone sizes (Playwright; run `npm run build` first) |
 
 GitHub Actions runs all of these on every pull request.
