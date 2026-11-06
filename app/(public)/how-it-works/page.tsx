@@ -13,8 +13,8 @@ const cycle = [
     title: "Set availability",
     points: [
       "Each employee sets their regular availability once, including the days and times they can usually work.",
-      "When a week looks different, they update only that week. They can also add time off.",
-      "Send automatic email reminders, on the days you choose, to employees who haven't submitted their availability yet.",
+      "When a week looks different, they update only that week. They can also submit time-off requests.",
+      "Set a weekly availability deadline and send automatic email reminders to employees who haven't submitted their availability yet.",
     ],
   },
   {
@@ -31,7 +31,7 @@ const cycle = [
     title: "Generate a fair schedule",
     points: [
       "TeamVory distributes hours fairly based on employee availability and your staffing needs.",
-      "Hard-to-fill shifts are prioritized. Employees are never assigned outside their availability, during time off, or to overlapping shifts.",
+      "Hard-to-fill shifts are prioritized. Employees are never assigned outside their availability, during approved time off, or to overlapping shifts.",
       "Need to cover a shift yourself? Add your preferred shifts and let TeamVory help identify where you can step in.",
       "Not satisfied with the result? Regenerate the schedule, make manual adjustments, or combine both approaches.",
     ],

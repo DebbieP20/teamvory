@@ -36,8 +36,10 @@ Owner and Manager are both "managers" in the app. The only differences are in th
 
 | Action | Owner | Manager | Employee | Inactive |
 |---|:-:|:-:|:-:|:-:|
-| Set default week and weekly changes | ✅ for anyone | ✅ for anyone | 👤 | — |
-| Add, edit, delete time off | ✅ for anyone | ✅ for anyone | 👤 | — |
+| Set default week and weekly changes | ✅ for anyone | ✅ for anyone | 👤 (until the deadline, if the business has one) | — |
+| Add, edit, delete time off | ✅ for anyone | ✅ for anyone | 👤 (pending until approved, if approval is on) | — |
+| Approve or decline time off (when approval is on) | ✅ | ✅ | — | — |
+| Change availability after the deadline (when a deadline is on) | ✅ for anyone | ✅ for anyone | — | — |
 | See everyone's availability and time off | ✅ | ✅ | — | — |
 
 ### Shifts and schedules

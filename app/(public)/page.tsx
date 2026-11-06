@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 const steps = [
   {
     title: "Your team sets their availability",
-    text: "Employees submit their regular availability from their phone. They only need to update it when their schedule changes or they need time off.",
+    text: "Employees submit their regular availability from their phone. They only need to update it when their schedule changes or they request time off.",
   },
   {
     title: "Generate a fair schedule",
@@ -36,7 +36,7 @@ const features = [
   {
     icon: CalendarCheckIcon,
     title: "Availability & time off",
-    text: "Set recurring availability, make changes for specific weeks, and add time off, all from a phone.",
+    text: "Set recurring availability, make changes for specific weeks, and request time off, all from a phone.",
   },
   {
     icon: ArrowRightLeftIcon,

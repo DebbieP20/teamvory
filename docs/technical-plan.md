@@ -61,7 +61,10 @@ Business        id, name, timezone ("America/New_York"), weekStartsOn (MONDAY),
                 swapApprovalMode (AUTO | MANAGER_APPROVAL),
                 openShiftPickup (bool),
                 reminderEnabled, reminderStartDay (MON–SUN), reminderDays (1–7),
-                reminderIncludeDefaultOnly (bool)
+                reminderIncludeDefaultOnly (bool),
+                availabilityDeadlineEnabled (bool, default off),
+                availabilityDeadlineDay (MON–SUN), availabilityDeadlineTime ("18:00"),
+                timeOffApprovalRequired (bool, default off)
 Membership      id, userId, businessId, role (OWNER | MANAGER | EMPLOYEE),
                 status (INVITED | ACTIVE | INACTIVE),
                 schedulingMode (FAIR_SHARE | BACKUP | NOT_SCHEDULED),
@@ -79,7 +82,10 @@ AvailabilityOverride  id, membershipId, weekId, date, startTime?, endTime?,
                 type (AVAILABLE | UNAVAILABLE),
                 enteredById (the employee themselves OR the manager)
 TimeOff         id, membershipId, startDate, endDate, note?,
-                enteredById (employee or manager) — no approval step
+                enteredById (employee or manager),
+                status (PENDING | APPROVED | DECLINED), default APPROVED:
+                PENDING only when the business requires approval (decision 30),
+                reviewedById?, reviewedAt?
 
 ShiftPattern    id, businessId, name ("Early season", "Mid season"),
                 shifts (JSON: [{start:"12:00", end:"17:00", required:2}, ...])
@@ -110,7 +116,22 @@ Notification    id, userId, channel (EMAIL | SMS), type,
 AuditLog        id, businessId, actorId, action, entity, before, after, at
 ```
 
-**How availability is resolved for a given week:** start from the employee's `AvailabilityTemplate`, then apply that week's `AvailabilityOverride` rows, then remove any `TimeOff`. There is **no deadline**: employees (or the manager on their behalf) can change availability at any time.
+**How availability is resolved for a given week:** start from the employee's `AvailabilityTemplate`, then apply that week's `AvailabilityOverride` rows, then remove any `TimeOff`. By default there is **no deadline**: employees (or the manager on their behalf) can change availability at any time. A business can turn on a deadline (decision 29, below). Time off counts only when APPROVED; pending time off is treated as unavailable by the auto-scheduler.
+
+### Optional business settings: availability deadline and time-off approval (decisions 29 and 30)
+
+TeamVory is meant for many kinds of businesses, so these two are **settings in Business settings, both off by default**. With both off, everything works exactly as the first client asked (decisions 6 and 9).
+
+**Availability deadline (decision 29).** The owner turns it on and picks a day and time, e.g. *Thursday 6 PM*, for the following week's availability.
+- Before the deadline, employees change that week's availability and time off freely.
+- After it, that week is **locked for employees**: they see "The deadline has passed. Ask your manager to change it." Managers can still edit for anyone. Changes to the default week only apply to weeks that are still open.
+- Availability reminders (decision 26) mention the deadline ("Due Thursday 6 PM"), and the dashboard lists who missed it.
+
+**Time-off approval (decision 30).** The owner turns it on to review time off before it counts.
+- Time off an employee adds is saved as **Pending**. Managers see it on the dashboard with **Approve** / **Decline**, and the employee gets an email either way.
+- While pending, the auto-scheduler treats those dates as unavailable (the safe choice) and the planning view shows them as *pending time off*. Declined time off is ignored.
+- Time off a manager enters for someone is approved automatically. If an employee edits approved time off, it goes back to Pending.
+- Turning the setting off approves anything still pending.
 
 **How far ahead (decision 22):** the owner schedules one week at a time, at most two weeks out. So week-by-week changes ("This week") are offered for the **current week and next week only**. Anything further ahead is covered by the default week, or by time off, which can be any future date. Availability is **one time range per day** (decision 21).
 
@@ -213,7 +234,7 @@ Reminders go out with the **daily morning job** (around 9 AM Eastern), so there'
 
 Each reminder day, an email goes to **active employees who haven't set their availability for next week**. "Set" means they have a default week saved or have entered changes for next week. People who already have it get nothing, and the reminder stops for a person as soon as they enter it (so day 2 only reaches whoever is still missing). One extra option, off by default: *also remind people who only use their default week, to check it's still right*.
 
-This is only a nudge. There is still no deadline (decision 6). Each send is saved in the notification outbox with a `dedupeKey` like `avail-reminder:{weekStart}:{userId}:{date}`, so nobody gets the same reminder twice. The dashboard's "who hasn't updated availability" list uses the same rule.
+This is only a nudge. If the business has turned on an availability deadline (decision 29), the reminder says when it's due. Each send is saved in the notification outbox with a `dedupeKey` like `avail-reminder:{weekStart}:{userId}:{date}`, so nobody gets the same reminder twice. The dashboard's "who hasn't updated availability" list uses the same rule.
 
 ### Importing events from the owner's phone calendar (decision 27, ON HOLD)
 
@@ -247,10 +268,10 @@ One **Vercel Cron job runs once a day in the morning** (`/api/cron/daily`, prote
 | 3 | Positions | None. Any employee can work any shift |
 | 4 | Seniority | None |
 | 5 | Legal / overtime limits | None |
-| 6 | Availability deadline | **No deadline.** Employees can update any time, with no extra steps for the manager |
+| 6 | Availability deadline | **No deadline** for this client. Employees can update any time, with no extra steps for the manager. Other businesses can turn on a deadline (decision 29) |
 | 7 | Recurring availability | Yes. Default weekly availability plus per-week exceptions |
 | 8 | Manager enters for employee | Yes, alongside employees entering their own |
-| 9 | Time off | Separate from weekly availability. **No approval:** the employee adds it to the calendar and the manager sees it |
+| 9 | Time off | Separate from weekly availability. **No approval** for this client: the employee adds it to the calendar and the manager sees it. Other businesses can require approval (decision 30) |
 | 10 | Swap approval | Manager setting: automatic or manager approval |
 | 11 | Open shifts | Any eligible employee can pick up with no acceptance step, and no time limit before the shift starts |
 | 12 | Exports | **PDF, PNG, JPG, Word (.docx), Excel (.xlsx)** |
@@ -271,6 +292,8 @@ One **Vercel Cron job runs once a day in the morning** (`/api/cron/daily`, prote
 | 26 | Availability reminders | Owner picks the start day and number of days in a row; sent each morning with the daily job. Sent only to employees who haven't set availability for next week (section 6b) |
 | 27 | Calendar sync | **On hold**: the owner will discuss pros and cons with the client first. Design kept in section 6b; not in any milestone |
 | 28 | Hosting and cost | **Build and test on free plans** (Vercel Hobby, Neon free). Scheduled jobs run once a day, so no paid plan is needed for features. Vercel's free plan doesn't allow commercial use, so **before launch (M9)** choose Vercel Pro (~$20/month) or another host whose free plan allows it, and include hosting in the monthly price. SMS stays after v1 (Twilio charges per message) |
+| 29 | Availability deadline setting | **Optional, off by default.** Owner picks a day and time; after it, that week is locked for employees and only managers can change it (section 3) |
+| 30 | Time-off approval setting | **Optional, off by default.** When on, employee time off is *Pending* until a manager approves or declines it (section 3) |
 
 **Brand colors** (from the brand sheet)
 
@@ -321,7 +344,7 @@ One **Vercel Cron job runs once a day in the morning** (`/api/cron/daily`, prote
 | **M0** | Setup | Repo, Next.js, Tailwind, Prisma, DB, CI, deploy preview |
 | **M1** | Public website | Home, How it works, About, Contact form (emailed to you), Privacy/Terms, TeamVory brand |
 | **M2** | Accounts | Sign up → create business, login, password reset, invite employees, role guards, active/inactive |
-| **M3** | Availability | Recurring default + weekly exceptions, manager edits on behalf, time off, manager overview |
+| **M3** | Availability | Recurring default + weekly exceptions, manager edits on behalf, time off, manager overview, **optional availability deadline and time-off approval** |
 | **M4** | Shift config + manual schedule | Shift patterns, copy previous week, click to assign, hours totals, conflict alerts |
 | **M5** | Publish + notifications | Publish/version schedules, email on publish/change, employee "My schedule", post-publish conflict flags, **availability reminders** (daily job) |
 | **M6** | Auto-scheduler | Proportional-fairness algorithm + tests, generate/regenerate, unfilled-shift report |
