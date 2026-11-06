@@ -4,12 +4,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-export function AppNav({ links }: { links: { href: string; label: string }[] }) {
-  const pathname = usePathname();
+type NavLink = { href: string; label: string };
+
+export function AppNav({ links }: { links: NavLink[] }) {
+  return <AppNavLinks links={links} pathname={usePathname()} />;
+}
+
+/** The links themselves; without a pathname nothing is highlighted (used while loading). */
+export function AppNavLinks({ links, pathname }: { links: NavLink[]; pathname?: string }) {
   return (
     <nav aria-label="App" className="flex gap-1 overflow-x-auto">
       {links.map((link) => {
-        const active = pathname === link.href;
+        // Sections are active on their sub-pages too (e.g. /employee/availability/week).
+        const isHome = links[0]?.href === link.href;
+        const active =
+          !!pathname && (isHome ? pathname === link.href : pathname === link.href || pathname.startsWith(`${link.href}/`));
         return (
           <Link
             key={link.href}

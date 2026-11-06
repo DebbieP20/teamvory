@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
-import { AppNav } from "./app-nav";
+import { AppNav, AppNavLinks } from "./app-nav";
 import { UserMenu } from "./user-menu";
 
 /**
@@ -26,7 +26,10 @@ export function AppShell({
             <Image src="/brand/teamvory-icon.svg" alt="TeamVory" width={32} height={32} className="sm:hidden" />
             <Image src="/brand/teamvory-logo.svg" alt="TeamVory" width={157} height={24} className="hidden sm:block" />
           </Link>
-          <AppNav links={links} />
+          {/* The highlighted link depends on the URL, so it fills in after the static frame. */}
+          <Suspense fallback={<AppNavLinks links={links} />}>
+            <AppNav links={links} />
+          </Suspense>
           <div className="ml-auto">
             <Suspense fallback={<div className="h-8 w-24 animate-pulse rounded bg-slate-100" />}>
               <UserMenu />
