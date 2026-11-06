@@ -12,35 +12,36 @@ const cycle = [
     who: "Your team",
     title: "Set availability",
     points: [
-      "Each person sets a default week once: the days and times they can usually work.",
-      "When a week is different, they change just that week. Time off is added the same way, with no approval needed.",
-      "No deadlines. If you like, TeamVory emails a reminder on the days you choose, only to people who haven't set next week yet.",
+      "Each employee sets their regular availability once, including the days and times they can usually work.",
+      "When a week looks different, they update only that week. They can also add time off.",
+      "Send automatic email reminders, on the days you choose, to employees who haven't submitted their availability yet.",
     ],
   },
   {
     who: "You",
     title: "Set up the week's shifts",
     points: [
-      "Copy last week in one click, or apply a saved pattern such as your standard 12–5 and 5–9 shifts.",
-      "Expecting a slow, rainy day? Switch that one day to fewer people. The rest of the week stays as it is.",
-      "Add extra shifts for events by hand.",
+      "Copy last week's schedule in one click, or apply a saved shift pattern for your business.",
+      "Need fewer employees on a slow or rainy day? Adjust staffing for that day without changing the rest of the week.",
+      "Add extra shifts for events, busy periods, or special occasions.",
     ],
   },
   {
     who: "TeamVory",
     title: "Generate a fair schedule",
     points: [
-      "Hours are shared in proportion to availability: someone who can work twice as much gets about twice the hours.",
-      "Hard-to-fill shifts are filled first. Nobody is scheduled outside their availability, on time off, or on two shifts at once.",
-      "The owner can be the backup: pin the shifts you want to work, and you're added to any shift nobody else can cover.",
-      "Don't like it? Regenerate for a different, equally fair schedule, or change any shift by hand.",
+      "TeamVory distributes hours fairly based on employee availability and your staffing needs.",
+      "Hard-to-fill shifts are prioritized. Employees are never assigned outside their availability, during time off, or to overlapping shifts.",
+      "Need to cover a shift yourself? Add your preferred shifts and let TeamVory help identify where you can step in.",
+      "Not satisfied with the result? Regenerate the schedule, make manual adjustments, or combine both approaches.",
     ],
   },
   {
     who: "You",
     title: "Publish",
     points: [
-      "Everyone gets an email with their shifts. They can see the whole team's schedule on their phone.",
+      "Publish the schedule and everyone receives an email with their assigned shifts.",
+      "Employees can view the full team schedule from their phone or computer.",
       "Need to change something later? Publish again, and only the people affected are told.",
     ],
   },
@@ -49,7 +50,7 @@ const cycle = [
 const faqs = [
   {
     q: "Does my team need to install an app?",
-    a: "No. TeamVory works in any web browser, on a phone or a computer.",
+    a: "No. TeamVory works directly in a web browser on a phone, tablet, or computer. No app installation is required.",
   },
   {
     q: "What if someone can't work their shift?",
@@ -57,15 +58,15 @@ const faqs = [
   },
   {
     q: "What if nobody is available for a shift?",
-    a: "TeamVory tells you exactly which shifts still need people. If the owner works shifts, they can cover them automatically.",
+    a: "TeamVory identifies shifts that still need coverage so you can take action. If you also work shifts, you can set yourself up as a backup.",
   },
   {
     q: "Can I still make the schedule myself?",
-    a: "Yes. You can assign every shift by hand, generate it, or mix both: pin the shifts you've decided and generate the rest.",
+    a: "Absolutely. You can build the entire schedule manually, generate it automatically, or combine both methods. Pin the shifts you've already assigned and let TeamVory fill in the rest.",
   },
   {
     q: "What about staff who only work part of the year?",
-    a: "Between seasons they're set to inactive and their history is kept. At the start of a season, tick who's back.",
+    a: "TeamVory supports seasonal teams. You can mark employees as inactive between seasons while keeping their scheduling history. When the next season begins, simply reactivate the employees who are returning.",
   },
 ];
 
@@ -74,7 +75,7 @@ export default function HowItWorksPage() {
     <>
       <PageHeader
         title="How it works"
-        intro="One simple cycle every week. Most of it happens on its own."
+        intro="One simple cycle every week. Less manual work, more time for your business."
       />
 
       <Section>

@@ -15,15 +15,15 @@ import { cn } from "@/lib/utils";
 const steps = [
   {
     title: "Your team sets their availability",
-    text: "Once, on their phone. After that they only change the weeks that are different, or add time off.",
+    text: "Employees submit their regular availability from their phone. They only need to update it when their schedule changes or they need time off.",
   },
   {
     title: "Generate a fair schedule",
-    text: "Hours are shared fairly, based on when each person can work. Or assign shifts yourself with a click.",
+    text: "TeamVory assigns employees based on availability, business needs, and fair distribution of hours. Prefer to stay in control? You can assign shifts manually.",
   },
   {
     title: "Publish, and you're done",
-    text: "Everyone gets an email with their shifts. Swaps and open shifts are handled in the app.",
+    text: "Publish the schedule and your team receives an email with their shifts. Shift swaps and open shifts can be managed right in the app.",
   },
 ];
 
@@ -31,32 +31,32 @@ const features = [
   {
     icon: ScaleIcon,
     title: "Fair auto-scheduling",
-    text: "Someone available twice as much gets about twice the hours. Regenerate until it looks right.",
+    text: "Distribute hours fairly based on employee availability and your staffing needs. Adjust and regenerate schedules until they work for your team.",
   },
   {
     icon: CalendarCheckIcon,
     title: "Availability & time off",
-    text: "A default week, changes for just one week, and time off, all from a phone.",
+    text: "Set recurring availability, make changes for specific weeks, and add time off, all from a phone.",
   },
   {
     icon: ArrowRightLeftIcon,
     title: "Swaps & open shifts",
-    text: "Staff trade shifts or pick up open ones, with your approval if you want it.",
+    text: "Let employees trade shifts or pick up available ones, with manager approval when needed.",
   },
   {
     icon: SunIcon,
-    title: "Built for seasons",
-    text: "Save shift patterns for busy and slow days, and bring returning staff back each season.",
+    title: "Adapts as you change",
+    text: "TeamVory helps you organize your team and adapt your schedules as your needs change.",
   },
   {
     icon: BellRingIcon,
     title: "Availability reminders",
-    text: "Automatic emails, on the days you choose, only to people who haven't set their availability yet.",
+    text: "Send automatic email reminders to employees who haven't submitted their availability yet.",
   },
   {
     icon: FileDownIcon,
     title: "Print or share",
-    text: "Download the schedule as PDF, image, Word or Excel, ready to post or send.",
+    text: "Download schedules in PDF, image, Word, or Excel formats, ready to post, print, or share.",
   },
 ];
 
@@ -67,10 +67,11 @@ export default function Home() {
       <section className="bg-navy text-white">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[1.1fr_1fr]">
           <div>
-            <h1 className="text-4xl leading-tight sm:text-5xl">Your team, perfectly organized.</h1>
+            <h1 className="text-3xl leading-tight sm:text-4xl lg:text-[2.75rem]">
+              Simplify employee scheduling and business operations with one intuitive platform.
+            </h1>
             <p className="mt-5 max-w-xl text-lg text-slate-300">
-              Your staff enter their availability once. You get a fair weekly schedule in minutes,
-              not hours of text messages and spreadsheets.
+              Spend less time collecting availability, balancing hours, and building schedules. TeamVory helps you organize your team so you can focus on running your business.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg" className="h-11 px-6 font-semibold">
@@ -87,9 +88,6 @@ export default function Home() {
                 </Link>
               </Button>
             </div>
-            <p className="mt-6 text-sm text-slate-400">
-              For small, medium and seasonal businesses.
-            </p>
           </div>
           <SchedulePreview />
         </div>
@@ -102,18 +100,18 @@ export default function Home() {
             <h3 className="text-lg">Today</h3>
             <ul className="mt-4 space-y-3 text-muted-foreground">
               <li>Staff text you their availability, one by one.</li>
-              <li>You copy it all into a spreadsheet.</li>
-              <li>You count hours by hand to keep things fair.</li>
+              <li>You copy everything into a spreadsheet.</li>
+              <li>You calculate hours manually to keep things fair.</li>
               <li>You build the schedule cell by cell, every week.</li>
             </ul>
           </div>
           <div className="rounded-xl border border-teal/40 bg-mint p-6">
             <h3 className="text-lg">With TeamVory</h3>
             <ul className="mt-4 space-y-3 text-navy/80">
-              <li>Staff set their availability in the app, once.</li>
-              <li>You pick this week&apos;s shifts in one click.</li>
-              <li>TeamVory shares the hours fairly for you.</li>
-              <li>You publish, and everyone gets an email.</li>
+              <li>Your team submits availability right in the app.</li>
+              <li>You set the shifts your business needs.</li>
+              <li>TeamVory distributes hours fairly based on availability.</li>
+              <li>You publish the schedule, and everyone gets an email.</li>
             </ul>
           </div>
         </div>

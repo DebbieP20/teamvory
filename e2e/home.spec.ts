@@ -5,6 +5,6 @@ test("home page shows the brand", async ({ page }) => {
   await expect(page).toHaveTitle(/TeamVory/);
   await expect(page.getByRole("banner").getByRole("img", { name: "TeamVory" })).toBeVisible();
   await expect(
-    page.getByRole("heading", { level: 1, name: "Your team, perfectly organized." }),
+    page.getByRole("heading", { level: 1, name: "Simplify employee scheduling and business operations with one intuitive platform." }),
   ).toBeVisible();
 });

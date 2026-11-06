@@ -45,13 +45,17 @@ export function Section({
 }
 
 /** Closing call to action used at the bottom of several pages. */
-export function CtaBand({ title = "Stop building schedules cell by cell." }: { title?: string }) {
+export function CtaBand({
+  title = "Spend less time managing schedules and more time growing your business.",
+}: {
+  title?: string;
+}) {
   return (
     <section className="bg-mint">
       <div className="mx-auto flex max-w-6xl flex-col items-center px-4 py-16 text-center sm:px-6">
         <h2 className="text-2xl sm:text-3xl">{title}</h2>
         <p className="mt-3 max-w-xl text-muted-foreground">
-          Set up your business in a few minutes. Your team only needs a phone and a web browser.
+          Set up TeamVory in minutes. Your team can access everything from their phone or web browser.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Button asChild size="lg" className="h-11 px-6 font-semibold">

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 const values = [
   {
     title: "Fair by design",
-    text: "Hours follow availability, not who asks the loudest. Everyone can see the rules are the same for all.",
+    text: "Scheduling should be based on availability, business needs, and consistent rules. Every team member deserves a fair opportunity to work.",
   },
   {
     title: "Simple enough for a busy day",
@@ -21,7 +21,7 @@ const values = [
   },
   {
     title: "Your data stays yours",
-    text: "We only collect what scheduling needs, never sell it, and keep each business's data separate.",
+    text: "We believe businesses should have control over their information. Your team's scheduling data should stay private and separate from other businesses' data.",
   },
 ];
 
@@ -30,21 +30,24 @@ export default function AboutPage() {
     <>
       <PageHeader
         title="About us"
-        intro="TeamVory is built for the owners and managers of small, medium and seasonal businesses, and the teams who work for them."
+        intro="TeamVory is built for business owners, managers, and the teams who keep businesses running. Whether you manage a small team, a growing business, or a seasonal workforce, we believe organizing work should be simpler."
       />
 
       <Section>
         <div className="max-w-3xl space-y-5 text-lg text-navy/80">
           <h2 className="text-2xl text-navy sm:text-3xl">Why we built TeamVory</h2>
           <p>
-            TeamVory started with a seasonal business owner and a weekly routine many owners know
-            well: collecting availability by text message, typing it into a spreadsheet, counting
-            hours to keep things fair, then building the schedule cell by cell.
+            TeamVory started with a seasonal business owner and a weekly routine many business
+            owners know well: collecting employee availability through text messages, entering
+            everything into a spreadsheet, balancing hours to keep things fair, and building the
+            schedule cell by cell.
           </p>
+          <p>It took hours every week, and mistakes were easy to make and hard to spot.</p>
           <p>
-            It took hours every week, and the mistakes were easy to make and hard to spot. So we
-            set out to build the tool we wished existed: one place where staff set their own
-            availability, and a fair schedule takes minutes instead of an evening.
+            We saw an opportunity to make things better. We set out to build the tool we wished
+            existed: one place where employees can manage their availability and business owners
+            can create organized, fair schedules in minutes instead of spending an entire evening
+            on them.
           </p>
         </div>
       </Section>
@@ -60,7 +63,7 @@ export default function AboutPage() {
         </ul>
       </Section>
 
-      <CtaBand title="Give your team a schedule they can trust." />
+      <CtaBand title="Spend less time organizing and more time focusing on your business." />
     </>
   );
 }

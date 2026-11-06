@@ -4,7 +4,7 @@ export const siteConfig = {
   name: "TeamVory",
   tagline: "Your team, perfectly organized.",
   description:
-    "Employee scheduling for small, medium and seasonal businesses. Staff enter their availability once, and you get a fair weekly schedule in minutes.",
+    "Spend less time collecting availability, balancing hours, and building schedules. TeamVory helps you organize your team so you can focus on running your business.",
 
   nav: [
     { href: "/how-it-works", label: "How it works" },
