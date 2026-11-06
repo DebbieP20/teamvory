@@ -341,7 +341,7 @@ target(person)        = hoursNeeded × eligibleHours(person) ÷ Σ eligibleHours
       <tr><td>App</td><td>Next.js + TypeScript</td><td>One codebase for the public site, manager app and employee app</td></tr>
       <tr><td>UI</td><td>Tailwind CSS + shadcn/ui</td><td>Accessible components that work on phones</td></tr>
       <tr><td>Database</td><td>PostgreSQL + Prisma</td><td>Fits related data like businesses, people and shifts</td></tr>
-      <tr><td>Login</td><td>Auth.js</td><td>Sign up, login, password reset and invite links</td></tr>
+      <tr><td>Login</td><td>Better Auth</td><td>Sign up, login, password reset; our own invite links</td></tr>
       <tr><td>Email / SMS</td><td>Resend, Twilio later</td><td>One notification layer with two channels</td></tr>
       <tr><td>Exports</td><td>react-pdf, satori + resvg, sharp, docx, exceljs</td><td>PDF, PNG, JPG, Word, Excel</td></tr>
       <tr><td>Dates</td><td>date-fns-tz</td><td>Switches between EDT and EST automatically</td></tr>
@@ -492,7 +492,7 @@ erDiagram
         uuid userId FK
         uuid businessId FK
         enum role "OWNER, MANAGER, EMPLOYEE"
-        enum status "INVITED, ACTIVE, INACTIVE"
+        enum status "ACTIVE, INACTIVE"
         enum schedulingMode "FAIR_SHARE, BACKUP, NOT_SCHEDULED"
         string colorTag
         int maxHoursPerWeek "optional"

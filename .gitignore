@@ -38,3 +38,6 @@ Thumbs.db
 .idea/
 
 /lib/generated/prisma
+
+# Emails captured during browser tests
+/.playwright/
