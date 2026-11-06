@@ -8,15 +8,15 @@ It replaces the usual routine of collecting availability by text message, typing
 
 ## Status
 
-🟡 **M1: public website in progress.** M0 (project setup) is done.
+🟡 **M2: accounts in progress.** M0 (setup) and M1 (public website) are done.
 
 | Milestone | | Status |
 |---|---|---|
 | Plan | Requirements, architecture, database, permissions, user flows | ✅ Done |
 | Wireframes | Seven key screens, clickable | ✅ Done |
 | M0 | Project setup | ✅ Done |
-| M1 | Public website | 🚧 In progress |
-| M2 | Accounts (sign up, log in, invitations, roles) | |
+| M1 | Public website | ✅ Done |
+| M2 | Accounts (sign up, log in, invitations, roles) | 🚧 In progress |
 | M3 | Availability (default week, weekly changes, time off) | |
 | M4 | Shift setup and manual scheduling | |
 | M5 | Publishing, email and availability reminders | |
@@ -40,7 +40,7 @@ Future features (positions, multiple locations, billing, calendar sync and more)
 
 ## Planned stack
 
-Next.js + TypeScript · Tailwind CSS + shadcn/ui · PostgreSQL + Prisma · Auth.js · Resend (email) · Vitest + Playwright · Vercel + Neon
+Next.js + TypeScript · Tailwind CSS + shadcn/ui · PostgreSQL + Prisma · Better Auth · Resend (email) · Vitest + Playwright · Vercel + Neon
 
 ## Run it locally
 

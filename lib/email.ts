@@ -1,4 +1,5 @@
 import "server-only";
+import { appendFile } from "node:fs/promises";
 import { Resend } from "resend";
 
 type Email = {
@@ -14,6 +15,13 @@ type Email = {
  * printed to the server console, so everything else keeps working.
  */
 export async function sendEmail(email: Email): Promise<boolean> {
+  // Automated tests read emails from a file instead (never set in production).
+  const captureFile = process.env.EMAIL_CAPTURE_FILE;
+  if (captureFile) {
+    await appendFile(captureFile, JSON.stringify({ ...email, sentAt: new Date().toISOString() }) + "\n");
+    return true;
+  }
+
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.info(`[email not sent: no RESEND_API_KEY]\nTo: ${email.to}\nSubject: ${email.subject}\n\n${email.text}`);

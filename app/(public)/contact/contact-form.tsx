@@ -1,18 +1,21 @@
 "use client";
 
 import { CheckCircle2Icon, Loader2Icon } from "lucide-react";
-import { useActionState } from "react";
+import { useActionState, useId } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { type ContactField, type ContactFormState, contactLimits } from "@/lib/contact";
+import { type ContactFormState, contactLimits } from "@/lib/contact";
 import { sendContactMessage } from "./actions";
 
 const initialState: ContactFormState = { status: "idle" };
 
 export function ContactForm() {
   const [state, formAction, pending] = useActionState(sendContactMessage, initialState);
+  // Unique ids: Next.js keeps visited pages mounted (hidden), so fixed ids could clash.
+  const uid = useId();
+  const ids = { name: `${uid}-name`, email: `${uid}-email`, message: `${uid}-message` };
 
   if (state.status === "success") {
     return (
@@ -35,23 +38,23 @@ export function ContactForm() {
         </p>
       )}
 
-      <Field id="name" label="Your name" error={errors.name}>
+      <Field id={ids.name} label="Your name" error={errors.name}>
         <Input
-          id="name"
+          id={ids.name}
           name="name"
           autoComplete="name"
           required
           maxLength={contactLimits.name}
           defaultValue={values.name}
           aria-invalid={!!errors.name}
-          aria-describedby={errors.name ? "name-error" : undefined}
+          aria-describedby={errors.name ? `${ids.name}-error` : undefined}
           className="h-10"
         />
       </Field>
 
-      <Field id="email" label="Email" error={errors.email}>
+      <Field id={ids.email} label="Email" error={errors.email}>
         <Input
-          id="email"
+          id={ids.email}
           name="email"
           type="email"
           autoComplete="email"
@@ -59,29 +62,29 @@ export function ContactForm() {
           maxLength={contactLimits.email}
           defaultValue={values.email}
           aria-invalid={!!errors.email}
-          aria-describedby={errors.email ? "email-error" : undefined}
+          aria-describedby={errors.email ? `${ids.email}-error` : undefined}
           className="h-10"
         />
       </Field>
 
-      <Field id="message" label="Message" error={errors.message}>
+      <Field id={ids.message} label="Message" error={errors.message}>
         <Textarea
-          id="message"
+          id={ids.message}
           name="message"
           required
           rows={6}
           maxLength={contactLimits.message}
           defaultValue={values.message}
           aria-invalid={!!errors.message}
-          aria-describedby={errors.message ? "message-error" : undefined}
+          aria-describedby={errors.message ? `${ids.message}-error` : undefined}
           className="min-h-36"
         />
       </Field>
 
       {/* Spam trap: hidden from people and screen readers, so only bots fill it in. */}
       <div aria-hidden className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
-        <label htmlFor="website">Website</label>
-        <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+        <label htmlFor={`${uid}-website`}>Website</label>
+        <input id={`${uid}-website`} name="website" type="text" tabIndex={-1} autoComplete="off" />
       </div>
 
       <Button type="submit" size="lg" disabled={pending} className="h-11 w-full px-6 font-semibold sm:w-auto">
@@ -98,7 +101,7 @@ function Field({
   error,
   children,
 }: {
-  id: ContactField;
+  id: string;
   label: string;
   error?: string;
   children: React.ReactNode;

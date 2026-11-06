@@ -107,11 +107,11 @@ flowchart LR
 | 7 | **Notification outbox**: the notification is saved in the same transaction as the change, then sent right after | A failed email is retried by the daily cron instead of being lost. `dedupeKey` stops duplicates |
 | 8 | **Open-shift pickup in a database transaction** with a row lock | When two people tap "Pick up" at the same moment, only the first succeeds |
 | 9 | **Exports generated on demand** in a route handler | No file storage needed. They always reflect the selected schedule version |
-| 10 | **JWT sessions** (Auth.js) with role and business in the token, re-checked on every change | Fast page loads, and permission changes still take effect on the next action |
+| 10 | **Database sessions** (Better Auth, httpOnly cookie). Role and status are read from the membership on every request | A deactivated employee or a role change takes effect immediately; sessions can be revoked (e.g. after a password reset). Changed from JWT/Auth.js in M2: Auth.js v5 was still in beta and discourages passwords. Original reasoning: fast page loads, and permission changes still take effect on the next action |
 
 ## 5. Security
 
-- **Passwords:** hashed with Argon2 (or bcrypt). Invitation and reset links store only a hash of the token, expire after 72 h / 1 h, and work once.
+- **Passwords:** hashed with scrypt by Better Auth, minimum 8 characters, never stored or logged in plain text. Better Auth's own HTTP endpoints are not exposed: every account action goes through our server actions, with our rate limits (`rate_limit_events` table). Invitation and reset links store only a hash of the token, expire after 72 h / 1 h, and work once.
 - **Three permission checks** (details in `permissions.md`):
   1. Middleware blocks `/manager/*` for employees and `/employee/*` for inactive users.
   2. Every service checks the role before doing anything.

@@ -13,7 +13,7 @@
 | Styling / UI | **Tailwind CSS + shadcn/ui** | Accessible components (dialogs, forms, tables) that look good on phones and desktops. |
 | Database | **PostgreSQL** (hosted on Neon or Supabase) | Relational data (businesses → employees → shifts) fits SQL well. |
 | ORM | **Prisma** | Type-safe queries and easy migrations. |
-| Auth | **Auth.js (NextAuth)** with email + password and magic-link invitations | Supports sign-up, login, password recovery and invite links. |
+| Auth | **Better Auth** (email + password, database sessions) plus our own invitation links | Stable, built-in sign-up, login and password reset. Chosen in M2 instead of Auth.js, whose v5 was still in beta and which discourages passwords. |
 | Validation | **Zod** | One schema validates both forms and server actions. |
 | Email | **Resend + React Email** | Notification emails built as templates. Free tier is enough for 10 employees. |
 | SMS (later) | **Twilio** | Employees already use text messages. Added after v1 through the same notification layer. |
@@ -66,7 +66,7 @@ Business        id, name, timezone ("America/New_York"), weekStartsOn (MONDAY),
                 availabilityDeadlineDay (MON–SUN), availabilityDeadlineTime ("18:00"),
                 timeOffApprovalRequired (bool, default off)
 Membership      id, userId, businessId, role (OWNER | MANAGER | EMPLOYEE),
-                status (INVITED | ACTIVE | INACTIVE),
+                status (ACTIVE | INACTIVE), schedulingMode,
                 schedulingMode (FAIR_SHARE | BACKUP | NOT_SCHEDULED),
                 colorTag, maxHoursPerWeek? (optional, unused by default)
 Season          id, businessId, name ("Summer 2027"), startDate, endDate

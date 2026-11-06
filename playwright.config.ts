@@ -1,4 +1,9 @@
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
+import { EMAIL_FILE } from "./e2e/helpers";
+
+mkdirSync(dirname(EMAIL_FILE), { recursive: true });
 
 // End-to-end tests run against a production build (`npm run build` first), on
 // port 3100 so they never clash with `npm run dev` on port 3000.
@@ -19,7 +24,14 @@ export default defineConfig({
     command: "npm run start -- --port 3100",
     url: "http://localhost:3100",
     reuseExistingServer: !process.env.CI,
-    // The tests send the contact form many times; don't let the rate limit block them.
-    env: { CONTACT_MAX_PER_HOUR: "1000" },
+    env: {
+      // The tests sign up and send forms many times; don't let rate limits block them.
+      CONTACT_MAX_PER_HOUR: "1000",
+      RATE_LIMITS: "off",
+      // Emails are written to a file the tests can read (see e2e/helpers.ts).
+      EMAIL_CAPTURE_FILE: EMAIL_FILE,
+      BETTER_AUTH_URL: "http://localhost:3100",
+      BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "e2e-only-secret-not-used-anywhere-else-0000",
+    },
   },
 });

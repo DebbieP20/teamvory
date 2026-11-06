@@ -31,11 +31,11 @@ test("footer links to Privacy and Terms", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: "Terms of Service" })).toBeVisible();
 });
 
-test("Get started shows the coming-soon page", async ({ page, isMobile }) => {
+test("Get started opens sign-up", async ({ page, isMobile }) => {
   await page.goto("/");
   if (isMobile) await page.getByRole("button", { name: "Open menu" }).click();
   await page.getByRole("banner").getByRole("link", { name: "Get started" }).click();
-  await expect(page.getByText("Accounts are coming soon.")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Create your business" })).toBeVisible();
 });
 
 test("unknown pages show a friendly 404", async ({ page }) => {

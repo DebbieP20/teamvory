@@ -65,7 +65,7 @@ erDiagram
         uuid userId FK
         uuid businessId FK
         enum role "OWNER, MANAGER, EMPLOYEE"
-        enum status "INVITED, ACTIVE, INACTIVE"
+        enum status "ACTIVE, INACTIVE"
         enum schedulingMode "FAIR_SHARE, BACKUP, NOT_SCHEDULED"
         string colorTag
         int maxHoursPerWeek "optional"

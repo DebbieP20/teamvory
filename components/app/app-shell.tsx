@@ -1,0 +1,42 @@
+import Image from "next/image";
+import Link from "next/link";
+import { Suspense } from "react";
+import { AppNav } from "./app-nav";
+import { UserMenu } from "./user-menu";
+
+/**
+ * Frame for the signed-in areas. The frame itself is static, so it shows
+ * instantly; the parts that need the session (user menu, page content)
+ * stream in behind Suspense boundaries.
+ */
+export function AppShell({
+  home,
+  links,
+  children,
+}: {
+  home: string;
+  links: { href: string; label: string }[];
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-h-full flex-1 flex-col bg-slate-50">
+      <header className="border-b bg-white">
+        <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
+          <Link href={home} aria-label="TeamVory dashboard" className="shrink-0">
+            <Image src="/brand/teamvory-icon.svg" alt="TeamVory" width={32} height={32} className="sm:hidden" />
+            <Image src="/brand/teamvory-logo.svg" alt="TeamVory" width={157} height={24} className="hidden sm:block" />
+          </Link>
+          <AppNav links={links} />
+          <div className="ml-auto">
+            <Suspense fallback={<div className="h-8 w-24 animate-pulse rounded bg-slate-100" />}>
+              <UserMenu />
+            </Suspense>
+          </div>
+        </div>
+      </header>
+      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
+        {children}
+      </main>
+    </div>
+  );
+}

@@ -25,3 +25,156 @@ model ContactMessage {
   @@index([ipHash, createdAt])
   @@map("contact_messages")
 }
+
+// ---------------------------------------------------------------------------
+// Accounts (Better Auth). Field names follow what Better Auth expects; see
+// lib/auth.ts. Passwords live on Account (hashed), never on User.
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String       @id
+  name          String
+  email         String       @unique
+  emailVerified Boolean      @default(false) @map("email_verified")
+  image         String?
+  phone         String?
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @default(now()) @updatedAt @map("updated_at")
+  sessions      Session[]
+  accounts      Account[]
+  memberships   Membership[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime @map("expires_at")
+  token     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+// ---------------------------------------------------------------------------
+// Businesses and the people in them (docs/database.md)
+// ---------------------------------------------------------------------------
+
+enum Role {
+  OWNER
+  MANAGER
+  EMPLOYEE
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INACTIVE
+}
+
+/// How the auto-scheduler treats a person (technical plan, section 5).
+enum SchedulingMode {
+  FAIR_SHARE
+  BACKUP
+  NOT_SCHEDULED
+}
+
+model Business {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  timezone    String       @default("America/New_York")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  memberships Membership[]
+  invitations Invitation[]
+
+  @@map("businesses")
+}
+
+/// A person's role and status in one business. Never deleted, only set to INACTIVE,
+/// so past schedules and hour reports stay correct.
+model Membership {
+  id              String           @id @default(uuid()) @db.Uuid
+  userId          String           @map("user_id")
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessId      String           @map("business_id") @db.Uuid
+  business        Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  role            Role
+  status          MembershipStatus @default(ACTIVE)
+  schedulingMode  SchedulingMode   @default(FAIR_SHARE) @map("scheduling_mode")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  invitationsSent Invitation[]
+
+  @@unique([userId, businessId])
+  @@index([businessId])
+  @@map("memberships")
+}
+
+/// An emailed invitation to join a business. Only a SHA-256 hash of the link's
+/// token is stored, so a database leak can't be used to accept invitations.
+model Invitation {
+  id          String     @id @default(uuid()) @db.Uuid
+  businessId  String     @map("business_id") @db.Uuid
+  business    Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  email       String
+  role        Role
+  tokenHash   String     @unique @map("token_hash")
+  invitedById String     @map("invited_by_id") @db.Uuid
+  invitedBy   Membership @relation(fields: [invitedById], references: [id])
+  expiresAt   DateTime   @map("expires_at")
+  acceptedAt  DateTime?  @map("accepted_at")
+  revokedAt   DateTime?  @map("revoked_at")
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  @@index([businessId])
+  @@map("invitations")
+}
+
+/// One row per attempt at a rate-limited action (login, sign-up, password reset...).
+/// Keys never contain raw emails or IP addresses, only hashes.
+model RateLimitEvent {
+  id        BigInt   @id @default(autoincrement())
+  key       String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([key, createdAt])
+  @@map("rate_limit_events")
+}
