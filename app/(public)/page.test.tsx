@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import Home from "./page";
 
 describe("Home page", () => {
-  it("shows the tagline", () => {
+  it("shows the main headline", () => {
     render(<Home />);
     expect(
       screen.getByRole("heading", { level: 1, name: "Your team, perfectly organized." }),

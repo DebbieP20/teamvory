@@ -75,7 +75,9 @@ flowchart TD
     MA --> CH{"Different from my default?"}
     CH -->|No| KEEP(["Nothing to do, default applies"])
     CH -->|Yes| EX["Edit only the days that change<br/>(available hours or unavailable all day)"]
-    EX --> SAVE{{"Save immediately, no deadline"}}
+    EX --> DL{"Has this week's availability<br/>deadline passed? (decision 29, optional)"}
+    DL -->|"No, or no deadline set (default)"| SAVE{{"Save immediately"}}
+    DL -->|Yes| LOCK(["Locked: 'Ask your manager to change it'"])
     SAVE --> PUBQ{"Is that week already published<br/>and does it conflict with my shifts?"}
     PUBQ -->|No| OK(["Manager sees the update"])
     PUBQ -->|Yes| FL["Go to Flow 7"]
@@ -107,7 +109,12 @@ flowchart TD
 flowchart TD
     S(["Employee opens My availability → Time off"]) --> CAL["Select dates on the calendar<br/>(one day, several days or whole weeks)"]
     CAL --> NOTE["Add an optional note<br/>(e.g. 'Family trip')"]
-    NOTE --> SV{{"Saved immediately, no approval needed"}}
+    NOTE --> AP{"Does the business require<br/>time-off approval? (decision 30)"}
+    AP -->|"No (default)"| SV{{"Saved and approved immediately"}}
+    AP -->|Yes| PEND{{"Saved as Pending.<br/>Manager sees Approve / Decline on the dashboard"}}
+    PEND --> DEC{"Manager decides"}
+    DEC -->|Approve| SV
+    DEC -->|Decline| DECL(["Employee is emailed; dates stay available"])
     SV --> SHOW{{"Shown on the manager's availability view<br/>and dashboard ('Upcoming time off')"}}
     SHOW --> EX{{"Never scheduled automatically on those dates.<br/>The manager can only add them by hand after<br/>agreeing with them (override, decision 20)"}}
     EX --> PQ{"Does it overlap a published shift?"}
@@ -118,7 +125,8 @@ flowchart TD
 ```
 
 **Notes**
-- Time off doesn't need manager approval for this client. The employee adds it to the calendar, and the manager sees which days or weeks that person can't work.
+- Time off doesn't need manager approval for the first client. The employee adds it to the calendar, and the manager sees which days or weeks that person can't work.
+- Businesses that turn on **time-off approval** (decision 30) get the Pending → Approve / Decline step. While pending, the auto-scheduler avoids those dates.
 - The manager can also add time off for an employee, the same way they enter availability for them (Flow 3).
 
 ---

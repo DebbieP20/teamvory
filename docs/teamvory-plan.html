@@ -229,10 +229,10 @@ footer { font-size: var(--s-1); color: var(--muted); border-top: 1px solid var(-
       <tr><td>Shift rules</td><td>No fixed min/max hours. Shift times and staffing change by month, set by the owner as shift patterns.</td></tr>
       <tr><td>Positions</td><td>None. Anyone can work any shift.</td></tr>
       <tr><td>Seniority, legal or overtime limits</td><td>None</td></tr>
-      <tr><td>Availability deadline</td><td>No deadline. Employees can update at any time, with no extra steps for the manager.</td></tr>
+      <tr><td>Availability deadline</td><td>No deadline for this client. Other businesses can turn on an optional deadline (off by default); after it, only managers can change that week.</td></tr>
       <tr><td>Recurring availability</td><td>Yes. A default week plus per-week exceptions.</td></tr>
       <tr><td>Manager enters for employee</td><td>Yes, alongside employees entering their own</td></tr>
-      <tr><td>Time off</td><td>Separate from weekly availability. No approval: the employee adds it to the calendar and the manager sees it.</td></tr>
+      <tr><td>Time off</td><td>Separate from weekly availability. No approval for this client. Other businesses can turn on optional approval (off by default): time off stays pending until a manager approves it.</td></tr>
       <tr><td>Swap approval</td><td>Manager setting: automatic or manager approval</td></tr>
       <tr><td>Open shifts</td><td>Any eligible employee can pick one up without anyone accepting, right up until the shift starts</td></tr>
       <tr><td>Exports</td><td>PDF, PNG, JPG, Word (.docx), Excel (.xlsx)</td></tr>
@@ -661,6 +661,7 @@ erDiagram
       <tr><td>See employee contact details</td><td>✅</td><td>✅</td><td>—</td></tr>
       <tr><td>Set availability and time off</td><td>Anyone</td><td>Anyone</td><td>Own</td></tr>
       <tr><td>See everyone&#x27;s availability and time off</td><td>✅</td><td>✅</td><td>—</td></tr>
+      <tr><td>Approve time off (when approval is on)</td><td>✅</td><td>✅</td><td>—</td></tr>
       <tr><td>Shift patterns, week setup, build/generate, publish</td><td>✅</td><td>✅</td><td>—</td></tr>
       <tr><td>See draft schedules</td><td>✅</td><td>✅</td><td>—</td></tr>
       <tr><td>See the published schedule</td><td>✅</td><td>✅</td><td>View</td></tr>
@@ -698,7 +699,7 @@ erDiagram
     <li><span class="id">M0</span><div><div class="t">Setup</div><div class="d">Repository, Next.js, database, automatic deploy previews</div></div></li>
     <li><span class="id">M1</span><div><div class="t">Public website</div><div class="d">Home, How it works, About, Contact form, Privacy and Terms, TeamVory brand</div></div></li>
     <li><span class="id">M2</span><div><div class="t">Accounts</div><div class="d">Create a business, log in, reset password, invite employees, roles</div></div></li>
-    <li><span class="id">M3</span><div><div class="t">Availability</div><div class="d">Default week + exceptions, manager entry, time off, overview</div></div></li>
+    <li><span class="id">M3</span><div><div class="t">Availability</div><div class="d">Default week + exceptions, manager entry, time off, overview, optional deadline and time-off approval</div></div></li>
     <li><span class="id">M4</span><div><div class="t">Shift setup + manual schedule</div><div class="d">Patterns, copy last week, assign by click, hour totals, conflict alerts</div></div></li>
     <li class="cut"><span class="id">M5</span><div><div class="t">Publish + email</div><div class="d">Versioned schedules, email on publish and changes, My schedule, availability reminders</div></div></li>
     <li><span class="id">M6</span><div><div class="t">Auto-scheduler</div><div class="d">Fairness algorithm with tests, generate and regenerate, unfilled-shift report</div></div></li>

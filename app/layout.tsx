@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s | TeamVory",
   },
   description:
-    "Employee scheduling for small, medium and seasonal businesses. Staff enter their availability once, and you get a fair weekly schedule in minutes.",
+    "Spend less time collecting availability, balancing hours, and building schedules. TeamVory helps you organize your team so you can focus on running your business.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

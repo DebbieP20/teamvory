@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../lib/generated/prisma"
@@ -10,4 +8,20 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// Messages sent from the public Contact page. Saved first, then emailed to the
+// site owner, so a failed email never loses a message.
+model ContactMessage {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String
+  email     String
+  message   String
+  // SHA-256 of the sender's IP address, only used for rate limiting (never the raw IP).
+  ipHash    String?   @map("ip_hash")
+  emailedAt DateTime? @map("emailed_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([ipHash, createdAt])
+  @@map("contact_messages")
 }

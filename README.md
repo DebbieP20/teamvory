@@ -8,14 +8,14 @@ It replaces the usual routine of collecting availability by text message, typing
 
 ## Status
 
-🟡 **M0: project setup in progress.** The technical plan and wireframes are done.
+🟡 **M1: public website in progress.** M0 (project setup) is done.
 
 | Milestone | | Status |
 |---|---|---|
 | Plan | Requirements, architecture, database, permissions, user flows | ✅ Done |
 | Wireframes | Seven key screens, clickable | ✅ Done |
-| M0 | Project setup | 🚧 In progress |
-| M1 | Public website | |
+| M0 | Project setup | ✅ Done |
+| M1 | Public website | 🚧 In progress |
 | M2 | Accounts (sign up, log in, invitations, roles) | |
 | M3 | Availability (default week, weekly changes, time off) | |
 | M4 | Shift setup and manual scheduling | |

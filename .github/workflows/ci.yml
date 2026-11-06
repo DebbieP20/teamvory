@@ -37,6 +37,8 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
       - run: npm run build
 
       - name: Install Playwright browser

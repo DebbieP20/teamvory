@@ -54,6 +54,10 @@ erDiagram
         enum reminderStartDay "MON to SUN"
         int reminderDays "days in a row"
         boolean reminderIncludeDefaultOnly
+        boolean availabilityDeadlineEnabled "default off"
+        enum availabilityDeadlineDay "MON to SUN"
+        time availabilityDeadlineTime
+        boolean timeOffApprovalRequired "default off"
         datetime createdAt
     }
     MEMBERSHIP {
@@ -111,6 +115,9 @@ erDiagram
         date endDate
         string note "optional"
         uuid enteredById FK
+        enum status "PENDING, APPROVED, DECLINED"
+        uuid reviewedById FK "optional"
+        datetime reviewedAt "optional"
     }
     SHIFT_PATTERN {
         uuid id PK
@@ -229,7 +236,8 @@ erDiagram
 | `pinned` on Assignment | Shifts the owner puts himself on (or any shift placed by hand and pinned) survive Generate and Regenerate |
 | Availability = **template + overrides** | The default week is entered once; each week only stores the days that differ (decision 7) |
 | Overrides keyed by **date**, not by week | Availability can be entered for any future week before that week is set up |
-| **TimeOff** has no status | No approval needed for this client (decision 9) |
+| **TimeOff** has a `status`, default APPROVED | No approval for the first client (decision 9), so their time off is APPROVED straight away. Businesses that turn on approval (decision 30) get PENDING until a manager decides |
+| Deadline settings on **Business** | Optional availability deadline (decision 29). Whether a week is locked is worked out from these settings, not stored |
 | **Week → Shift** separate from **Schedule → Assignment** | Shift setup (what's needed) stays fixed while the manager regenerates schedules (who works). The spec requires regenerating "without changing the underlying shift configuration" |
 | **Schedule versions** | Publishing again creates a new version; the old one becomes SUPERSEDED and stays in history. Exports can pick any version |
 | No `hours` column on Assignment | Hours come from the shift's start and end, so they can't get out of sync |
