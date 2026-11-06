@@ -6,7 +6,7 @@ describe("Home page", () => {
   it("shows the main headline", () => {
     render(<Home />);
     expect(
-      screen.getByRole("heading", { level: 1, name: "Simplify employee scheduling and business operations with one intuitive platform." }),
+      screen.getByRole("heading", { level: 1, name: "Your team, perfectly organized." }),
     ).toBeInTheDocument();
   });
 });

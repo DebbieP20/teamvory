@@ -67,9 +67,7 @@ export default function Home() {
       <section className="bg-navy text-white">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[1.1fr_1fr]">
           <div>
-            <h1 className="text-3xl leading-tight sm:text-4xl lg:text-[2.75rem]">
-              Simplify employee scheduling and business operations with one intuitive platform.
-            </h1>
+            <h1 className="text-4xl leading-tight sm:text-5xl">Your team, perfectly organized.</h1>
             <p className="mt-5 max-w-xl text-lg text-slate-300">
               Spend less time collecting availability, balancing hours, and building schedules. TeamVory helps you organize your team so you can focus on running your business.
             </p>
