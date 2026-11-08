@@ -20,8 +20,8 @@ test("employee sets a default week and the manager sees it", async ({ page, brow
   await expect(employee.getByRole("heading", { level: 1, name: "My availability" })).toBeVisible();
   await choose(employee, "Monday", "All day");
   await choose(employee, "Tuesday", "Custom");
-  await day(employee, "Tuesday").getByLabel("From", { exact: true }).selectOption("14:00");
-  await day(employee, "Tuesday").getByLabel("to", { exact: true }).selectOption("21:00");
+  await day(employee, "Tuesday").getByLabel("From", { exact: true }).fill("14:00");
+  await day(employee, "Tuesday").getByLabel("to", { exact: true }).fill("21:00");
   await employee.getByRole("button", { name: "Save default week" }).click();
   await expect(employee.getByText("Default week saved.")).toBeVisible();
 
@@ -41,10 +41,19 @@ test("custom times must end after they start", async ({ page, browser }, testInf
   const { employee, employeeContext } = await ownerWithEmployee(page, browser, testInfo);
   await employee.goto("/employee/availability");
   await choose(employee, "Friday", "Custom");
-  await day(employee, "Friday").getByLabel("From", { exact: true }).selectOption("17:00");
-  await day(employee, "Friday").getByLabel("to", { exact: true }).selectOption("12:00");
+  await day(employee, "Friday").getByLabel("From", { exact: true }).fill("17:00");
+  await day(employee, "Friday").getByLabel("to", { exact: true }).fill("12:00");
   await employee.getByRole("button", { name: "Save default week" }).click();
   await expect(day(employee, "Friday").getByText("The end time must be after the start time.")).toBeVisible();
+
+  // Times can be typed, in 15-minute steps.
+  await day(employee, "Friday").getByLabel("From", { exact: true }).fill("06:15");
+  await day(employee, "Friday").getByLabel("to", { exact: true }).fill("13:45");
+  await employee.getByRole("button", { name: "Save default week" }).click();
+  await expect(employee.getByText("Default week saved.")).toBeVisible();
+  await employee.reload();
+  await expect(day(employee, "Friday").getByLabel("From", { exact: true })).toHaveValue("06:15");
+  await expect(day(employee, "Friday").getByLabel("to", { exact: true })).toHaveValue("13:45");
   await employeeContext.close();
 });
 
@@ -132,6 +141,13 @@ test("after the deadline, employees can't change that week but managers can", as
   await page.getByLabel("at").selectOption("23:30"); // ...11:30 PM, so this week is past its deadline
   await page.getByRole("button", { name: "Save settings" }).click();
   await expect(page.getByText("Settings saved.")).toBeVisible();
+
+  // Saving again keeps the settings (regression: the form used to reset its checkboxes).
+  await page.getByRole("button", { name: "Save settings" }).click();
+  await expect(page.getByText("Settings saved.")).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("Use an availability deadline")).toBeChecked();
+  await expect(page.getByLabel("Every")).toHaveValue("7");
 
   await employee.goto("/employee/availability/week?week=this");
   await expect(employee.getByText("The availability deadline for this week has passed.")).toBeVisible();

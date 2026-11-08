@@ -33,6 +33,13 @@ describe("resolveDay", () => {
   });
 });
 
+describe("15-minute steps", () => {
+  it("rejects times that aren't on a quarter hour", () => {
+    expect(validateDay({ kind: "CUSTOM", startTime: "14:07", endTime: "17:00" })).toMatch(/15-minute/);
+    expect(validateDay({ kind: "CUSTOM", startTime: "14:00", endTime: "16:50" })).toMatch(/15-minute/);
+  });
+});
+
 describe("describe and validateDay", () => {
   it("describes days in plain words", () => {
     expect(describeDay({ kind: "ALL_DAY" })).toBe("All day");
@@ -43,6 +50,7 @@ describe("describe and validateDay", () => {
     expect(validateDay({ kind: "CUSTOM", startTime: "17:00", endTime: "12:00" })).toMatch(/after/);
     expect(validateDay({ kind: "CUSTOM", startTime: "17:00" })).toMatch(/Choose/);
     expect(validateDay({ kind: "CUSTOM", startTime: "12:00", endTime: "17:00" })).toBeNull();
+    expect(validateDay({ kind: "CUSTOM", startTime: "06:15", endTime: "13:45" })).toBeNull();
     expect(validateDay({ kind: "OFF" })).toBeNull();
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { FormMessage, SubmitButton } from "@/components/forms/fields";
+import { FormMessage, SubmitButton, submitWithoutReset } from "@/components/forms/fields";
 import { saveDefaultWeek } from "@/lib/availability-actions";
 import type { DaySetting } from "@/lib/availability";
 import { WEEKDAYS } from "@/lib/dates";
@@ -9,11 +9,11 @@ import { idleState } from "@/lib/form-state";
 import { DayEditor } from "./day-editor";
 
 export function DefaultWeekForm({ membershipId, days }: { membershipId: string; days: DaySetting[] }) {
-  const [state, action] = useActionState(saveDefaultWeek, idleState);
+  const [state, action, pending] = useActionState(saveDefaultWeek, idleState);
   const errors = state.status === "error" ? (state.fieldErrors ?? {}) : {};
 
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={submitWithoutReset(action)} className="space-y-4">
       <input type="hidden" name="membershipId" value={membershipId} />
       <FormMessage state={state} />
       <ul className="space-y-3">
@@ -24,7 +24,7 @@ export function DefaultWeekForm({ membershipId, days }: { membershipId: string; 
           </li>
         ))}
       </ul>
-      <SubmitButton pendingText="Saving…" className="w-full sm:w-auto">
+      <SubmitButton pendingText="Saving…" pending={pending} className="w-full sm:w-auto">
         Save default week
       </SubmitButton>
     </form>

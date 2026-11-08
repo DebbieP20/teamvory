@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useId, useState } from "react";
-import { FormMessage, SubmitButton } from "@/components/forms/fields";
+import { FormMessage, SubmitButton, submitWithoutReset } from "@/components/forms/fields";
 import { saveAvailabilitySettings } from "@/lib/availability-actions";
 import { formatTime, TIME_OPTIONS, WEEKDAYS } from "@/lib/dates";
 import { idleState } from "@/lib/form-state";
@@ -12,12 +12,12 @@ const selectClass =
   "h-10 rounded-lg border border-input bg-white px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-60";
 
 export function AvailabilitySettingsForm({ initial, disabled }: { initial: Initial; disabled: boolean }) {
-  const [state, action] = useActionState(saveAvailabilitySettings, idleState);
+  const [state, action, pending] = useActionState(saveAvailabilitySettings, idleState);
   const [deadlineOn, setDeadlineOn] = useState(initial.deadlineEnabled);
   const id = useId();
 
   return (
-    <form action={action} className="space-y-6">
+    <form onSubmit={submitWithoutReset(action)} className="space-y-6">
       <FormMessage state={state} />
       <fieldset disabled={disabled} className="space-y-6">
         <section className="rounded-xl border bg-white p-6" aria-labelledby={`${id}-deadline`}>
@@ -74,7 +74,11 @@ export function AvailabilitySettingsForm({ initial, disabled }: { initial: Initi
           </label>
         </section>
 
-        {!disabled && <SubmitButton pendingText="Saving…">Save settings</SubmitButton>}
+        {!disabled && (
+          <SubmitButton pendingText="Saving…" pending={pending}>
+            Save settings
+          </SubmitButton>
+        )}
       </fieldset>
     </form>
   );

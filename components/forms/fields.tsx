@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2Icon } from "lucide-react";
-import { useId } from "react";
+import { startTransition, useId } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,14 +80,30 @@ export function FormMessage({ state }: { state: FormState }) {
 export function SubmitButton({
   children,
   pendingText,
+  pending: pendingProp,
   className,
   ...props
-}: { pendingText: string } & React.ComponentProps<typeof Button>) {
-  const { pending } = useFormStatus();
+}: { pendingText: string; pending?: boolean } & React.ComponentProps<typeof Button>) {
+  const status = useFormStatus();
+  const pending = pendingProp ?? status.pending;
   return (
     <Button type="submit" size="lg" disabled={pending} className={cn("h-11 px-6 font-semibold", className)} {...props}>
       {pending && <Loader2Icon className="animate-spin" data-icon="inline-start" />}
       {pending ? pendingText : children}
     </Button>
   );
+}
+
+/**
+ * onSubmit handler that runs a form action WITHOUT React's automatic form reset.
+ * Use it for forms with controlled choices (radio groups, checkboxes): the reset
+ * would clear those in the page while React still shows them as chosen, so the
+ * next save would send the wrong values. Pair with SubmitButton's `pending` prop.
+ */
+export function submitWithoutReset(dispatch: (formData: FormData) => void) {
+  return (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    startTransition(() => dispatch(formData));
+  };
 }

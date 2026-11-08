@@ -49,6 +49,10 @@ export function validateDay(setting: DaySetting): string | null {
   if (!setting.startTime || !setting.endTime || !valid.test(setting.startTime) || !valid.test(setting.endTime)) {
     return "Choose a start and end time.";
   }
+  const quarter = (t: string) => Number(t.slice(3)) % 15 === 0;
+  if (!quarter(setting.startTime) || !quarter(setting.endTime)) {
+    return "Use 15-minute steps, like 2:00, 2:15, 2:30 or 2:45.";
+  }
   if (setting.startTime >= setting.endTime) return "The end time must be after the start time.";
   return null;
 }

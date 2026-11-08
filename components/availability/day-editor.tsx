@@ -2,7 +2,6 @@
 
 import { useId, useState } from "react";
 import type { DaySetting, Kind } from "@/lib/availability";
-import { TIME_OPTIONS, formatTime } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 
 const choices: { kind: Kind; label: string }[] = [
@@ -54,11 +53,14 @@ export function DayEditor({
         ))}
       </div>
       {kind === "CUSTOM" && (
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-          <label htmlFor={`${id}-start`}>From</label>
-          <TimeSelect id={`${id}-start`} name={`${prefix}start`} defaultValue={initial.startTime ?? "12:00"} />
-          <label htmlFor={`${id}-end`}>to</label>
-          <TimeSelect id={`${id}-end`} name={`${prefix}end`} defaultValue={initial.endTime ?? "17:00"} />
+        <div className="mt-2 space-y-1">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <label htmlFor={`${id}-start`}>From</label>
+            <TimeInput id={`${id}-start`} name={`${prefix}start`} defaultValue={initial.startTime ?? "12:00"} />
+            <label htmlFor={`${id}-end`}>to</label>
+            <TimeInput id={`${id}-end`} name={`${prefix}end`} defaultValue={initial.endTime ?? "17:00"} />
+          </div>
+          <p className="text-xs text-muted-foreground">Type a time or use the picker. Times go in 15-minute steps.</p>
         </div>
       )}
       {error && (
@@ -70,19 +72,21 @@ export function DayEditor({
   );
 }
 
-function TimeSelect({ id, name, defaultValue }: { id: string; name: string; defaultValue: string }) {
+/**
+ * The browser's own time field: people can type the time, or open the picker
+ * (scroll wheels on iPhone, a clock on Android, a list on computers). The value
+ * is always "HH:mm" (24-hour), whatever the display looks like.
+ */
+function TimeInput({ id, name, defaultValue }: { id: string; name: string; defaultValue: string }) {
   return (
-    <select
+    <input
+      type="time"
       id={id}
       name={name}
       defaultValue={defaultValue}
-      className="h-9 rounded-lg border border-input bg-white px-2 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-    >
-      {TIME_OPTIONS.map((t) => (
-        <option key={t} value={t}>
-          {formatTime(t)}
-        </option>
-      ))}
-    </select>
+      step={15 * 60}
+      required
+      className="h-10 min-w-32 rounded-lg border border-input bg-white px-2 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+    />
   );
 }
