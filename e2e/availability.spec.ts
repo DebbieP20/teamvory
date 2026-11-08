@@ -43,12 +43,24 @@ test("custom times must end after they start", async ({ page, browser }, testInf
   await choose(employee, "Friday", "Custom");
   await day(employee, "Friday").getByLabel("From", { exact: true }).fill("17:00");
   await day(employee, "Friday").getByLabel("to", { exact: true }).fill("12:00");
-  await employee.getByRole("button", { name: "Save default week" }).click();
   await expect(day(employee, "Friday").getByText("The end time must be after the start time.")).toBeVisible();
+  await employee.getByRole("button", { name: "Save default week" }).click();
+  await expect(employee.getByText("Default week saved.")).toHaveCount(0);
+
+  // A time that isn't on a quarter hour turns red with a clear message, and can't be saved.
+  const from = day(employee, "Friday").getByLabel("From", { exact: true });
+  await from.fill("12:17");
+  await expect(from).toHaveAttribute("aria-invalid", "true");
+  await expect(day(employee, "Friday").getByText("Double-check the time. Use :00, :15, :30 or :45")).toBeVisible();
+  await employee.getByRole("button", { name: "Save default week" }).click();
+  await expect(employee.getByText("Default week saved.")).toHaveCount(0);
+  await expect(from).toBeFocused();
 
   // Times can be typed, in 15-minute steps.
   await day(employee, "Friday").getByLabel("From", { exact: true }).fill("06:15");
   await day(employee, "Friday").getByLabel("to", { exact: true }).fill("13:45");
+  await expect(from).toHaveAttribute("aria-invalid", "false");
+  await expect(day(employee, "Friday").getByText("Double-check the time")).toHaveCount(0);
   await employee.getByRole("button", { name: "Save default week" }).click();
   await expect(employee.getByText("Default week saved.")).toBeVisible();
   await employee.reload();

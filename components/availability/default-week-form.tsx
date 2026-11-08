@@ -13,7 +13,7 @@ export function DefaultWeekForm({ membershipId, days }: { membershipId: string; 
   const errors = state.status === "error" ? (state.fieldErrors ?? {}) : {};
 
   return (
-    <form onSubmit={submitWithoutReset(action)} className="space-y-4">
+    <form onSubmit={submitWithoutReset(action)} noValidate className="space-y-4">
       <input type="hidden" name="membershipId" value={membershipId} />
       <FormMessage state={state} />
       <ul className="space-y-3">

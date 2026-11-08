@@ -103,7 +103,17 @@ export function SubmitButton({
 export function submitWithoutReset(dispatch: (formData: FormData) => void) {
   return (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (focusFirstInvalid(event.currentTarget)) return;
     const formData = new FormData(event.currentTarget);
     startTransition(() => dispatch(formData));
   };
+}
+
+/** If a field in the form is marked invalid, moves focus to it and returns true. */
+export function focusFirstInvalid(form: HTMLFormElement): boolean {
+  const invalid = form.querySelector<HTMLElement>('[aria-invalid="true"]');
+  if (!invalid) return false;
+  invalid.focus();
+  invalid.scrollIntoView({ block: "center", behavior: "smooth" });
+  return true;
 }

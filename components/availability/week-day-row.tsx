@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { FormMessage, SubmitButton } from "@/components/forms/fields";
+import { FormMessage, SubmitButton, focusFirstInvalid } from "@/components/forms/fields";
 import { Button } from "@/components/ui/button";
 import { resetDayChange, saveDayChange } from "@/lib/availability-actions";
 import type { DaySetting, ResolvedDay } from "@/lib/availability";
@@ -54,7 +54,15 @@ export function WeekDayRow({
       <FormMessage state={saveState.status === "error" ? saveState : resetState} />
       {open && (
         <div className="mt-3 space-y-3">
-          <form action={save} className="space-y-3" onSubmit={() => setOpen(false)}>
+          <form
+            action={save}
+            noValidate
+            className="space-y-3"
+            onSubmit={(e) => {
+              if (focusFirstInvalid(e.currentTarget)) e.preventDefault();
+              else setOpen(false);
+            }}
+          >
             <input type="hidden" name="membershipId" value={membershipId} />
             <input type="hidden" name="date" value={date} />
             <DayEditor legend={label} initial={initial} />
