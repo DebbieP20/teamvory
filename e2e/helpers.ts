@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { expect, type Page, type TestInfo } from "@playwright/test";
+import { type Browser, expect, type Page, type TestInfo } from "@playwright/test";
 
 export const EMAIL_FILE = ".playwright/emails.jsonl";
 
@@ -66,4 +66,25 @@ export async function logIn(page: Page, email: string, password = PASSWORD) {
 export async function logOut(page: Page) {
   await page.getByRole("button", { name: "Log out" }).click();
   await expect(page).toHaveURL("/login");
+}
+
+/** Owner signs up and invites an employee, who joins in a separate browser. */
+export async function ownerWithEmployee(page: Page, browser: Browser, testInfo: TestInfo, employeeName = "Eli Employee") {
+  const ownerEmail = uniqueEmail(testInfo, "owner");
+  const employeeEmail = uniqueEmail(testInfo, "employee");
+  await signUpOwner(page, ownerEmail);
+  await page.goto("/manager/employees");
+  await field(page, "Email").fill(employeeEmail);
+  await page.getByRole("button", { name: "Send invitation" }).click();
+  await expect(page.getByText(`Invitation sent to ${employeeEmail}.`)).toBeVisible();
+
+  const invite = await waitForEmail(employeeEmail, /invited you/);
+  const employeeContext = await browser.newContext();
+  const employee = await employeeContext.newPage();
+  await employee.goto(linkIn(invite));
+  await field(employee, "Your name").fill(employeeName);
+  await field(employee, "Choose a password").fill(PASSWORD);
+  await employee.getByRole("button", { name: "Create account and join" }).click();
+  await expect(employee).toHaveURL("/employee");
+  return { employee, employeeEmail, employeeContext };
 }

@@ -117,9 +117,18 @@ enum SchedulingMode {
 }
 
 model Business {
-  id          String       @id @default(uuid()) @db.Uuid
-  name        String
-  timezone    String       @default("America/New_York")
+  id       String @id @default(uuid()) @db.Uuid
+  name     String
+  timezone String @default("America/New_York")
+
+  // Optional settings, both off by default (decisions 29 and 30).
+  availabilityDeadlineEnabled Boolean @default(false) @map("availability_deadline_enabled")
+  /// 1 = Monday ... 7 = Sunday, in the week BEFORE the week being scheduled
+  availabilityDeadlineDay     Int     @default(4) @map("availability_deadline_day")
+  /// Local wall-clock time, "HH:mm"
+  availabilityDeadlineTime    String  @default("18:00") @map("availability_deadline_time")
+  timeOffApprovalRequired     Boolean @default(false) @map("time_off_approval_required")
+
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
   memberships Membership[]
@@ -131,17 +140,20 @@ model Business {
 /// A person's role and status in one business. Never deleted, only set to INACTIVE,
 /// so past schedules and hour reports stay correct.
 model Membership {
-  id              String           @id @default(uuid()) @db.Uuid
-  userId          String           @map("user_id")
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  businessId      String           @map("business_id") @db.Uuid
-  business        Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  role            Role
-  status          MembershipStatus @default(ACTIVE)
-  schedulingMode  SchedulingMode   @default(FAIR_SHARE) @map("scheduling_mode")
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
-  invitationsSent Invitation[]
+  id                    String                 @id @default(uuid()) @db.Uuid
+  userId                String                 @map("user_id")
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessId            String                 @map("business_id") @db.Uuid
+  business              Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  role                  Role
+  status                MembershipStatus       @default(ACTIVE)
+  schedulingMode        SchedulingMode         @default(FAIR_SHARE) @map("scheduling_mode")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  invitationsSent       Invitation[]
+  availabilityTemplate  AvailabilityTemplate[]
+  availabilityOverrides AvailabilityOverride[]
+  timeOff               TimeOff[]
 
   @@unique([userId, businessId])
   @@index([businessId])
@@ -177,4 +189,72 @@ model RateLimitEvent {
 
   @@index([key, createdAt])
   @@map("rate_limit_events")
+}
+
+// ---------------------------------------------------------------------------
+// Availability (technical plan, section 3). Times are local wall-clock
+// "HH:mm" strings in the business's time zone; dates are calendar dates.
+// ---------------------------------------------------------------------------
+
+enum AvailabilityKind {
+  OFF
+  ALL_DAY
+  CUSTOM
+}
+
+/// Someone's usual week: one row per weekday (1 = Monday ... 7 = Sunday).
+model AvailabilityTemplate {
+  id           String           @id @default(uuid()) @db.Uuid
+  membershipId String           @map("membership_id") @db.Uuid
+  membership   Membership       @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  dayOfWeek    Int              @map("day_of_week")
+  kind         AvailabilityKind
+  startTime    String?          @map("start_time")
+  endTime      String?          @map("end_time")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  @@unique([membershipId, dayOfWeek])
+  @@map("availability_templates")
+}
+
+/// A change for one specific date ("this week only"). Replaces the default for that day.
+model AvailabilityOverride {
+  id           String           @id @default(uuid()) @db.Uuid
+  membershipId String           @map("membership_id") @db.Uuid
+  membership   Membership       @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  date         DateTime         @db.Date
+  kind         AvailabilityKind
+  startTime    String?          @map("start_time")
+  endTime      String?          @map("end_time")
+  /// The membership that made the change (the person, or a manager on their behalf)
+  enteredById  String           @map("entered_by_id") @db.Uuid
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  @@unique([membershipId, date])
+  @@map("availability_overrides")
+}
+
+enum TimeOffStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+/// Whole days someone can't work. APPROVED straight away unless the business
+/// requires approval (decision 30).
+model TimeOff {
+  id           String        @id @default(uuid()) @db.Uuid
+  membershipId String        @map("membership_id") @db.Uuid
+  membership   Membership    @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  startDate    DateTime      @map("start_date") @db.Date
+  endDate      DateTime      @map("end_date") @db.Date
+  note         String?
+  status       TimeOffStatus @default(APPROVED)
+  enteredById  String        @map("entered_by_id") @db.Uuid
+  reviewedById String?       @map("reviewed_by_id") @db.Uuid
+  reviewedAt   DateTime?     @map("reviewed_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  @@index([membershipId, startDate])
+  @@map("time_off")
 }

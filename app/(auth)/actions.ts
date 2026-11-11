@@ -37,8 +37,18 @@ async function createBusinessFor(userId: string, businessName: string) {
   await db.business.create({
     data: {
       name: businessName,
-      // The owner picks their own shifts and covers gaps (decision 19).
-      memberships: { create: { userId, role: "OWNER", schedulingMode: "BACKUP" } },
+      // The owner picks their own shifts and covers gaps (decision 19), so their
+      // default week starts as "all day" and they only mark days off.
+      memberships: {
+        create: {
+          userId,
+          role: "OWNER",
+          schedulingMode: "BACKUP",
+          availabilityTemplate: {
+            create: Array.from({ length: 7 }, (_, i) => ({ dayOfWeek: i + 1, kind: "ALL_DAY" as const })),
+          },
+        },
+      },
     },
   });
 }
