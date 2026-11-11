@@ -4,12 +4,15 @@ import { refresh } from "next/cache";
 import { z } from "zod";
 import { resolveDay } from "@/lib/availability";
 import { loadWeek } from "@/lib/availability-data";
-import { addDays, fromDbDate, type IsoDate, toDbDate, weekStart } from "@/lib/dates";
+import { addDays, formatWeek, fromDbDate, type IsoDate, toDbDate, weekStart } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { errorState, type FormState } from "@/lib/form-state";
+import { notify } from "@/lib/notifications";
+import { changesByPerson, hasUnpublishedChanges, scheduleEmail, shiftsFor } from "@/lib/publish";
 import { coversShift, DEFAULT_PATTERNS, describeShift, overlaps, type PatternShift, unavailableReason, validateShift } from "@/lib/schedule";
-import { getOrCreateDraft, getOrCreateWeek, selectedWeek } from "@/lib/schedule-data";
+import { draftSnapshot, findWeek, getOrCreateDraft, getOrCreateWeek, loadPublished, selectedWeek } from "@/lib/schedule-data";
 import { requireManager } from "@/lib/session";
+import { appUrl } from "@/lib/urls";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -283,4 +286,91 @@ export async function addDefaultPatterns() {
     skipDuplicates: true,
   });
   refresh();
+}
+
+// --- Publishing ------------------------------------------------------------------
+
+/**
+ * Freezes the draft into a new published version and emails the team: everyone on
+ * the first publish, then only the people whose own shifts changed.
+ */
+export async function publishSchedule(_prev: FormState, formData: FormData): Promise<FormState> {
+  const membership = await manager();
+  const monday = String(formData.get("monday"));
+  if (!isoDate.safeParse(monday).success || !(await checkEditableWeek(membership.businessId, monday))) {
+    return errorState("You can only publish this week and next week.");
+  }
+  const week = await findWeek(membership.businessId, monday);
+  if (!week) return errorState("Set up the week's shifts first.");
+  const [snapshot, previous] = await Promise.all([draftSnapshot(week.id), loadPublished(week.id)]);
+  if (!snapshot.shifts.length) return errorState("Set up the week's shifts first.");
+  if (previous && !hasUnpublishedChanges(previous.snapshot, snapshot)) {
+    return errorState("Nothing has changed since you last published.");
+  }
+
+  let published;
+  try {
+    published = await db.$transaction(async (tx) => {
+      if (previous) await tx.schedule.update({ where: { id: previous.id }, data: { status: "SUPERSEDED" } });
+      return tx.schedule.create({
+        data: {
+          weekId: week.id,
+          status: "PUBLISHED",
+          version: (previous?.version ?? 0) + 1,
+          snapshot,
+          publishedAt: new Date(),
+          publishedById: membership.id,
+        },
+      });
+    });
+  } catch {
+    // Only one published version per week is allowed by the database.
+    return errorState("Someone else published this week at the same moment. Reload the page and check.");
+  }
+
+  // Who to email.
+  const changes = changesByPerson(previous?.snapshot ?? null, snapshot);
+  const people = await db.membership.findMany({
+    where: {
+      businessId: membership.businessId,
+      status: "ACTIVE",
+      // Not the person publishing: they know already.
+      ...(previous
+        ? { id: { in: [...changes.keys()].filter((id) => id !== membership.id) } }
+        : { id: { not: membership.id }, schedulingMode: { not: "NOT_SCHEDULED" as const } }),
+    },
+    include: { user: { select: { id: true, name: true, email: true } } },
+  });
+  const weekLabel = formatWeek(monday);
+  const sent = await notify(
+    people.map((p) => {
+      const email = scheduleEmail({
+        name: p.user.name,
+        businessName: membership.businessName,
+        week: weekLabel,
+        firstPublish: !previous,
+        change: changes.get(p.id) ?? null,
+        shifts: shiftsFor(snapshot, p.id),
+        membershipId: p.id,
+        link: `${appUrl()}/employee`,
+      });
+      return {
+        businessId: membership.businessId,
+        userId: p.user.id,
+        type: previous ? ("schedule-changed" as const) : ("schedule-published" as const),
+        dedupeKey: `publish:${published.id}:${p.id}`,
+        to: p.user.email,
+        ...email,
+      };
+    }),
+  );
+
+  refresh();
+  const who =
+    sent > 0
+      ? `Emailed ${sent} ${sent === 1 ? "person" : "people"}.`
+      : previous
+        ? "No one else's shifts changed, so no emails were sent."
+        : "Nobody else to email yet.";
+  return { status: "success", message: `${previous ? `Version ${published.version} published` : "Published"}. ${who}` };
 }

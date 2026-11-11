@@ -160,6 +160,7 @@ erDiagram
         enum generatedBy "MANUAL or AUTO"
         int seed "optional"
         int lockVersion
+        json snapshot "published versions: the frozen shifts and people"
         datetime publishedAt "optional"
         uuid publishedById FK "optional"
     }
@@ -240,6 +241,7 @@ erDiagram
 | Deadline settings on **Business** | Optional availability deadline (decision 29). Whether a week is locked is worked out from these settings, not stored |
 | **Week → Shift** separate from **Schedule → Assignment** | Shift setup (what's needed) stays fixed while the manager regenerates schedules (who works). The spec requires regenerating "without changing the underlying shift configuration" |
 | **Schedule versions** | Publishing again creates a new version; the old one becomes SUPERSEDED and stays in history. Exports can pick any version |
+| **Draft + frozen snapshots** | The manager always edits the one DRAFT (its Assignment rows). Publishing copies it into a new PUBLISHED row as a JSON `snapshot` (shift times, number needed, people). Editing or deleting a shift later never changes what the team was sent, and comparing two snapshots tells who to email (`lib/publish.ts`) |
 | No `hours` column on Assignment | Hours come from the shift's start and end, so they can't get out of sync |
 | **ShiftPattern** stores shifts as JSON | Patterns are only templates; they're copied into real Shift rows when applied, so editing a pattern never changes past weeks |
 | `businessId` on top-level tables | Every query can filter by business (data isolation, future multi-business support) |
@@ -254,7 +256,9 @@ erDiagram
 | Only one draft and one published schedule per week | Partial unique indexes on (`weekId`) where `status = 'DRAFT'` and where `status = 'PUBLISHED'` |
 | Shift times make sense | Check: `endTime > startTime`, `requiredCount >= 1` |
 | Time off dates make sense | Check: `endDate >= startDate` |
-| No duplicate emails | Unique `dedupeKey` on Notification, e.g. `publish:{scheduleId}:{userId}` |
+| No duplicate emails | Unique `dedupeKey` on Notification, e.g. `publish:{scheduleId}:{membershipId}`, `avail-reminder:{weekStart}:{userId}:{date}`, `conflict:{scheduleId}:{shiftId}:{membershipId}:{managerId}` |
+| Published versions are complete | Check: a non-draft schedule has a `snapshot` and `publishedAt` |
+| Reminder days stay in the week | Check: `reminderStartDay + reminderDays <= 8` (never past Sunday) |
 | Overlapping shifts for one person | Checked in the service layer (needs time comparison across rows) and re-checked inside the swap/pickup transaction |
 
 ## 4. Indexes for common screens

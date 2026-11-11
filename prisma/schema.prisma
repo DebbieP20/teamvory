@@ -129,12 +129,21 @@ model Business {
   availabilityDeadlineTime    String  @default("18:00") @map("availability_deadline_time")
   timeOffApprovalRequired     Boolean @default(false) @map("time_off_approval_required")
 
+  // Availability reminders (decision 26): sent with the daily morning job.
+  reminderEnabled            Boolean @default(false) @map("reminder_enabled")
+  /// 1 = Monday ... 7 = Sunday, in the week BEFORE the week being scheduled
+  reminderStartDay           Int     @default(3) @map("reminder_start_day")
+  /// How many days in a row, starting on reminderStartDay (never past Sunday)
+  reminderDays               Int     @default(2) @map("reminder_days")
+  reminderIncludeDefaultOnly Boolean @default(false) @map("reminder_include_default_only")
+
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
   memberships   Membership[]
   invitations   Invitation[]
   shiftPatterns ShiftPattern[]
   weeks         Week[]
+  notifications Notification[]
 
   @@map("businesses")
 }
@@ -323,14 +332,18 @@ enum ScheduleStatus {
 
 /// A version of who works a week. M4 builds the DRAFT; publishing comes in M5.
 model Schedule {
-  id          String         @id @default(uuid()) @db.Uuid
-  weekId      String         @map("week_id") @db.Uuid
-  week        Week           @relation(fields: [weekId], references: [id], onDelete: Cascade)
-  version     Int            @default(1)
-  status      ScheduleStatus @default(DRAFT)
-  createdAt   DateTime       @default(now()) @map("created_at")
-  updatedAt   DateTime       @updatedAt @map("updated_at")
-  assignments Assignment[]
+  id            String         @id @default(uuid()) @db.Uuid
+  weekId        String         @map("week_id") @db.Uuid
+  week          Week           @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  version       Int            @default(1)
+  status        ScheduleStatus @default(DRAFT)
+  /// Published versions only: what the team saw, frozen (see lib/publish.ts)
+  snapshot      Json?
+  publishedAt   DateTime?      @map("published_at")
+  publishedById String?        @map("published_by_id") @db.Uuid
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  assignments   Assignment[]
 
   @@index([weekId, status])
   @@map("schedules")
@@ -354,4 +367,32 @@ model Assignment {
   @@unique([scheduleId, shiftId, membershipId])
   @@index([membershipId])
   @@map("assignments")
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+/// The notification outbox: every automatic email is saved here first, then sent.
+/// dedupeKey stops the same notification going out twice; failed ones are retried by the daily job.
+model Notification {
+  id         String             @id @default(uuid()) @db.Uuid
+  businessId String             @map("business_id") @db.Uuid
+  business   Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId     String             @map("user_id")
+  type       String
+  dedupeKey  String             @unique @map("dedupe_key")
+  to         String
+  subject    String
+  text       String
+  status     NotificationStatus @default(PENDING)
+  attempts   Int                @default(0)
+  lastError  String?            @map("last_error")
+  createdAt  DateTime           @default(now()) @map("created_at")
+  sentAt     DateTime?          @map("sent_at")
+
+  @@index([status, createdAt])
+  @@map("notifications")
 }

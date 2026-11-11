@@ -2,6 +2,8 @@ import { readFile } from "node:fs/promises";
 import { type Browser, expect, type Page, type TestInfo } from "@playwright/test";
 
 export const EMAIL_FILE = ".playwright/emails.jsonl";
+/** The daily job's secret during tests (playwright.config.ts passes it to the app). */
+export const E2E_CRON_SECRET = "e2e-only-cron-secret";
 
 /** A unique email address per test and browser project. */
 export function uniqueEmail(testInfo: TestInfo, label: string) {
@@ -86,5 +88,5 @@ export async function ownerWithEmployee(page: Page, browser: Browser, testInfo: 
   await field(employee, "Choose a password").fill(PASSWORD);
   await employee.getByRole("button", { name: "Create account and join" }).click();
   await expect(employee).toHaveURL("/employee");
-  return { employee, employeeEmail, employeeContext };
+  return { employee, employeeEmail, employeeContext, ownerEmail };
 }

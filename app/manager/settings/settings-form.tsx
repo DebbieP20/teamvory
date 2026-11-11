@@ -5,8 +5,18 @@ import { FormMessage, SubmitButton, submitWithoutReset } from "@/components/form
 import { saveAvailabilitySettings } from "@/lib/availability-actions";
 import { formatTime, TIME_OPTIONS, WEEKDAYS } from "@/lib/dates";
 import { idleState } from "@/lib/form-state";
+import { describeReminderDays } from "@/lib/reminders";
 
-type Initial = { deadlineEnabled: boolean; deadlineDay: number; deadlineTime: string; timeOffApprovalRequired: boolean };
+type Initial = {
+  deadlineEnabled: boolean;
+  deadlineDay: number;
+  deadlineTime: string;
+  timeOffApprovalRequired: boolean;
+  reminderEnabled: boolean;
+  reminderStartDay: number;
+  reminderDays: number;
+  reminderIncludeDefaultOnly: boolean;
+};
 
 const selectClass =
   "h-10 rounded-lg border border-input bg-white px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-60";
@@ -14,6 +24,11 @@ const selectClass =
 export function AvailabilitySettingsForm({ initial, disabled }: { initial: Initial; disabled: boolean }) {
   const [state, action, pending] = useActionState(saveAvailabilitySettings, idleState);
   const [deadlineOn, setDeadlineOn] = useState(initial.deadlineEnabled);
+  const [remindersOn, setRemindersOn] = useState(initial.reminderEnabled);
+  const [startDay, setStartDay] = useState(initial.reminderStartDay);
+  // Reminders stay in the week before the scheduled week, so they can't run past Sunday.
+  const [days, setDays] = useState(Math.min(initial.reminderDays, 8 - initial.reminderStartDay));
+  const maxDays = 8 - startDay;
   const id = useId();
 
   return (
@@ -54,6 +69,72 @@ export function AvailabilitySettingsForm({ initial, disabled }: { initial: Initi
               </select>
             </div>
             <p className="pb-2 text-sm text-muted-foreground">for the following week</p>
+          </div>
+        </section>
+
+        <section className="rounded-xl border bg-white p-6" aria-labelledby={`${id}-reminders`}>
+          <h2 id={`${id}-reminders`} className="text-lg">Availability reminders</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            An email in the morning to people who haven&apos;t set their availability for next week. It stops for each person as soon
+            as they set it.
+          </p>
+          <label className="mt-4 flex items-center gap-3 font-medium">
+            <input
+              type="checkbox"
+              name="reminderEnabled"
+              checked={remindersOn}
+              onChange={(e) => setRemindersOn(e.target.checked)}
+              className="size-5 accent-teal-600"
+            />
+            Send availability reminders
+          </label>
+          <div className="mt-4 space-y-4" hidden={!remindersOn}>
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="space-y-2">
+                <label htmlFor={`${id}-rstart`} className="block text-sm font-medium">Starting</label>
+                <select
+                  id={`${id}-rstart`}
+                  name="reminderStartDay"
+                  value={startDay}
+                  onChange={(e) => {
+                    const d = Number(e.target.value);
+                    setStartDay(d);
+                    setDays((n) => Math.min(n, 8 - d));
+                  }}
+                  className={selectClass}
+                >
+                  {WEEKDAYS.map((d, i) => (
+                    <option key={d} value={i + 1}>{d}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label htmlFor={`${id}-rdays`} className="block text-sm font-medium">for</label>
+                <select
+                  id={`${id}-rdays`}
+                  name="reminderDays"
+                  value={days}
+                  onChange={(e) => setDays(Number(e.target.value))}
+                  className={selectClass}
+                >
+                  {Array.from({ length: maxDays }, (_, i) => i + 1).map((n) => (
+                    <option key={n} value={n}>{n} {n === 1 ? "day" : "days in a row"}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground" aria-live="polite">
+              Sent each {describeReminderDays({ startDay, days })} morning, about 9 AM.
+            </p>
+            <label className="flex items-start gap-3 text-sm">
+              <input
+                type="checkbox"
+                name="reminderIncludeDefaultOnly"
+                defaultChecked={initial.reminderIncludeDefaultOnly}
+                className="mt-0.5 size-5 accent-teal-600"
+              />
+              Also remind people who only use their default week, to check it&apos;s still right
+            </label>
           </div>
         </section>
 

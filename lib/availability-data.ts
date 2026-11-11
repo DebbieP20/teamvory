@@ -3,6 +3,7 @@ import { type DaySetting, type DeadlineSettings, type TimeOffEntry } from "@/lib
 import { addDays, fromDbDate, type IsoDate, nowInZone, toDbDate } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { isManagerRole } from "@/lib/permissions";
+import type { ReminderSettings } from "@/lib/reminders";
 import { getMembership, requireUser } from "@/lib/session";
 
 export type BusinessSettings = {
@@ -11,6 +12,7 @@ export type BusinessSettings = {
   timezone: string;
   deadline: DeadlineSettings;
   timeOffApprovalRequired: boolean;
+  reminders: ReminderSettings;
 };
 
 export async function getBusinessSettings(businessId: string): Promise<BusinessSettings> {
@@ -21,6 +23,12 @@ export async function getBusinessSettings(businessId: string): Promise<BusinessS
     timezone: b.timezone,
     deadline: { enabled: b.availabilityDeadlineEnabled, day: b.availabilityDeadlineDay, time: b.availabilityDeadlineTime },
     timeOffApprovalRequired: b.timeOffApprovalRequired,
+    reminders: {
+      enabled: b.reminderEnabled,
+      startDay: b.reminderStartDay,
+      days: b.reminderDays,
+      includeDefaultOnly: b.reminderIncludeDefaultOnly,
+    },
   };
 }
 
