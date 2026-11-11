@@ -84,3 +84,43 @@ export const TIME_OPTIONS: string[] = Array.from({ length: 38 }, (_, i) => {
   const minutes = 5 * 60 + i * 30;
   return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 });
+
+/** "14:00" → "2:00 PM", always with minutes (for time boxes). */
+export function formatTimeFull(time: string): string {
+  const [h, m] = time.split(":").map(Number);
+  return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
+}
+
+/** Every quarter hour of the day: "00:00", "00:15" ... "23:45". */
+export const QUARTER_HOURS: string[] = Array.from({ length: 96 }, (_, i) => {
+  const minutes = i * 15;
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+});
+
+/**
+ * Understands times the way people type them and returns "HH:mm", or null.
+ * "12:15 pm", "12:15pm", "1215p", "2pm", "2 PM", "14:30", "1430", "9.45am".
+ * Without AM/PM, 1–6 means afternoon (a typical work day), 7–11 morning, 12 noon.
+ */
+export function parseTimeInput(input: string): string | null {
+  const text = input.trim().toLowerCase().replace(/\s+/g, "").replace(/\./g, ":");
+  const match = /^(\d{1,2})(?::?(\d{2}))?(a|am|p|pm)?$/.exec(text);
+  if (!match) return null;
+  let hour = Number(match[1]);
+  const minute = match[2] === undefined ? 0 : Number(match[2]);
+  const suffix = match[3]?.[0];
+  if (minute > 59) return null;
+
+  if (suffix) {
+    if (hour < 1 || hour > 12) return null;
+    if (suffix === "a") hour = hour === 12 ? 0 : hour;
+    else hour = hour === 12 ? 12 : hour + 12;
+  } else if (hour > 23) {
+    return null;
+  } else if (hour >= 1 && hour <= 6 && !match[1].startsWith("0")) {
+    // No AM/PM: guess like a person would for work hours. 24-hour times
+    // ("14:30") and times with a leading zero ("02:30") are taken as written.
+    hour += 12;
+  }
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}

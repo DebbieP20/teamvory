@@ -3,6 +3,7 @@
 import { TriangleAlertIcon } from "lucide-react";
 import { useId, useState } from "react";
 import type { DaySetting, Kind } from "@/lib/availability";
+import { TimeCombobox } from "@/components/forms/time-combobox";
 import { cn } from "@/lib/utils";
 
 const choices: { kind: Kind; label: string }[] = [
@@ -66,7 +67,7 @@ export function DayEditor({
         <div className="mt-2 space-y-1">
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <label htmlFor={`${id}-start`}>From</label>
-            <TimeInput
+            <TimeCombobox
               id={`${id}-start`}
               name={`${prefix}start`}
               value={start}
@@ -75,7 +76,7 @@ export function DayEditor({
               errorId={`${id}-error`}
             />
             <label htmlFor={`${id}-end`}>to</label>
-            <TimeInput
+            <TimeCombobox
               id={`${id}-end`}
               name={`${prefix}end`}
               value={end}
@@ -84,7 +85,7 @@ export function DayEditor({
               errorId={`${id}-error`}
             />
           </div>
-          <p className="text-xs text-muted-foreground">Type a time or use the picker. Times go in 15-minute steps.</p>
+          <p className="text-xs text-muted-foreground">Type a time (like 12:15 PM) or pick one from the list. Times go in 15-minute steps.</p>
         </div>
       )}
       <p id={`${id}-error`} aria-live="polite" className={cn("text-sm font-medium text-destructive", shownError && "mt-2")}>
@@ -99,50 +100,9 @@ export function DayEditor({
   );
 }
 
-/**
- * The browser's own time field: people can type the time, or open the picker
- * (scroll wheels on iPhone, a clock on Android, a list on computers). The value
- * is always "HH:mm" (24-hour), whatever the display looks like.
- */
-function TimeInput({
-  id,
-  name,
-  value,
-  onChange,
-  invalid,
-  errorId,
-}: {
-  id: string;
-  name: string;
-  value: string;
-  onChange: (value: string) => void;
-  invalid: boolean;
-  errorId: string;
-}) {
-  return (
-    <input
-      type="time"
-      id={id}
-      name={name}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      step={15 * 60}
-      required
-      aria-invalid={invalid}
-      aria-describedby={invalid ? errorId : undefined}
-      className={cn(
-        "h-10 min-w-32 rounded-lg border bg-white px-2 text-base outline-none focus-visible:ring-3",
-        invalid
-          ? "border-destructive bg-red-50 text-destructive focus-visible:ring-destructive/30"
-          : "border-input focus-visible:border-ring focus-visible:ring-ring/50",
-      )}
-    />
-  );
-}
-
 /** A friendly message if a typed time can't be used, otherwise null. */
 function timeProblem(time: string): string | null {
-  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return "Enter a full time, like 12:15 PM.";
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return "Double-check the time. Type it like 12:15 PM, or pick one from the list.";
   if (Number(time.slice(3)) % 15 !== 0) {
     return "Double-check the time. Use :00, :15, :30 or :45, like 12:15 PM.";
   }
