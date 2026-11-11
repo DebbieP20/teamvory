@@ -53,13 +53,13 @@ test("add, edit and remove a single shift", async ({ page }, testInfo) => {
   await page.keyboard.press("Tab");
   await wednesday.getByRole("combobox", { name: "End" }).fill("10pm");
   await page.keyboard.press("Tab");
-  await wednesday.getByLabel("People").selectOption("3");
+  await wednesday.getByLabel("people", { exact: true }).selectOption("3");
   await wednesday.getByRole("button", { name: "Add", exact: true }).click();
   await expect(wednesday.getByText("12 h")).toBeVisible(); // 4 h × 3
   await expect(wednesday.getByText("6 PM – 10 PM")).toBeVisible();
 
   await wednesday.getByRole("button", { name: "Edit: 6 PM – 10 PM" }).click();
-  await wednesday.getByLabel("People").selectOption("2");
+  await wednesday.getByLabel("people", { exact: true }).selectOption("2");
   await wednesday.getByRole("button", { name: "Save" }).click();
   await expect(wednesday.getByText("8 h")).toBeVisible();
 
@@ -92,7 +92,7 @@ test("create and delete a pattern", async ({ page }, testInfo) => {
   await page.keyboard.press("Tab");
   await form.getByRole("combobox", { name: "End" }).fill("10:30pm");
   await page.keyboard.press("Tab");
-  await form.getByLabel("People").selectOption("3");
+  await form.getByLabel("people", { exact: true }).selectOption("3");
   await form.getByRole("button", { name: "Create pattern" }).click();
   await expect(page.getByRole("region", { name: "Event night" })).toBeVisible();
 

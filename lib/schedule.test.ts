@@ -67,7 +67,8 @@ describe("validateShift", () => {
   it("rejects bad shifts with a clear message", () => {
     expect(validateShift({ start: "17:00", end: "12:00", required: 2 })).toMatch(/after/);
     expect(validateShift({ start: "12:10", end: "17:00", required: 2 })).toMatch(/15-minute/);
-    expect(validateShift({ start: "12:00", end: "17:00", required: 0 })).toMatch(/between 1 and 50/);
+    expect(validateShift({ start: "12:00", end: "17:00", required: 0 })).toMatch(/between 1 and 5/);
+    expect(validateShift({ start: "12:00", end: "17:00", required: 6 })).toMatch(/between 1 and 5/);
   });
 });
 

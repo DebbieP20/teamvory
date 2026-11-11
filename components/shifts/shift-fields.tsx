@@ -3,6 +3,7 @@
 import { TriangleAlertIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { TimeCombobox, timeProblem } from "@/components/forms/time-combobox";
+import { MAX_PEOPLE } from "@/lib/schedule";
 import { cn } from "@/lib/utils";
 
 /**
@@ -48,17 +49,20 @@ export function ShiftFields({
           errorId={`${id}-error`}
           label="End"
         />
-        <label htmlFor={`${id}-required`} className="ml-1">People</label>
-        <select
-          id={`${id}-required`}
-          name="required"
-          defaultValue={initial.required}
-          className="h-10 rounded-lg border border-input bg-white px-2 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-        >
-          {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
-            <option key={n} value={n}>{n}</option>
-          ))}
-        </select>
+        {/* Label and list stay together on one line, so the number clearly means people. */}
+        <span className="flex items-center gap-2 whitespace-nowrap">
+          <select
+            id={`${id}-required`}
+            name="required"
+            defaultValue={Math.min(initial.required, MAX_PEOPLE)}
+            className="h-10 rounded-lg border border-input bg-white px-2 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            {Array.from({ length: MAX_PEOPLE }, (_, i) => i + 1).map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
+          <label htmlFor={`${id}-required`}>people</label>
+        </span>
       </div>
       <p id={`${id}-error`} aria-live="polite" className={cn("text-sm font-medium text-destructive", message && "mt-1")}>
         {message && (

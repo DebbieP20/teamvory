@@ -50,6 +50,9 @@ export function timeRows(shifts: Pick<ShiftTimes, "startTime" | "endTime">[]): {
   return [...seen.values()].sort((a, b) => a.startTime.localeCompare(b.startTime) || a.endTime.localeCompare(b.endTime));
 }
 
+/** The most people one shift can need (the People list goes 1–5). */
+export const MAX_PEOPLE = 5;
+
 /** Checks one shift for a pattern or the shift setup. Returns an error or null. */
 export function validateShift(shift: { start: string; end: string; required: number }): string | null {
   const valid = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -58,8 +61,8 @@ export function validateShift(shift: { start: string; end: string; required: num
     return "Use 15-minute steps, like 2:00, 2:15, 2:30 or 2:45.";
   }
   if (shift.start >= shift.end) return "The end time must be after the start time.";
-  if (!Number.isInteger(shift.required) || shift.required < 1 || shift.required > 50) {
-    return "People needed must be between 1 and 50.";
+  if (!Number.isInteger(shift.required) || shift.required < 1 || shift.required > MAX_PEOPLE) {
+    return `People needed must be between 1 and ${MAX_PEOPLE}.`;
   }
   return null;
 }
