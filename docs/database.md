@@ -158,7 +158,7 @@ erDiagram
         int version
         enum status "DRAFT, PUBLISHED, SUPERSEDED"
         enum generatedBy "MANUAL or AUTO"
-        int seed "optional"
+        int seed "optional, last Build or Regenerate"
         int lockVersion
         json snapshot "published versions: the frozen shifts and people"
         datetime publishedAt "optional"
@@ -169,8 +169,10 @@ erDiagram
         uuid scheduleId FK
         uuid shiftId FK
         uuid membershipId FK
-        boolean pinned "kept by Generate"
+        boolean pinned "kept by Generate (everything placed by hand)"
         boolean override "assigned though marked not available"
+        boolean auto "placed by the auto-scheduler"
+        boolean covering "the owner filling a gap"
     }
     SHIFT_REQUEST {
         uuid id PK

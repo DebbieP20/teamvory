@@ -16,6 +16,8 @@ export type Candidate = {
   name: string;
   isOwner: boolean;
   hours: number;
+  /** Fair-share target in hours; null for the backup (owner) */
+  target: number | null;
   status: "available" | "unavailable" | "blocked";
   reason: string | null;
 };
@@ -27,7 +29,17 @@ export type GridShift = {
   endTime: string;
   requiredCount: number;
   label: string;
-  assigned: { id: string; membershipId: string; name: string; isOwner: boolean; pinned: boolean; override: boolean; conflict: boolean }[];
+  assigned: {
+    id: string;
+    membershipId: string;
+    name: string;
+    isOwner: boolean;
+    pinned: boolean;
+    override: boolean;
+    /** The owner filling a gap the auto-scheduler couldn't */
+    covering: boolean;
+    conflict: boolean;
+  }[];
   candidates: Candidate[];
 };
 
@@ -103,8 +115,8 @@ export function ScheduleGrid({
       </div>
       <p className="text-xs text-muted-foreground">
         <span className="rounded bg-violet-100 px-1 text-violet-800">Owner</span> · <PinIcon className="inline size-3" aria-hidden /> pinned:
-        kept when the auto-scheduler regenerates · <span className="font-semibold text-amber-700">agreed</span>: added though marked not
-        available
+        kept by Build and Regenerate (placed by hand) · <span className="font-semibold text-amber-700">agreed</span>: added though marked
+        not available · <span className="font-semibold text-violet-800">covering</span>: you fill a gap nobody else could
       </p>
       {openShift && (
         <AssignDialog
@@ -165,6 +177,7 @@ function AssignedChip({ assignment: a, shiftLabel }: { assignment: GridShift["as
         {shortName(a.name)}
       </span>
       {a.override && <span className="text-[10px] font-semibold text-amber-700 uppercase">agreed</span>}
+      {a.covering && <span className="text-[10px] font-semibold text-violet-800 uppercase">covering</span>}
       {a.conflict && <TriangleAlertIcon className="size-3 shrink-0 text-amber-600" aria-label="No longer available" />}
       <form action={togglePin}>
         <input type="hidden" name="assignmentId" value={a.id} />
@@ -242,7 +255,9 @@ function AssignDialog({ shift, onClose }: { shift: GridShift; onClose: () => voi
         ) : (
           <ul className="max-h-[60vh] space-y-1.5 overflow-y-auto">
             {shift.candidates.map((c) => {
-              const hours = `${Number.isInteger(c.hours) ? c.hours : c.hours.toFixed(2)} h this week`;
+              const fmt = (h: number) => (Number.isInteger(h) ? h : h.toFixed(1));
+              const hours =
+                c.target === null ? `${fmt(c.hours)} h · backup` : `${fmt(c.hours)} of ${fmt(c.target)} h fair share`;
               if (confirming === c.membershipId) {
                 return (
                   <li key={c.membershipId} className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">

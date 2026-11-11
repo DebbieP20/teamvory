@@ -206,6 +206,12 @@ Only *fair share* people are counted in `eligibleHours` and `target`, and `total
 
 Typical size (about 10 people, 4 shifts × 7 days = 28 shifts, 56 slots) runs in a few milliseconds.
 
+**As built (M6):** `lib/scheduler.ts` (`generateSchedule`, `fairTargets`), unit tested in `lib/scheduler.test.ts`.
+- Anything placed **by hand is pinned automatically** (including the owner's own shifts and agreed exceptions), so **Build schedule** never undoes the manager's choices. Unpinning a shift lets Regenerate change it.
+- **Build schedule** / **Regenerate** keep pinned shifts and replace the rest. Each run uses a new random seed (saved on the draft), so Regenerate gives a different but equally fair mix.
+- The improvement pass (step 4) moves single generated shifts to someone else whenever that lowers the total squared distance from everyone's target.
+- The Schedule page shows each person's hours against their fair share (bar and line), and the Assign list puts the people furthest below their fair share first.
+
 ---
 
 ## 6. Shift swaps, coverage and open shifts

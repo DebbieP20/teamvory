@@ -1,5 +1,6 @@
 "use server";
 
+import { randomInt } from "node:crypto";
 import { refresh } from "next/cache";
 import { z } from "zod";
 import { resolveDay } from "@/lib/availability";
@@ -10,7 +11,17 @@ import { errorState, type FormState } from "@/lib/form-state";
 import { notify } from "@/lib/notifications";
 import { changesByPerson, hasUnpublishedChanges, scheduleEmail, shiftsFor } from "@/lib/publish";
 import { coversShift, DEFAULT_PATTERNS, describeShift, overlaps, type PatternShift, unavailableReason, validateShift } from "@/lib/schedule";
-import { draftSnapshot, findWeek, getOrCreateDraft, getOrCreateWeek, loadPublished, selectedWeek } from "@/lib/schedule-data";
+import {
+  draftSnapshot,
+  findWeek,
+  getOrCreateDraft,
+  getOrCreateWeek,
+  loadPublished,
+  loadSchedulingPeople,
+  loadShifts,
+  selectedWeek,
+} from "@/lib/schedule-data";
+import { generateSchedule } from "@/lib/scheduler";
 import { requireManager } from "@/lib/session";
 import { appUrl } from "@/lib/urls";
 
@@ -246,7 +257,7 @@ export async function assignPerson(_prev: FormState, formData: FormData): Promis
       shiftId: shift.id,
       membershipId: person.id,
       override: !available,
-      pinned: !available, // agreed exceptions are kept when regenerating
+      pinned: true, // placed by hand: Build and Regenerate keep it (unpin to let them change it)
       createdById: membership.id,
     },
   });
@@ -373,4 +384,57 @@ export async function publishSchedule(_prev: FormState, formData: FormData): Pro
         ? "No one else's shifts changed, so no emails were sent."
         : "Nobody else to email yet.";
   return { status: "success", message: `${previous ? `Version ${published.version} published` : "Published"}. ${who}` };
+}
+
+// --- Auto-scheduler ----------------------------------------------------------------
+
+/**
+ * Build schedule / Regenerate (section 5): keeps every pinned assignment, replaces the
+ * rest with a fresh fair schedule. A new random seed each time gives a different mix.
+ */
+export async function buildSchedule(_prev: FormState, formData: FormData): Promise<FormState> {
+  const membership = await manager();
+  const monday = String(formData.get("monday"));
+  if (!isoDate.safeParse(monday).success || !(await checkEditableWeek(membership.businessId, monday))) {
+    return errorState("You can only build this week and next week.");
+  }
+  const week = await findWeek(membership.businessId, monday);
+  const shifts = await loadShifts(week?.id);
+  if (!week || !shifts.length) return errorState("Set up the week's shifts first.");
+
+  const [{ people }, draft] = await Promise.all([
+    loadSchedulingPeople(membership.businessId, monday, shifts),
+    getOrCreateDraft(week.id),
+  ]);
+  const kept = await db.assignment.findMany({ where: { scheduleId: draft.id, pinned: true }, select: { shiftId: true, membershipId: true } });
+  const seed = randomInt(1, 2 ** 31 - 1);
+  const result = generateSchedule({ shifts, people, fixed: kept, seed });
+
+  await db.$transaction([
+    db.assignment.deleteMany({ where: { scheduleId: draft.id, pinned: false } }),
+    db.assignment.createMany({
+      data: result.assignments.map((a) => ({
+        scheduleId: draft.id,
+        shiftId: a.shiftId,
+        membershipId: a.membershipId,
+        auto: true,
+        covering: a.covering,
+        createdById: membership.id,
+      })),
+    }),
+    db.schedule.update({ where: { id: draft.id }, data: { seed } }),
+  ]);
+  refresh();
+
+  const needed = shifts.reduce((n, s) => n + s.requiredCount, 0);
+  const missing = result.unfilled.reduce((n, u) => n + u.missing, 0);
+  const covering = result.assignments.filter((a) => a.covering);
+  const coverers = [...new Set(covering.map((a) => a.membershipId))];
+  const who = coverers.length === 1 && coverers[0] !== membership.id ? `${people.find((p) => p.id === coverers[0])!.name} covers` : "You're covering";
+  const parts = [
+    `Schedule built: ${needed - missing} of ${needed} spots filled.`,
+    covering.length ? `${who} ${covering.length} ${covering.length === 1 ? "shift" : "shifts"} nobody else could.` : "",
+    missing ? `${result.unfilled.length} ${result.unfilled.length === 1 ? "shift still needs" : "shifts still need"} people.` : "",
+  ];
+  return { status: "success", message: parts.filter(Boolean).join(" ") };
 }

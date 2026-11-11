@@ -1,18 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { WeekSwitcher } from "@/components/app/week-switcher";
+import { BuildForm } from "@/components/shifts/build-form";
 import { PublishForm } from "@/components/shifts/publish-form";
 import { type Candidate, type GridShift, ScheduleGrid } from "@/components/shifts/schedule-grid";
-import { resolveDay } from "@/lib/availability";
-import { loadWeek } from "@/lib/availability-data";
 import { formatWeek } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { coversShift, describeShift, hoursOf, overlaps, timeRows, unavailableReason } from "@/lib/schedule";
 import { buildSnapshot, changesByPerson, hasUnpublishedChanges } from "@/lib/publish";
-import { daysOf, findWeek, loadPublished, loadShifts, selectedWeek } from "@/lib/schedule-data";
+import { daysOf, findWeek, loadPublished, loadSchedulingPeople, loadShifts, selectedWeek } from "@/lib/schedule-data";
+import { fairTargets } from "@/lib/scheduler";
 import { requireManager } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Schedule" };
+
+/** 12 → "12 h", 13.33 → "13.3 h" */
+const fmtHours = (h: number) => `${Number.isInteger(h) ? h : h.toFixed(1)} h`;
 
 export default async function SchedulePage({ searchParams }: PageProps<"/manager/schedule">) {
   const { membership } = await requireManager();
@@ -39,26 +42,18 @@ export default async function SchedulePage({ searchParams }: PageProps<"/manager
     );
   }
 
-  const [people, draft, published] = await Promise.all([
-    db.membership.findMany({
-      where: { businessId: membership.businessId, status: "ACTIVE", schedulingMode: { not: "NOT_SCHEDULED" } },
-      include: { user: { select: { name: true } } },
-      orderBy: { user: { name: "asc" } },
-    }),
+  const [{ people, dayFor }, draft, published] = await Promise.all([
+    loadSchedulingPeople(membership.businessId, monday, shifts),
     db.schedule.findFirst({
       where: { weekId: week!.id, status: "DRAFT" },
       include: { assignments: { include: { membership: { include: { user: { select: { name: true } } } } } } },
     }),
     loadPublished(week!.id),
   ]);
-  const availability = await loadWeek(people.map((p) => p.id), monday);
   const assignments = draft?.assignments ?? [];
   const shiftById = new Map(shifts.map((s) => [s.id, s]));
-
-  const dayFor = (personId: string, date: string) => {
-    const a = availability.get(personId);
-    return a ? resolveDay(date, a.template, a.overrides, a.timeOff) : null;
-  };
+  // Fair targets (section 5): the same numbers the auto-scheduler aims for.
+  const targets = fairTargets(shifts, people, assignments.filter((a) => a.pinned));
 
   // Each person's hours and shifts this week.
   const hours = new Map<string, number>();
@@ -84,6 +79,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/manager
         isOwner: a.membership.role === "OWNER",
         pinned: a.pinned,
         override: a.override,
+        covering: a.covering,
         conflict,
       };
     });
@@ -96,7 +92,13 @@ export default async function SchedulePage({ searchParams }: PageProps<"/manager
           const other = shiftById.get(a.shiftId);
           return a.membershipId === p.id && other && overlaps(shift, other);
         });
-        const base = { membershipId: p.id, name: p.user.name, isOwner: p.role === "OWNER", hours: hours.get(p.id) ?? 0 };
+        const base = {
+          membershipId: p.id,
+          name: p.name,
+          isOwner: p.role === "OWNER",
+          hours: hours.get(p.id) ?? 0,
+          target: targets.get(p.id) ?? null,
+        };
         if (clash) {
           return { ...base, status: "blocked" as const, reason: `Already working ${describeShift(shiftById.get(clash.shiftId)!)}` };
         }
@@ -105,12 +107,15 @@ export default async function SchedulePage({ searchParams }: PageProps<"/manager
       })
       .sort((a, b) => {
         const order = { available: 0, unavailable: 1, blocked: 2 };
-        // Available people with the fewest hours first, then the owner as backup (decision 19).
-        return order[a.status] - order[b.status] || Number(a.isOwner) - Number(b.isOwner) || a.hours - b.hours || a.name.localeCompare(b.name);
+        // Available people furthest below their fair target first; backup people (the owner) last (decision 19).
+        const gap = (c: typeof a) => (c.target === null ? -Infinity : c.target - c.hours);
+        return order[a.status] - order[b.status] || gap(b) - gap(a) || a.hours - b.hours || a.name.localeCompare(b.name);
       });
 
     return { ...shift, label: describeShift(shift), assigned, candidates };
   });
+
+  const scale = Math.max(1, ...people.map((p) => Math.max(hours.get(p.id) ?? 0, targets.get(p.id) ?? 0)));
 
   const short = gridShifts.filter((s) => s.assigned.length < s.requiredCount);
   // The number needed was lowered after people were assigned: the manager picks who comes off.
@@ -161,7 +166,10 @@ export default async function SchedulePage({ searchParams }: PageProps<"/manager
             </span>
           </p>
         </div>
-        <PublishForm monday={monday} firstPublish={!published} hasChanges={hasChanges} problems={problems} />
+        <div className="flex flex-wrap items-start gap-3">
+          <BuildForm monday={monday} regenerate={assignments.some((a) => a.auto)} />
+          <PublishForm monday={monday} firstPublish={!published} hasChanges={hasChanges} problems={problems} />
+        </div>
       </div>
 
       <WeekSwitcher basePath="/manager/schedule" weeks={weeks} selected={selected} />
@@ -213,21 +221,39 @@ export default async function SchedulePage({ searchParams }: PageProps<"/manager
           <ul className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2 lg:grid-cols-3">
             {people.map((p) => {
               const h = hours.get(p.id) ?? 0;
+              const target = targets.get(p.id);
               const count = assignments.filter((a) => a.membershipId === p.id).length;
               return (
-                <li key={p.id} className="flex justify-between gap-2 bg-white px-4 py-2 text-sm">
-                  <span>
-                    {p.user.name}
-                    {p.role === "OWNER" && <span className="text-muted-foreground"> (owner)</span>}
-                  </span>
-                  <span className="whitespace-nowrap text-muted-foreground">
-                    <strong className="text-navy">{Number.isInteger(h) ? h : h.toFixed(2)} h</strong> · {count} shift{count === 1 ? "" : "s"}
-                  </span>
+                <li key={p.id} className="space-y-1.5 bg-white px-4 py-2.5 text-sm">
+                  <div className="flex justify-between gap-2">
+                    <span>
+                      {p.name}
+                      {p.role === "OWNER" && <span className="text-muted-foreground"> (owner)</span>}
+                    </span>
+                    <span className="whitespace-nowrap text-muted-foreground">
+                      <strong className="text-navy">{fmtHours(h)}</strong> · {count} shift{count === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  {target !== undefined ? (
+                    <div className="flex items-center gap-2">
+                      <div className="relative h-2 flex-1 rounded-full bg-slate-100" aria-hidden>
+                        <div className="h-2 rounded-full bg-teal" style={{ width: `${(Math.min(h, scale) / scale) * 100}%` }} />
+                        <div className="absolute -top-1 h-4 w-0.5 bg-navy" style={{ left: `${(target / scale) * 100}%` }} />
+                      </div>
+                      <span className="w-24 text-right text-xs text-muted-foreground">
+                        {target > 0 ? `fair: ${fmtHours(target)}` : "not available"}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Backup: covers gaps, no target</p>
+                  )}
                 </li>
               );
             })}
           </ul>
-          <p className="text-xs text-muted-foreground">Fair targets based on availability come with the auto-scheduler.</p>
+          <p className="text-xs text-muted-foreground">
+            Bar = hours given. Line = fair share, based on how much each person is available.
+          </p>
         </aside>
       </div>
     </div>
