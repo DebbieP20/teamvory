@@ -21,6 +21,7 @@ export function TimeCombobox({
   onChange,
   invalid,
   errorId,
+  label,
 }: {
   id: string;
   name: string;
@@ -28,6 +29,8 @@ export function TimeCombobox({
   onChange: (value: string) => void;
   invalid: boolean;
   errorId?: string;
+  /** Accessible name when there's no visible <label for={id}> */
+  label?: string;
 }) {
   const listId = useId();
   const [text, setText] = useState(() => display(value));
@@ -90,6 +93,7 @@ export function TimeCombobox({
           autoComplete="off"
           placeholder="12:15 PM"
           value={text}
+          aria-label={label}
           aria-expanded={open}
           aria-controls={listId}
           aria-autocomplete="list"
@@ -172,4 +176,13 @@ function nearestIndex(value: string) {
   const parsed = parseTimeInput(value) ?? "12:00";
   const minutes = Number(parsed.slice(0, 2)) * 60 + Number(parsed.slice(3));
   return Math.min(QUARTER_HOURS.length - 1, Math.floor(minutes / 15));
+}
+
+/** A friendly message if a typed time can't be used, otherwise null. */
+export function timeProblem(time: string): string | null {
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return "Double-check the time. Type it like 12:15 PM, or pick one from the list.";
+  if (Number(time.slice(3)) % 15 !== 0) {
+    return "Double-check the time. Use :00, :15, :30 or :45, like 12:15 PM.";
+  }
+  return null;
 }

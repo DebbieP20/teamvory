@@ -8,7 +8,7 @@ It replaces the usual routine of collecting availability by text message, typing
 
 ## Status
 
-🟡 **M3: availability in progress.** M0–M2 (setup, public website, accounts) are done.
+🟡 **M4: shift setup and manual schedule in progress.** M0–M3 are done.
 
 | Milestone | | Status |
 |---|---|---|
@@ -17,8 +17,8 @@ It replaces the usual routine of collecting availability by text message, typing
 | M0 | Project setup | ✅ Done |
 | M1 | Public website | ✅ Done |
 | M2 | Accounts (sign up, log in, invitations, roles) | ✅ Done |
-| M3 | Availability (default week, weekly changes, time off) | 🚧 In progress |
-| M4 | Shift setup and manual scheduling | |
+| M3 | Availability (default week, weekly changes, time off) | ✅ Done |
+| M4 | Shift setup and manual scheduling | 🚧 In progress |
 | M5 | Publishing, email and availability reminders | |
 | M6 | Auto-scheduler | |
 | M7 | Swaps and open shifts | |

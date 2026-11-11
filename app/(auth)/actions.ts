@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { errorState, type FormState } from "@/lib/form-state";
 import { clientIpHash, isRateLimited } from "@/lib/rate-limit";
 import { getMembership, getSessionUser, homePath, requireUser } from "@/lib/session";
+import { DEFAULT_PATTERNS } from "@/lib/schedule";
 import { sha256 } from "@/lib/tokens";
 import { safeNextPath } from "@/lib/urls";
 import {
@@ -49,6 +50,8 @@ async function createBusinessFor(userId: string, businessName: string) {
           },
         },
       },
+      // Starting patterns (decision 23); the owner can edit or delete them.
+      shiftPatterns: { create: DEFAULT_PATTERNS.map((p) => ({ name: p.name, shifts: p.shifts })) },
     },
   });
 }

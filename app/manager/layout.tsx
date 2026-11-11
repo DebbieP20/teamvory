@@ -4,6 +4,8 @@ const links = [
   { href: "/manager", label: "Dashboard" },
   { href: "/manager/employees", label: "Employees" },
   { href: "/manager/availability", label: "Availability" },
+  { href: "/manager/shifts", label: "Shifts" },
+  { href: "/manager/schedule", label: "Schedule" },
   { href: "/manager/settings", label: "Settings" },
 ];
 

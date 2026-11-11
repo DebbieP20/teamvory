@@ -13,7 +13,7 @@ export function AppNav({ links }: { links: NavLink[] }) {
 /** The links themselves; without a pathname nothing is highlighted (used while loading). */
 export function AppNavLinks({ links, pathname }: { links: NavLink[]; pathname?: string }) {
   return (
-    <nav aria-label="App" className="flex gap-1 overflow-x-auto">
+    <nav aria-label="App" className="flex flex-wrap gap-1 sm:flex-nowrap">
       {links.map((link) => {
         // Sections are active on their sub-pages too (e.g. /employee/availability/week).
         const isHome = links[0]?.href === link.href;
