@@ -194,3 +194,35 @@ test("overlapping shifts are blocked, and later availability changes are flagged
   await expect(page.getByText(`Eli Employee is on ${afternoon} but isn't available any more (Time off).`)).toBeVisible();
   await employeeContext.close();
 });
+
+test("lowering the people needed after assigning flags the extra person", async ({ page, browser }, testInfo) => {
+  const { employee, employeeContext } = await ownerWithEmployee(page, browser, testInfo);
+  await setDefaultWeek(employee, ["All day", "All day", "All day", "All day", "All day", "All day", "All day"]);
+  await applyPattern(page, "Standard", [1]);
+  const evening = shiftLabel(1, "17:00", "21:00");
+
+  await page.goto("/manager/schedule?week=next");
+  for (const name of ["Eli Employee", "Dana Owner"]) {
+    await page.getByRole("button", { name: `Assign: ${evening}` }).click();
+    await page.getByRole("dialog").getByRole("button", { name: `Assign ${name}` }).click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+  }
+  // Full: no more Assign button.
+  await expect(page.getByRole("button", { name: `Assign: ${evening}` })).toHaveCount(0);
+
+  // The owner changes Tuesday 5–9 to 1 person.
+  await page.goto("/manager/shifts?week=next");
+  const tuesday = page.getByRole("listitem", { name: formatDay(next(1)) });
+  await tuesday.getByRole("button", { name: "Edit: 5 PM – 9 PM" }).click();
+  await tuesday.getByLabel("people", { exact: true }).selectOption("1");
+  await tuesday.getByRole("button", { name: "Save" }).click();
+  await expect(tuesday.getByText("2 assigned: remove 1 on the")).toBeVisible();
+
+  await page.goto("/manager/schedule?week=next");
+  await expect(page.getByText(`${evening} has 2 people but needs 1. Remove 1`)).toBeVisible();
+  await expect(page.getByText("Every shift is filled.")).toHaveCount(0);
+
+  await page.getByRole("button", { name: `Remove: Dana Owner, ${evening}` }).click();
+  await expect(page.getByText(`${evening} has 2 people`)).toHaveCount(0);
+  await employeeContext.close();
+});

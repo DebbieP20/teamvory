@@ -85,7 +85,7 @@ export default async function ShiftSetupPage({ searchParams }: PageProps<"/manag
                 </span>
               </h3>
               {dayShifts.map((s) => (
-                <ShiftRowForm key={s.id} shift={s} assigned={assigned.get(s.id) ?? 0} />
+                <ShiftRowForm key={s.id} shift={s} assigned={assigned.get(s.id) ?? 0} scheduleHref={`/manager/schedule?week=${selected}`} />
               ))}
               <AddShiftForm date={date} label={formatDay(date)} />
             </li>

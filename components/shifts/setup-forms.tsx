@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
+import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { FormMessage, SubmitButton, submitWithoutReset } from "@/components/forms/fields";
@@ -101,9 +102,11 @@ export function ApplyPatternForm({
 export function ShiftRowForm({
   shift,
   assigned,
+  scheduleHref,
 }: {
   shift: { id: string; startTime: string; endTime: string; requiredCount: number };
   assigned: number;
+  scheduleHref: string;
 }) {
   const [state, action, pending] = useActionState(updateShift, idleState);
   const [editing, setEditing] = useState(false);
@@ -122,8 +125,16 @@ export function ShiftRowForm({
           <div className="font-medium">{summary}</div>
           <div className="text-xs text-muted-foreground">
             {shift.requiredCount} {shift.requiredCount === 1 ? "person" : "people"}
-            {assigned > 0 && ` · ${assigned} assigned`}
+            {assigned > 0 && assigned <= shift.requiredCount && ` · ${assigned} assigned`}
           </div>
+          {assigned > shift.requiredCount && (
+            <div className="text-xs font-semibold text-destructive">
+              {assigned} assigned: remove {assigned - shift.requiredCount} on the{" "}
+              <Link href={scheduleHref} className="underline">
+                Schedule
+              </Link>
+            </div>
+          )}
         </div>
         <Button variant="outline" size="lg" onClick={() => setEditing(true)} aria-label={`Edit: ${summary}`}>
           Edit

@@ -110,6 +110,8 @@ export default async function SchedulePage({ searchParams }: PageProps<"/manager
   });
 
   const short = gridShifts.filter((s) => s.assigned.length < s.requiredCount);
+  // The number needed was lowered after people were assigned: the manager picks who comes off.
+  const overfull = gridShifts.filter((s) => s.assigned.length > s.requiredCount);
   const totalNeeded = shifts.reduce((n, s) => n + s.requiredCount, 0);
   const totalFilled = gridShifts.reduce((n, s) => n + Math.min(s.assigned.length, s.requiredCount), 0);
 
@@ -130,10 +132,18 @@ export default async function SchedulePage({ searchParams }: PageProps<"/manager
 
       <WeekSwitcher basePath="/manager/schedule" weeks={weeks} selected={selected} />
 
-      {(short.length > 0 || conflicts.length > 0) && (
+      {(short.length > 0 || overfull.length > 0 || conflicts.length > 0) && (
         <section aria-labelledby="attention-heading" className="space-y-2">
           <h2 id="attention-heading" className="sr-only">Needs attention</h2>
           <ul className="space-y-2">
+            {overfull.map((s) => {
+              const extra = s.assigned.length - s.requiredCount;
+              return (
+                <li key={s.id} className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-destructive">
+                  {s.label} has {s.assigned.length} people but needs {s.requiredCount}. Remove {extra} (marked in red below).
+                </li>
+              );
+            })}
             {conflicts.map((c) => (
               <li key={c} className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
                 ⚠ {c}
@@ -155,7 +165,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/manager
           </ul>
         </section>
       )}
-      {short.length === 0 && conflicts.length === 0 && (
+      {short.length === 0 && overfull.length === 0 && conflicts.length === 0 && (
         <p role="status" className="rounded-lg border border-teal/40 bg-mint px-4 py-2 text-sm text-teal-dark">
           ✓ Every shift is filled.
         </p>

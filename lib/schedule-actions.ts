@@ -168,6 +168,14 @@ export async function updateShift(_prev: FormState, formData: FormData): Promise
   const s = shifts[0];
   await db.shift.update({ where: { id: shift.id }, data: { startTime: s.start, endTime: s.end, requiredCount: s.required } });
   refresh();
+  const assigned = await db.assignment.count({ where: { shiftId: shift.id, schedule: { status: "DRAFT" } } });
+  if (assigned > s.required) {
+    const extra = assigned - s.required;
+    return {
+      status: "success",
+      message: `Shift saved. ${assigned} people are already assigned, so remove ${extra} on the Schedule.`,
+    };
+  }
   return { status: "success", message: "Shift saved." };
 }
 
@@ -207,6 +215,10 @@ export async function assignPerson(_prev: FormState, formData: FormData): Promis
     include: { shift: true },
   });
   if (theirShifts.some((a) => a.shiftId === shift.id)) return errorState(`${person.user.name} is already on this shift.`);
+  const onShift = await db.assignment.count({ where: { scheduleId: draft.id, shiftId: shift.id } });
+  if (onShift >= shift.requiredCount) {
+    return errorState(`This shift already has the ${shift.requiredCount} ${shift.requiredCount === 1 ? "person" : "people"} it needs. To add more, raise the number in Shift setup.`);
+  }
   const clash = theirShifts.find((a) =>
     overlaps(shiftTimes, { date: fromDbDate(a.shift.date), startTime: a.shift.startTime, endTime: a.shift.endTime }),
   );

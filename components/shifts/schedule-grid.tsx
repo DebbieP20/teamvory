@@ -119,21 +119,25 @@ export function ScheduleGrid({
 /** One shift: how many are on it, their chips, and the Assign button. */
 function ShiftCell({ shift, onAssign, heading }: { shift: GridShift; onAssign: () => void; heading?: string }) {
   const short = shift.assigned.length < shift.requiredCount;
+  // More people than the shift needs, e.g. after lowering the number in Shift setup.
+  const extra = shift.assigned.length - shift.requiredCount;
+  const problem = short || extra > 0;
   return (
-    <div className={cn("h-full rounded-lg border p-1.5", short ? "border-red-200 bg-red-50" : "bg-slate-50")}>
-      <div className={cn("mb-1 flex justify-between gap-2 text-xs", short ? "font-semibold text-destructive" : "text-muted-foreground")}>
+    <div className={cn("h-full rounded-lg border p-1.5", problem ? "border-red-200 bg-red-50" : "bg-slate-50")}>
+      <div className={cn("mb-1 flex justify-between gap-2 text-xs", problem ? "font-semibold text-destructive" : "text-muted-foreground")}>
         <span>
           {heading && <span className="mr-2 text-sm font-semibold text-navy">{heading}</span>}
           {shift.assigned.length}/{shift.requiredCount}
         </span>
         {short && <span>needs {shift.requiredCount - shift.assigned.length}</span>}
+        {extra > 0 && <span>remove {extra}</span>}
       </div>
       <ul className="space-y-1">
         {shift.assigned.map((a) => (
           <AssignedChip key={a.id} assignment={a} shiftLabel={shift.label} />
         ))}
       </ul>
-      {short ? (
+      {short && (
         <button
           type="button"
           onClick={onAssign}
@@ -141,15 +145,6 @@ function ShiftCell({ shift, onAssign, heading }: { shift: GridShift; onAssign: (
           className="mt-1 flex w-full items-center justify-center gap-1 rounded-md border border-dashed border-slate-400 py-1 text-xs text-muted-foreground hover:border-teal-dark hover:text-teal-dark"
         >
           <PlusIcon className="size-3" aria-hidden /> Assign
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={onAssign}
-          aria-label={`Add someone extra: ${shift.label}`}
-          className="mt-1 w-full text-center text-xs text-muted-foreground hover:text-teal-dark"
-        >
-          + add
         </button>
       )}
     </div>
