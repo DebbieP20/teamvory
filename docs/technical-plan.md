@@ -139,6 +139,8 @@ TeamVory is meant for many kinds of businesses, so these two are **settings in B
 
 **Seasons:** at the start of a season the manager opens a "Season roster" screen and checks who is back. Returning employees become ACTIVE. Everyone else stays INACTIVE, keeping their history and default availability, and can be reactivated in a later season. Inactive employees can't log in to the employee area and are never scheduled.
 
+**Publishing (built in M5):** the manager always works on the week's one draft. **Publish** freezes it into a new numbered version (a snapshot of the shifts, times and people) and marks the previous version SUPERSEDED. The first publish emails everyone who can be scheduled. Later publishes email only the people whose own shifts changed (added, removed or moved), with what changed. The Schedule page shows *Draft*, *Published* or *Unpublished changes for N people*, and asks before publishing shifts that are short or have too many people. Employees see the latest published version on their home page (this week and next week, with who they work with).
+
 **Preventing silent overwrites (NFR "Reliability"):** `Schedule` and `Assignment` rows carry a version number. A save sent with an out-of-date version is rejected and the manager is shown "This schedule changed since you opened it."
 
 ---

@@ -1,10 +1,12 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 import { type DaySetting, editableWeeks, isWeekLocked, validateDay } from "@/lib/availability";
 import { authorizeAvailability, getBusinessSettings, today } from "@/lib/availability-data";
 import { addDays, daysBetween, formatDay, formatWeek, fromDbDate, type IsoDate, toDbDate, weekStart } from "@/lib/dates";
+import { notifyManagersOfConflicts } from "@/lib/conflicts";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { errorState, type FormState } from "@/lib/form-state";
@@ -25,6 +27,17 @@ function readDay(formData: FormData, prefix = ""): DaySetting {
 
 function lockedMessage(monday: IsoDate) {
   return `The availability deadline for the week of ${formatWeek(monday)} has passed. Ask your manager to change it.`;
+}
+
+/**
+ * An employee's own change that clashes with a shift they're already published on
+ * alerts the managers (once per clash). Runs after the response, so saving stays fast.
+ */
+function alertManagersIfConflict(access: { actor: { businessId: string }; target: { id: string }; actorIsManager: boolean }) {
+  if (access.actorIsManager) return; // the manager made the change and knows
+  after(() =>
+    notifyManagersOfConflicts(access.actor.businessId, access.target.id).catch((e) => console.error("Conflict alert failed", e)),
+  );
 }
 
 // --- Default week ------------------------------------------------------------
@@ -50,6 +63,7 @@ export async function saveDefaultWeek(_prev: FormState, formData: FormData): Pro
       }),
     ),
   );
+  alertManagersIfConflict(access);
   refresh();
   return { status: "success", message: "Default week saved." };
 }
@@ -88,6 +102,7 @@ export async function saveDayChange(_prev: FormState, formData: FormData): Promi
     create: { membershipId, date: toDbDate(date), enteredById: check.access.actor.id, ...day },
     update: { enteredById: check.access.actor.id, ...day },
   });
+  alertManagersIfConflict(check.access);
   refresh();
   return { status: "success", message: `Saved for ${formatDay(date)}.` };
 }
@@ -98,6 +113,7 @@ export async function resetDayChange(_prev: FormState, formData: FormData): Prom
   if ("error" in check) return errorState(check.error);
 
   await db.availabilityOverride.deleteMany({ where: { membershipId: check.access.target.id, date: toDbDate(date) } });
+  alertManagersIfConflict(check.access);
   refresh();
   return { status: "success", message: `${formatDay(date)} is back to the default.` };
 }
@@ -159,6 +175,7 @@ export async function addTimeOff(_prev: FormState, formData: FormData): Promise<
       enteredById: access.actor.id,
     },
   });
+  alertManagersIfConflict(access);
   refresh();
   return {
     status: "success",
@@ -218,7 +235,11 @@ const settingsSchema = z.object({
   deadlineDay: z.coerce.number().int().min(1).max(7),
   deadlineTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   timeOffApprovalRequired: z.boolean(),
-});
+  reminderEnabled: z.boolean(),
+  reminderStartDay: z.coerce.number().int().min(1).max(7),
+  reminderDays: z.coerce.number().int().min(1).max(7),
+  reminderIncludeDefaultOnly: z.boolean(),
+}).refine((v) => v.reminderStartDay + v.reminderDays <= 8, { message: "Reminders can't run past Sunday." });
 
 export async function saveAvailabilitySettings(_prev: FormState, formData: FormData): Promise<FormState> {
   const { membership } = await requireManager();
@@ -229,6 +250,10 @@ export async function saveAvailabilitySettings(_prev: FormState, formData: FormD
     deadlineDay: formData.get("deadlineDay"),
     deadlineTime: formData.get("deadlineTime"),
     timeOffApprovalRequired: formData.get("timeOffApprovalRequired") === "on",
+    reminderEnabled: formData.get("reminderEnabled") === "on",
+    reminderStartDay: formData.get("reminderStartDay"),
+    reminderDays: formData.get("reminderDays"),
+    reminderIncludeDefaultOnly: formData.get("reminderIncludeDefaultOnly") === "on",
   });
   if (!parsed.success) return errorState("Please check the settings.");
 
@@ -241,6 +266,10 @@ export async function saveAvailabilitySettings(_prev: FormState, formData: FormD
         availabilityDeadlineDay: parsed.data.deadlineDay,
         availabilityDeadlineTime: parsed.data.deadlineTime,
         timeOffApprovalRequired: parsed.data.timeOffApprovalRequired,
+        reminderEnabled: parsed.data.reminderEnabled,
+        reminderStartDay: parsed.data.reminderStartDay,
+        reminderDays: parsed.data.reminderDays,
+        reminderIncludeDefaultOnly: parsed.data.reminderIncludeDefaultOnly,
       },
     }),
     // Turning approval off approves anything still waiting (decision 30).

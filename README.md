@@ -8,7 +8,7 @@ It replaces the usual routine of collecting availability by text message, typing
 
 ## Status
 
-🟡 **M4: shift setup and manual schedule in progress.** M0–M3 are done.
+🟡 **M5: publishing, email and availability reminders in progress.** M0–M4 are done.
 
 | Milestone | | Status |
 |---|---|---|
@@ -18,8 +18,8 @@ It replaces the usual routine of collecting availability by text message, typing
 | M1 | Public website | ✅ Done |
 | M2 | Accounts (sign up, log in, invitations, roles) | ✅ Done |
 | M3 | Availability (default week, weekly changes, time off) | ✅ Done |
-| M4 | Shift setup and manual scheduling | 🚧 In progress |
-| M5 | Publishing, email and availability reminders | |
+| M4 | Shift setup and manual scheduling | ✅ Done |
+| M5 | Publishing, email and availability reminders | 🚧 In progress |
 | M6 | Auto-scheduler | |
 | M7 | Swaps and open shifts | |
 | M8 | Events and exports (PDF, PNG, JPG, Word, Excel) | |
@@ -76,6 +76,12 @@ Check that the app can reach the database at http://localhost:3000/api/health.
 | `npm run test:e2e` | Browser tests on desktop and phone sizes (Playwright; run `npm run build` first) |
 
 GitHub Actions runs all of these on every pull request.
+
+**The daily job** (availability reminders, email retries) runs every morning once the app is hosted (`vercel.json`). On your computer, run it by hand with the `CRON_SECRET` from `.env`:
+
+```bash
+curl -H "Authorization: Bearer <CRON_SECRET>" http://localhost:3000/api/cron/daily
+```
 
 ## Documentation
 

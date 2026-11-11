@@ -1,9 +1,10 @@
 import "server-only";
-import { editableWeeks } from "@/lib/availability";
-import { getBusinessSettings, today } from "@/lib/availability-data";
+import { editableWeeks, resolveDay } from "@/lib/availability";
+import { getBusinessSettings, loadWeek, today } from "@/lib/availability-data";
 import { addDays, fromDbDate, type IsoDate, toDbDate } from "@/lib/dates";
 import { db } from "@/lib/db";
-import type { PatternShift } from "@/lib/schedule";
+import { buildSnapshot, type Snapshot, type SnapshotShift } from "@/lib/publish";
+import { coversShift, type PatternShift, unavailableReason } from "@/lib/schedule";
 
 /** "this" or "next" from ?week=, and the matching Monday (decision 22: two weeks only). */
 export async function selectedWeek(businessId: string, param: string | string[] | undefined) {
@@ -53,3 +54,66 @@ export async function loadPatterns(businessId: string) {
 
 /** Dates of the 7 days of the week starting `monday`. */
 export const daysOf = (monday: IsoDate) => Array.from({ length: 7 }, (_, i) => addDays(monday, i));
+
+/** The version the team can see for a week (null before the first publish). */
+export async function loadPublished(weekId: string | undefined) {
+  if (!weekId) return null;
+  const schedule = await db.schedule.findFirst({ where: { weekId, status: "PUBLISHED" } });
+  return schedule ? { ...schedule, snapshot: schedule.snapshot as Snapshot } : null;
+}
+
+/** The draft as it would be published right now. */
+export async function draftSnapshot(weekId: string): Promise<Snapshot> {
+  const [shifts, draft] = await Promise.all([
+    loadShifts(weekId),
+    db.schedule.findFirst({
+      where: { weekId, status: "DRAFT" },
+      include: { assignments: { include: { membership: { include: { user: { select: { name: true } } } } } } },
+    }),
+  ]);
+  return buildSnapshot(
+    shifts,
+    (draft?.assignments ?? []).map((a) => ({ shiftId: a.shiftId, membershipId: a.membershipId, name: a.membership.user.name })),
+  );
+}
+
+export type PublishedConflict = { scheduleId: string; membershipId: string; name: string; shift: SnapshotShift; reason: string };
+
+/**
+ * Published shifts (today onwards) that someone can no longer work because their
+ * availability changed after publishing. The schedule never changes by itself (section 3).
+ */
+export async function publishedConflicts(businessId: string, onlyMembershipId?: string): Promise<PublishedConflict[]> {
+  const { now, weeks } = await selectedWeek(businessId, undefined);
+  const result: PublishedConflict[] = [];
+  for (const monday of [weeks.thisWeek, weeks.nextWeek]) {
+    const week = await findWeek(businessId, monday);
+    const published = await loadPublished(week?.id);
+    if (!published) continue;
+    const upcoming = published.snapshot.shifts.filter((s) => s.date >= now.date);
+    const ids = [...new Set(upcoming.flatMap((s) => s.people.map((p) => p.membershipId)))].filter(
+      (id) => !onlyMembershipId || id === onlyMembershipId,
+    );
+    if (!ids.length) continue;
+    const [availability, agreed] = await Promise.all([
+      loadWeek(ids, monday),
+      // Exceptions the manager agreed to aren't conflicts.
+      db.assignment.findMany({
+        where: { schedule: { weekId: week!.id, status: "DRAFT" }, override: true, membershipId: { in: ids } },
+        select: { shiftId: true, membershipId: true },
+      }),
+    ]);
+    const agreedKeys = new Set(agreed.map((a) => `${a.shiftId}:${a.membershipId}`));
+    for (const shift of upcoming) {
+      for (const p of shift.people) {
+        const a = availability.get(p.membershipId);
+        if (!a || agreedKeys.has(`${shift.shiftId}:${p.membershipId}`)) continue;
+        const day = resolveDay(shift.date, a.template, a.overrides, a.timeOff);
+        if (!coversShift(day, shift)) {
+          result.push({ scheduleId: published.id, membershipId: p.membershipId, name: p.name, shift, reason: unavailableReason(day) });
+        }
+      }
+    }
+  }
+  return result;
+}

@@ -1,20 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { WeekSwitcher } from "@/components/app/week-switcher";
+import { PublishForm } from "@/components/shifts/publish-form";
 import { type Candidate, type GridShift, ScheduleGrid } from "@/components/shifts/schedule-grid";
 import { resolveDay } from "@/lib/availability";
 import { loadWeek } from "@/lib/availability-data";
 import { formatWeek } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { coversShift, describeShift, hoursOf, overlaps, timeRows, unavailableReason } from "@/lib/schedule";
-import { daysOf, findWeek, loadShifts, selectedWeek } from "@/lib/schedule-data";
+import { buildSnapshot, changesByPerson, hasUnpublishedChanges } from "@/lib/publish";
+import { daysOf, findWeek, loadPublished, loadShifts, selectedWeek } from "@/lib/schedule-data";
 import { requireManager } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Schedule" };
 
 export default async function SchedulePage({ searchParams }: PageProps<"/manager/schedule">) {
   const { membership } = await requireManager();
-  const { weeks, selected, monday } = await selectedWeek(membership.businessId, (await searchParams).week);
+  const { settings, weeks, selected, monday } = await selectedWeek(membership.businessId, (await searchParams).week);
   const week = await findWeek(membership.businessId, monday);
   const shifts = await loadShifts(week?.id);
 
@@ -37,7 +39,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/manager
     );
   }
 
-  const [people, draft] = await Promise.all([
+  const [people, draft, published] = await Promise.all([
     db.membership.findMany({
       where: { businessId: membership.businessId, status: "ACTIVE", schedulingMode: { not: "NOT_SCHEDULED" } },
       include: { user: { select: { name: true } } },
@@ -47,6 +49,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/manager
       where: { weekId: week!.id, status: "DRAFT" },
       include: { assignments: { include: { membership: { include: { user: { select: { name: true } } } } } } },
     }),
+    loadPublished(week!.id),
   ]);
   const availability = await loadWeek(people.map((p) => p.id), monday);
   const assignments = draft?.assignments ?? [];
@@ -115,19 +118,50 @@ export default async function SchedulePage({ searchParams }: PageProps<"/manager
   const totalNeeded = shifts.reduce((n, s) => n + s.requiredCount, 0);
   const totalFilled = gridShifts.reduce((n, s) => n + Math.min(s.assigned.length, s.requiredCount), 0);
 
+  // Publishing: compare the draft with what the team can see.
+  const snapshot = buildSnapshot(
+    shifts,
+    assignments.map((a) => ({ shiftId: a.shiftId, membershipId: a.membershipId, name: a.membership.user.name })),
+  );
+  const hasChanges = hasUnpublishedChanges(published?.snapshot ?? null, snapshot);
+  const affected = published ? changesByPerson(published.snapshot, snapshot).size : 0;
+  const problems = [
+    short.length && `${short.length} ${short.length === 1 ? "shift still needs" : "shifts still need"} people`,
+    overfull.length && `${overfull.length} ${overfull.length === 1 ? "shift has" : "shifts have"} more people than needed`,
+  ].filter((p): p is string => !!p);
+  const publishedOn = published?.publishedAt
+    ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: settings.timezone }).format(published.publishedAt)
+    : null;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl">Schedule</h1>
           <p className="mt-1 text-muted-foreground">
-            Draft for {formatWeek(monday)}: {totalFilled} of {totalNeeded} spots filled. Your team can&apos;t see it until you publish (coming
-            next).
+            {formatWeek(monday)}: {totalFilled} of {totalNeeded} spots filled.{" "}
+            <Link href={`/manager/shifts?week=${selected}`} className="font-semibold text-teal-dark hover:underline">
+              Change shifts
+            </Link>
+          </p>
+          <p role="status" className="mt-2 text-sm">
+            {!published ? (
+              <span className="rounded bg-slate-200 px-2 py-0.5 font-semibold text-navy">Draft · not published</span>
+            ) : hasChanges ? (
+              <span className="rounded bg-amber-100 px-2 py-0.5 font-semibold text-amber-900">
+                Unpublished changes{affected ? ` for ${affected} ${affected === 1 ? "person" : "people"}` : ""}
+              </span>
+            ) : (
+              <span className="rounded bg-mint px-2 py-0.5 font-semibold text-teal-dark">Published</span>
+            )}{" "}
+            <span className="text-muted-foreground">
+              {!published
+                ? "Your team can't see it until you publish."
+                : `Version ${published.version}, published ${publishedOn}.${hasChanges ? " Your team still sees that version." : ""}`}
+            </span>
           </p>
         </div>
-        <Link href={`/manager/shifts?week=${selected}`} className="text-sm font-semibold text-teal-dark hover:underline">
-          Change shifts
-        </Link>
+        <PublishForm monday={monday} firstPublish={!published} hasChanges={hasChanges} problems={problems} />
       </div>
 
       <WeekSwitcher basePath="/manager/schedule" weeks={weeks} selected={selected} />

@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
-import { EMAIL_FILE } from "./e2e/helpers";
+import { E2E_CRON_SECRET, EMAIL_FILE } from "./e2e/helpers";
 
 mkdirSync(dirname(EMAIL_FILE), { recursive: true });
 
@@ -32,6 +32,7 @@ export default defineConfig({
       EMAIL_CAPTURE_FILE: EMAIL_FILE,
       BETTER_AUTH_URL: "http://localhost:3100",
       BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "e2e-only-secret-not-used-anywhere-else-0000",
+      CRON_SECRET: E2E_CRON_SECRET,
     },
   },
 });

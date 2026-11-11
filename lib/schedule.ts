@@ -40,6 +40,12 @@ export function describeShift(shift: ShiftTimes): string {
   return `${formatDay(shift.date)}, ${formatTime(shift.startTime)} – ${formatTime(shift.endTime)}`;
 }
 
+/** "Ana Pérez" → "Ana P." so names fit in the grid and emails (the full name is in labels). */
+export function shortName(name: string) {
+  const [first, ...rest] = name.trim().split(/\s+/);
+  return rest.length ? `${first} ${rest[rest.length - 1][0]}.` : first;
+}
+
 /**
  * The rows of the weekly grid: one per distinct shift time across the week,
  * earliest first (e.g. 12–5 and 5–9). A day without that shift shows an empty cell.

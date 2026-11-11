@@ -7,6 +7,7 @@ import { FormMessage } from "@/components/forms/fields";
 import { Button } from "@/components/ui/button";
 import { formatDay, formatTime, WEEKDAYS_SHORT } from "@/lib/dates";
 import { idleState } from "@/lib/form-state";
+import { shortName } from "@/lib/schedule";
 import { assignPerson, removeAssignment, togglePin } from "@/lib/schedule-actions";
 import { cn } from "@/lib/utils";
 
@@ -179,12 +180,6 @@ function AssignedChip({ assignment: a, shiftLabel }: { assignment: GridShift["as
       </form>
     </li>
   );
-}
-
-/** "Ana Pérez" → "Ana P." so names fit in the grid (the full name is in the tooltip and labels). */
-function shortName(name: string) {
-  const [first, ...rest] = name.trim().split(/\s+/);
-  return rest.length ? `${first} ${rest[rest.length - 1][0]}.` : first;
 }
 
 function IconSubmit({ label, pressed, children }: { label: string; pressed?: boolean; children: React.ReactNode }) {

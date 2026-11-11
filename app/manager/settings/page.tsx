@@ -28,6 +28,10 @@ export default async function SettingsPage() {
           deadlineDay: settings.deadline.day,
           deadlineTime: settings.deadline.time,
           timeOffApprovalRequired: settings.timeOffApprovalRequired,
+          reminderEnabled: settings.reminders.enabled,
+          reminderStartDay: settings.reminders.startDay,
+          reminderDays: settings.reminders.days,
+          reminderIncludeDefaultOnly: settings.reminders.includeDefaultOnly,
         }}
       />
     </div>
