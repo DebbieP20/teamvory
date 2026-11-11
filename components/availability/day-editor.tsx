@@ -3,7 +3,7 @@
 import { TriangleAlertIcon } from "lucide-react";
 import { useId, useState } from "react";
 import type { DaySetting, Kind } from "@/lib/availability";
-import { TimeCombobox } from "@/components/forms/time-combobox";
+import { TimeCombobox, timeProblem } from "@/components/forms/time-combobox";
 import { cn } from "@/lib/utils";
 
 const choices: { kind: Kind; label: string }[] = [
@@ -98,13 +98,4 @@ export function DayEditor({
       </p>
     </fieldset>
   );
-}
-
-/** A friendly message if a typed time can't be used, otherwise null. */
-function timeProblem(time: string): string | null {
-  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return "Double-check the time. Type it like 12:15 PM, or pick one from the list.";
-  if (Number(time.slice(3)) % 15 !== 0) {
-    return "Double-check the time. Use :00, :15, :30 or :45, like 12:15 PM.";
-  }
-  return null;
 }

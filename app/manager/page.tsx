@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function ManagerDashboard() {
   const { user, membership } = await requireManager();
-  const [teamCount, pendingInvites, missingAvailability, pendingTimeOff] = await Promise.all([
+  const [teamCount, pendingInvites, missingAvailability, pendingTimeOff, hasShifts, hasAssignments] = await Promise.all([
     db.membership.count({ where: { businessId: membership.businessId, status: "ACTIVE", role: { not: "OWNER" } } }),
     db.invitation.count({
       where: { businessId: membership.businessId, acceptedAt: null, revokedAt: null, expiresAt: { gt: new Date() } },
@@ -22,6 +22,8 @@ export default async function ManagerDashboard() {
       },
     }),
     db.timeOff.count({ where: { status: "PENDING", membership: { businessId: membership.businessId } } }),
+    db.shift.count({ where: { week: { businessId: membership.businessId } } }).then((n) => n > 0),
+    db.assignment.count({ where: { schedule: { week: { businessId: membership.businessId } } } }).then((n) => n > 0),
   ]);
 
   const steps = [
@@ -44,7 +46,8 @@ export default async function ManagerDashboard() {
           : "Collect availability",
       href: "/manager/availability",
     },
-    { done: false, label: "Set up shifts and build your first schedule (coming soon)", href: null },
+    { done: hasShifts, label: "Set up this week's shifts", href: "/manager/shifts" },
+    { done: hasAssignments, label: "Build the schedule", href: "/manager/schedule" },
   ];
 
   return (

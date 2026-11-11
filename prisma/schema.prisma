@@ -129,10 +129,12 @@ model Business {
   availabilityDeadlineTime    String  @default("18:00") @map("availability_deadline_time")
   timeOffApprovalRequired     Boolean @default(false) @map("time_off_approval_required")
 
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
-  memberships Membership[]
-  invitations Invitation[]
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  memberships   Membership[]
+  invitations   Invitation[]
+  shiftPatterns ShiftPattern[]
+  weeks         Week[]
 
   @@map("businesses")
 }
@@ -154,6 +156,7 @@ model Membership {
   availabilityTemplate  AvailabilityTemplate[]
   availabilityOverrides AvailabilityOverride[]
   timeOff               TimeOff[]
+  assignments           Assignment[]
 
   @@unique([userId, businessId])
   @@index([businessId])
@@ -257,4 +260,98 @@ model TimeOff {
 
   @@index([membershipId, startDate])
   @@map("time_off")
+}
+
+// ---------------------------------------------------------------------------
+// Shifts and schedules (technical plan, sections 4 and 5). What's needed
+// (Week -> Shift) is kept apart from who works (Schedule -> Assignment), so
+// schedules can be rebuilt without touching the shift setup.
+// ---------------------------------------------------------------------------
+
+/// A saved set of shifts, like "Standard" or "Slow day". Copied into real Shift
+/// rows when applied, so editing a pattern never changes weeks already set up.
+model ShiftPattern {
+  id         String   @id @default(uuid()) @db.Uuid
+  businessId String   @map("business_id") @db.Uuid
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  /// [{ "start": "12:00", "end": "17:00", "required": 2 }, ...]
+  shifts     Json
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([businessId, name])
+  @@map("shift_patterns")
+}
+
+model Week {
+  id         String     @id @default(uuid()) @db.Uuid
+  businessId String     @map("business_id") @db.Uuid
+  business   Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  /// Always a Monday
+  startDate  DateTime   @map("start_date") @db.Date
+  createdAt  DateTime   @default(now()) @map("created_at")
+  shifts     Shift[]
+  schedules  Schedule[]
+
+  @@unique([businessId, startDate])
+  @@map("weeks")
+}
+
+model Shift {
+  id            String       @id @default(uuid()) @db.Uuid
+  weekId        String       @map("week_id") @db.Uuid
+  week          Week         @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  date          DateTime     @db.Date
+  /// Local wall-clock "HH:mm"; shifts never cross midnight
+  startTime     String       @map("start_time")
+  endTime       String       @map("end_time")
+  requiredCount Int          @map("required_count")
+  notes         String?
+  createdAt     DateTime     @default(now()) @map("created_at")
+  assignments   Assignment[]
+
+  @@index([weekId, date])
+  @@map("shifts")
+}
+
+enum ScheduleStatus {
+  DRAFT
+  PUBLISHED
+  SUPERSEDED
+}
+
+/// A version of who works a week. M4 builds the DRAFT; publishing comes in M5.
+model Schedule {
+  id          String         @id @default(uuid()) @db.Uuid
+  weekId      String         @map("week_id") @db.Uuid
+  week        Week           @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  version     Int            @default(1)
+  status      ScheduleStatus @default(DRAFT)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  assignments Assignment[]
+
+  @@index([weekId, status])
+  @@map("schedules")
+}
+
+model Assignment {
+  id           String     @id @default(uuid()) @db.Uuid
+  scheduleId   String     @map("schedule_id") @db.Uuid
+  schedule     Schedule   @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  shiftId      String     @map("shift_id") @db.Uuid
+  shift        Shift      @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  membershipId String     @map("membership_id") @db.Uuid
+  membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  /// Placed by hand and kept by Generate/Regenerate (M6)
+  pinned       Boolean    @default(false)
+  /// Assigned although marked not available, after the manager confirmed (decision 20)
+  override     Boolean    @default(false)
+  createdById  String     @map("created_by_id") @db.Uuid
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  @@unique([scheduleId, shiftId, membershipId])
+  @@index([membershipId])
+  @@map("assignments")
 }
