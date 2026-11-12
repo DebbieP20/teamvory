@@ -137,6 +137,9 @@ model Business {
   reminderDays               Int     @default(2) @map("reminder_days")
   reminderIncludeDefaultOnly Boolean @default(false) @map("reminder_include_default_only")
 
+  /// Swaps and open-shift pickups: complete at once, or wait for a manager (section 6)
+  swapApprovalMode SwapApprovalMode @default(AUTOMATIC) @map("swap_approval_mode")
+
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
   memberships   Membership[]
@@ -144,6 +147,7 @@ model Business {
   shiftPatterns ShiftPattern[]
   weeks         Week[]
   notifications Notification[]
+  shiftRequests ShiftRequest[]
 
   @@map("businesses")
 }
@@ -166,6 +170,9 @@ model Membership {
   availabilityOverrides AvailabilityOverride[]
   timeOff               TimeOff[]
   assignments           Assignment[]
+  requestsMade          ShiftRequest[]         @relation("requestsMade")
+  requestsReceived      ShiftRequest[]         @relation("requestsReceived")
+  requestsPickedUp      ShiftRequest[]         @relation("requestsPickedUp")
 
   @@unique([userId, businessId])
   @@index([businessId])
@@ -294,14 +301,15 @@ model ShiftPattern {
 }
 
 model Week {
-  id         String     @id @default(uuid()) @db.Uuid
-  businessId String     @map("business_id") @db.Uuid
-  business   Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  id         String         @id @default(uuid()) @db.Uuid
+  businessId String         @map("business_id") @db.Uuid
+  business   Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
   /// Always a Monday
-  startDate  DateTime   @map("start_date") @db.Date
-  createdAt  DateTime   @default(now()) @map("created_at")
+  startDate  DateTime       @map("start_date") @db.Date
+  createdAt  DateTime       @default(now()) @map("created_at")
   shifts     Shift[]
   schedules  Schedule[]
+  requests   ShiftRequest[]
 
   @@unique([businessId, startDate])
   @@map("weeks")
@@ -401,4 +409,56 @@ model Notification {
 
   @@index([status, createdAt])
   @@map("notifications")
+}
+
+enum SwapApprovalMode {
+  AUTOMATIC
+  MANAGER_APPROVAL
+}
+
+enum ShiftRequestType {
+  /// Trade with a specific coworker (they must accept)
+  SWAP
+  /// Posted as an open shift: the first eligible person to pick it up gets it
+  COVERAGE
+}
+
+enum ShiftRequestStatus {
+  /// Waiting for the coworker (swap) or for someone to pick it up (open shift)
+  OPEN
+  PENDING_APPROVAL
+  COMPLETED
+  DECLINED
+  CANCELLED
+}
+
+/// A swap or open-shift request on the PUBLISHED schedule (section 6).
+/// The requester keeps the shift until the request completes.
+model ShiftRequest {
+  id                 String             @id @default(uuid()) @db.Uuid
+  businessId         String             @map("business_id") @db.Uuid
+  business           Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  type               ShiftRequestType
+  status             ShiftRequestStatus @default(OPEN)
+  requesterId        String             @map("requester_id") @db.Uuid
+  requester          Membership         @relation("requestsMade", fields: [requesterId], references: [id], onDelete: Cascade)
+  weekId             String             @map("week_id") @db.Uuid
+  week               Week               @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  /// A shift in the week's published snapshot (not a foreign key: the published copy
+  /// outlives later edits to the shift setup)
+  shiftId            String             @map("shift_id") @db.Uuid
+  /// Swaps: the coworker and the shift of theirs the requester would take
+  targetMembershipId String?            @map("target_membership_id") @db.Uuid
+  targetMembership   Membership?        @relation("requestsReceived", fields: [targetMembershipId], references: [id], onDelete: Cascade)
+  targetShiftId      String?            @map("target_shift_id") @db.Uuid
+  /// Open shifts: who picked it up
+  pickedUpById       String?            @map("picked_up_by_id") @db.Uuid
+  pickedUpBy         Membership?        @relation("requestsPickedUp", fields: [pickedUpById], references: [id], onDelete: Cascade)
+  note               String?
+  resolvedById       String?            @map("resolved_by_id") @db.Uuid
+  resolvedAt         DateTime?          @map("resolved_at")
+  createdAt          DateTime           @default(now()) @map("created_at")
+
+  @@index([businessId, status])
+  @@map("shift_requests")
 }

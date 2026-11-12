@@ -178,11 +178,14 @@ erDiagram
         uuid id PK
         uuid businessId FK
         enum type "SWAP or COVERAGE"
+        uuid weekId FK
         uuid requesterId FK
-        uuid assignmentId FK
-        uuid targetAssignmentId FK "swap only"
+        uuid shiftId "a shift in the published snapshot"
+        uuid targetMembershipId FK "swap only"
+        uuid targetShiftId "swap only"
         uuid pickedUpById FK "coverage only"
-        enum status "OPEN, PENDING_APPROVAL, COMPLETED, REJECTED, CANCELLED"
+        enum status "OPEN, PENDING_APPROVAL, COMPLETED, DECLINED, CANCELLED"
+        string note "optional"
         datetime createdAt
         datetime resolvedAt "optional"
     }
@@ -260,6 +263,8 @@ erDiagram
 | Time off dates make sense | Check: `endDate >= startDate` |
 | No duplicate emails | Unique `dedupeKey` on Notification, e.g. `publish:{scheduleId}:{membershipId}`, `avail-reminder:{weekStart}:{userId}:{date}`, `conflict:{scheduleId}:{shiftId}:{membershipId}:{managerId}` |
 | Published versions are complete | Check: a non-draft schedule has a `snapshot` and `publishedAt` |
+| One active request per person per shift | Partial unique index on (`shiftId`, `requesterId`) where status is OPEN or PENDING_APPROVAL |
+| Swaps name a coworker and shift; open shifts don't | Check on `type` and the target columns; nobody swaps with themselves |
 | Reminder days stay in the week | Check: `reminderStartDay + reminderDays <= 8` (never past Sunday) |
 | Overlapping shifts for one person | Checked in the service layer (needs time comparison across rows) and re-checked inside the swap/pickup transaction |
 

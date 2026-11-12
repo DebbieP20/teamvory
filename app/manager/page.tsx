@@ -1,12 +1,17 @@
 import { CheckCircle2Icon, CircleIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { RequestButton } from "@/components/requests/request-forms";
+import { ResultBanner } from "@/components/requests/result-banner";
 import { formatWeek } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { hasUnpublishedChanges } from "@/lib/publish";
 import { describeShift } from "@/lib/schedule";
 import { draftSnapshot, findWeek, loadPublished, publishedConflicts, selectedWeek } from "@/lib/schedule-data";
+import { reviewRequest } from "@/lib/request-actions";
+import { activeRequests } from "@/lib/requests-data";
 import { requireManager } from "@/lib/session";
+import { startsSoon } from "@/lib/swaps";
 import { cn } from "@/lib/utils";
 
 /** This week (running) and next week (being built), as in wireframe 4. */
@@ -31,13 +36,17 @@ export const metadata: Metadata = { title: "Dashboard" };
 export default async function ManagerDashboard() {
   const { user, membership } = await requireManager();
   const { weeks } = await selectedWeek(membership.businessId, undefined);
-  const [cards, conflicts] = await Promise.all([
+  const [cards, conflicts, { requests, now }] = await Promise.all([
     Promise.all([
       weekCard(membership.businessId, weeks.thisWeek, "this", "This week"),
       weekCard(membership.businessId, weeks.nextWeek, "next", "Next week"),
     ]),
     publishedConflicts(membership.businessId),
+    activeRequests(membership.businessId),
   ]);
+  const approvals = requests.filter((r) => r.status === "PENDING_APPROVAL");
+  const openShifts = requests.filter((r) => r.type === "COVERAGE" && r.status === "OPEN");
+  const attention = conflicts.length + approvals.length + openShifts.length;
   const [teamCount, pendingInvites, missingAvailability, pendingTimeOff, hasShifts, hasAssignments, hasPublished] = await Promise.all([
     db.membership.count({ where: { businessId: membership.businessId, status: "ACTIVE", role: { not: "OWNER" } } }),
     db.invitation.count({
@@ -104,23 +113,65 @@ export default async function ManagerDashboard() {
         ))}
       </div>
 
-      {conflicts.length > 0 && (
-        <section aria-labelledby="attention-heading" className="space-y-2">
-          <h2 id="attention-heading" className="text-lg">Needs your attention</h2>
-          <ul className="space-y-2">
-            {conflicts.map((c) => (
-              <li key={`${c.scheduleId}-${c.shift.shiftId}-${c.membershipId}`}>
-                <Link
-                  href={`/manager/schedule?week=${c.shift.date >= weeks.nextWeek ? "next" : "this"}`}
-                  className="block rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 text-amber-900 hover:bg-amber-100"
-                >
-                  ⚠ <strong>{c.name}</strong> can&apos;t work {describeShift(c.shift)} any more ({c.reason}). Find cover →
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <ResultBanner>
+        {attention > 0 && (
+          <section aria-labelledby="attention-heading" className="space-y-2">
+            <h2 id="attention-heading" className="text-lg">Needs your attention</h2>
+            <ul className="space-y-2">
+              {approvals.map((r) => (
+                <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-teal/40 bg-white px-5 py-3">
+                  <div>
+                    <div className="font-semibold">{r.type === "SWAP" ? "Swap to approve" : "Pickup to approve"}</div>
+                    <div className="text-sm">
+                      {r.type === "SWAP"
+                        ? `${r.requester.user.name} takes ${describeShift(r.targetShift!)}, ${r.targetMembership!.user.name} takes ${describeShift(r.shift)}. Both agreed.`
+                        : `${r.pickedUpBy!.user.name} takes ${r.requester.user.name}'s ${describeShift(r.shift)}.`}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <RequestButton action={reviewRequest} fields={{ requestId: r.id, decision: "approve" }} label="Approve" pendingText="Approving…" />
+                    <RequestButton
+                      action={reviewRequest}
+                      fields={{ requestId: r.id, decision: "decline" }}
+                      label="Decline"
+                      pendingText="Declining…"
+                      variant="secondary"
+                    />
+                  </div>
+                </li>
+              ))}
+              {openShifts.map((r) => {
+                const soon = startsSoon(r.shift, now);
+                return (
+                  <li key={r.id}>
+                    <Link
+                      href={`/manager/schedule?week=${r.monday === weeks.nextWeek ? "next" : "this"}`}
+                      className={cn(
+                        "block rounded-xl border px-5 py-3 hover:bg-slate-50",
+                        soon ? "border-red-200 bg-red-50 text-destructive" : "bg-white",
+                      )}
+                    >
+                      {soon && <strong>Starts soon · </strong>}
+                      Open shift: <strong>{describeShift(r.shift)}</strong>, posted by {r.requester.user.name}. Nobody has picked it up yet, so{" "}
+                      {r.requester.user.name.split(" ")[0]} still works it.
+                    </Link>
+                  </li>
+                );
+              })}
+              {conflicts.map((c) => (
+                <li key={`${c.scheduleId}-${c.shift.shiftId}-${c.membershipId}`}>
+                  <Link
+                    href={`/manager/schedule?week=${c.shift.date >= weeks.nextWeek ? "next" : "this"}`}
+                    className="block rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 text-amber-900 hover:bg-amber-100"
+                  >
+                    ⚠ <strong>{c.name}</strong> can&apos;t work {describeShift(c.shift)} any more ({c.reason}). Find cover →
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </ResultBanner>
 
       {pendingTimeOff > 0 && (
         <Link

@@ -7,6 +7,7 @@ import { shiftsFor } from "@/lib/publish";
 import { shortName } from "@/lib/schedule";
 import { findWeek, loadPublished, selectedWeek } from "@/lib/schedule-data";
 import { requireEmployee } from "@/lib/session";
+import { isUpcoming } from "@/lib/swaps";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Home" };
@@ -15,6 +16,15 @@ export default async function EmployeeHome() {
   const { user, membership } = await requireEmployee();
   const hasDefaultWeek = (await db.availabilityTemplate.count({ where: { membershipId: membership.id } })) > 0;
   const { now, weeks } = await selectedWeek(membership.businessId, undefined);
+  // Shifts with a swap or open-shift request in progress.
+  const requested = new Map(
+    (
+      await db.shiftRequest.findMany({
+        where: { requesterId: membership.id, status: { in: ["OPEN", "PENDING_APPROVAL"] } },
+        select: { shiftId: true, type: true, status: true },
+      })
+    ).map((r) => [r.shiftId, r]),
+  );
   const schedule = await Promise.all(
     [
       { label: "This week", monday: weeks.thisWeek },
@@ -66,7 +76,27 @@ export default async function EmployeeHome() {
                         </div>
                         <div className="text-sm text-muted-foreground">{others.length ? `With ${others.join(", ")}` : "Just you"}</div>
                       </div>
-                      {done && <span className="ml-auto text-xs text-muted-foreground">Done</span>}
+                      {done ? (
+                        <span className="ml-auto text-xs text-muted-foreground">Done</span>
+                      ) : requested.has(s.shiftId) ? (
+                        <Link href="/employee/shifts" className="ml-auto rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                          {requested.get(s.shiftId)!.status === "PENDING_APPROVAL"
+                            ? "Waiting for approval"
+                            : requested.get(s.shiftId)!.type === "SWAP"
+                              ? "Swap asked"
+                              : "Posted as open"}
+                        </Link>
+                      ) : (
+                        isUpcoming(s, now) && (
+                          <Link
+                            href={`/employee/shifts/${s.shiftId}`}
+                            className="ml-auto shrink-0 text-sm font-semibold text-teal-dark hover:underline"
+                            aria-label={`Can't make it: ${formatDay(s.date)}, ${formatTime(s.startTime)} – ${formatTime(s.endTime)}`}
+                          >
+                            Can&apos;t make it?
+                          </Link>
+                        )
+                      )}
                     </li>
                   );
                 })}

@@ -9,7 +9,7 @@ import { sendEmail } from "@/lib/email";
 export type OutgoingNotification = {
   businessId: string;
   userId: string;
-  type: "schedule-published" | "schedule-changed" | "availability-reminder" | "availability-conflict";
+  type: "schedule-published" | "schedule-changed" | "availability-reminder" | "availability-conflict" | "shift-request";
   dedupeKey: string;
   to: string;
   subject: string;

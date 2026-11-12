@@ -228,6 +228,13 @@ Until someone picks up the shift, the original employee is still assigned and st
 
 After completion, hours totals update and everyone involved gets a notification.
 
+**As built (M7):**
+- Employees open a shift from **My schedule → Can't make it?** and either **ask a coworker to swap** (only coworker shifts that work for both are listed, same week) or **post it as an open shift** (everyone who can work it gets an email). Requests are listed under **Shifts**, with Pick up, Accept/Decline and Cancel.
+- Swap approval is a setting, **Automatic** by default. With **Manager approves**, accepted swaps and pickups wait on the dashboard with Approve/Decline.
+- Completing a request claims it first (a guarded update in a transaction), so two people can't take the same shift. It then creates a new published version with the change (the change is on record), and makes the same change in the draft (pinned) so the manager's next publish doesn't undo it.
+- Every step re-checks the rules against the published schedule as it is now. If it changed underneath (re-published, shift started, availability changed), the request is closed with the reason.
+- The dashboard lists open shifts (red when they start within 24 hours) and approvals. Only employees swap and pick up; the owner and managers change the schedule directly.
+
 ---
 
 ## 6b. Availability reminders (and calendar sync, on hold)

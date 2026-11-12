@@ -16,6 +16,7 @@ type Initial = {
   reminderStartDay: number;
   reminderDays: number;
   reminderIncludeDefaultOnly: boolean;
+  swapApprovalMode: "AUTOMATIC" | "MANAGER_APPROVAL";
 };
 
 const selectClass =
@@ -29,6 +30,7 @@ export function AvailabilitySettingsForm({ initial, disabled }: { initial: Initi
   // Reminders stay in the week before the scheduled week, so they can't run past Sunday.
   const [days, setDays] = useState(Math.min(initial.reminderDays, 8 - initial.reminderStartDay));
   const maxDays = 8 - startDay;
+  const [swapMode, setSwapMode] = useState(initial.swapApprovalMode);
   const id = useId();
 
   return (
@@ -153,6 +155,36 @@ export function AvailabilitySettingsForm({ initial, disabled }: { initial: Initi
             />
             Managers approve time off
           </label>
+        </section>
+
+        <section className="rounded-xl border bg-white p-6" aria-labelledby={`${id}-swaps`}>
+          <h2 id={`${id}-swaps`} className="text-lg">Swaps and open shifts</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Employees can swap shifts with a coworker (who must accept) or post a shift they can&apos;t work for anyone to pick up.
+          </p>
+          <div role="radiogroup" aria-labelledby={`${id}-swaps`} className="mt-4 space-y-3">
+            {(
+              [
+                ["AUTOMATIC", "Automatic", "A swap or pickup changes the schedule right away. You get an email about it."],
+                ["MANAGER_APPROVAL", "Manager approves", "It waits on your dashboard until you approve it. Until then nothing changes."],
+              ] as const
+            ).map(([value, label, help]) => (
+              <label key={value} className="flex items-start gap-3">
+                <input
+                  type="radio"
+                  name="swapApprovalMode"
+                  value={value}
+                  checked={swapMode === value}
+                  onChange={() => setSwapMode(value)}
+                  className="mt-1 size-5 accent-teal-600"
+                />
+                <span>
+                  <span className="font-medium">{label}</span>
+                  <span className="block text-sm text-muted-foreground">{help}</span>
+                </span>
+              </label>
+            ))}
+          </div>
         </section>
 
         {!disabled && (

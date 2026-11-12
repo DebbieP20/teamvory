@@ -32,6 +32,7 @@ export default async function SettingsPage() {
           reminderStartDay: settings.reminders.startDay,
           reminderDays: settings.reminders.days,
           reminderIncludeDefaultOnly: settings.reminders.includeDefaultOnly,
+          swapApprovalMode: settings.swapApprovalMode,
         }}
       />
     </div>
