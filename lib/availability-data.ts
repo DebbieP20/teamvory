@@ -13,6 +13,7 @@ export type BusinessSettings = {
   deadline: DeadlineSettings;
   timeOffApprovalRequired: boolean;
   reminders: ReminderSettings;
+  swapApprovalMode: "AUTOMATIC" | "MANAGER_APPROVAL";
 };
 
 export async function getBusinessSettings(businessId: string): Promise<BusinessSettings> {
@@ -29,6 +30,7 @@ export async function getBusinessSettings(businessId: string): Promise<BusinessS
       days: b.reminderDays,
       includeDefaultOnly: b.reminderIncludeDefaultOnly,
     },
+    swapApprovalMode: b.swapApprovalMode,
   };
 }
 

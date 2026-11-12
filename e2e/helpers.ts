@@ -70,11 +70,9 @@ export async function logOut(page: Page) {
   await expect(page).toHaveURL("/login");
 }
 
-/** Owner signs up and invites an employee, who joins in a separate browser. */
-export async function ownerWithEmployee(page: Page, browser: Browser, testInfo: TestInfo, employeeName = "Eli Employee") {
-  const ownerEmail = uniqueEmail(testInfo, "owner");
-  const employeeEmail = uniqueEmail(testInfo, "employee");
-  await signUpOwner(page, ownerEmail);
+/** The (logged-in) owner invites someone, who joins in their own browser. */
+export async function inviteEmployee(page: Page, browser: Browser, testInfo: TestInfo, employeeName: string, label = "employee") {
+  const employeeEmail = uniqueEmail(testInfo, label);
   await page.goto("/manager/employees");
   await field(page, "Email").fill(employeeEmail);
   await page.getByRole("button", { name: "Send invitation" }).click();
@@ -88,5 +86,12 @@ export async function ownerWithEmployee(page: Page, browser: Browser, testInfo: 
   await field(employee, "Choose a password").fill(PASSWORD);
   await employee.getByRole("button", { name: "Create account and join" }).click();
   await expect(employee).toHaveURL("/employee");
-  return { employee, employeeEmail, employeeContext, ownerEmail };
+  return { employee, employeeEmail, employeeContext };
+}
+
+/** Owner signs up and invites an employee, who joins in a separate browser. */
+export async function ownerWithEmployee(page: Page, browser: Browser, testInfo: TestInfo, employeeName = "Eli Employee") {
+  const ownerEmail = uniqueEmail(testInfo, "owner");
+  await signUpOwner(page, ownerEmail);
+  return { ...(await inviteEmployee(page, browser, testInfo, employeeName)), ownerEmail };
 }

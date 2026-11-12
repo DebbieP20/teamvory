@@ -162,7 +162,7 @@ test("after the deadline, employees can't change that week but managers can", as
   await page.goto("/manager/settings");
   await page.getByLabel("Use an availability deadline").check();
   await page.getByLabel("Every").selectOption("7"); // Sunday...
-  await page.getByLabel("at").selectOption("23:30"); // ...11:30 PM, so this week is past its deadline
+  await page.getByLabel("at", { exact: true }).selectOption("23:30"); // ...11:30 PM, so this week is past its deadline
   await page.getByRole("button", { name: "Save settings" }).click();
   await expect(page.getByText("Settings saved.")).toBeVisible();
 

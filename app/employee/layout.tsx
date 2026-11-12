@@ -2,6 +2,7 @@ import { AppShell } from "@/components/app/app-shell";
 
 const links = [
   { href: "/employee", label: "Home" },
+  { href: "/employee/shifts", label: "Shifts" },
   { href: "/employee/availability", label: "Availability" },
 ];
 

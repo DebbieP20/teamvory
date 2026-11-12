@@ -239,6 +239,7 @@ const settingsSchema = z.object({
   reminderStartDay: z.coerce.number().int().min(1).max(7),
   reminderDays: z.coerce.number().int().min(1).max(7),
   reminderIncludeDefaultOnly: z.boolean(),
+  swapApprovalMode: z.enum(["AUTOMATIC", "MANAGER_APPROVAL"]),
 }).refine((v) => v.reminderStartDay + v.reminderDays <= 8, { message: "Reminders can't run past Sunday." });
 
 export async function saveAvailabilitySettings(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -254,6 +255,7 @@ export async function saveAvailabilitySettings(_prev: FormState, formData: FormD
     reminderStartDay: formData.get("reminderStartDay"),
     reminderDays: formData.get("reminderDays"),
     reminderIncludeDefaultOnly: formData.get("reminderIncludeDefaultOnly") === "on",
+    swapApprovalMode: formData.get("swapApprovalMode") ?? "AUTOMATIC",
   });
   if (!parsed.success) return errorState("Please check the settings.");
 
@@ -270,6 +272,7 @@ export async function saveAvailabilitySettings(_prev: FormState, formData: FormD
         reminderStartDay: parsed.data.reminderStartDay,
         reminderDays: parsed.data.reminderDays,
         reminderIncludeDefaultOnly: parsed.data.reminderIncludeDefaultOnly,
+        swapApprovalMode: parsed.data.swapApprovalMode,
       },
     }),
     // Turning approval off approves anything still waiting (decision 30).
