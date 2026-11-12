@@ -27,12 +27,31 @@ export async function getOrCreateWeek(businessId: string, monday: IsoDate) {
   });
 }
 
-export type ShiftRow = { id: string; date: IsoDate; startTime: string; endTime: string; requiredCount: number };
+export type ShiftRow = {
+  id: string;
+  date: IsoDate;
+  startTime: string;
+  endTime: string;
+  requiredCount: number;
+  /** The event this shift staffs, if any */
+  eventTitle: string | null;
+};
 
 export async function loadShifts(weekId: string | undefined): Promise<ShiftRow[]> {
   if (!weekId) return [];
-  const shifts = await db.shift.findMany({ where: { weekId }, orderBy: [{ date: "asc" }, { startTime: "asc" }] });
-  return shifts.map((s) => ({ id: s.id, date: fromDbDate(s.date), startTime: s.startTime, endTime: s.endTime, requiredCount: s.requiredCount }));
+  const shifts = await db.shift.findMany({
+    where: { weekId },
+    include: { event: { select: { title: true } } },
+    orderBy: [{ date: "asc" }, { startTime: "asc" }],
+  });
+  return shifts.map((s) => ({
+    id: s.id,
+    date: fromDbDate(s.date),
+    startTime: s.startTime,
+    endTime: s.endTime,
+    requiredCount: s.requiredCount,
+    eventTitle: s.event?.title ?? null,
+  }));
 }
 
 /** The week's draft schedule, created on first use. */
@@ -122,7 +141,7 @@ export async function publishedConflicts(businessId: string, onlyMembershipId?: 
  * Everyone who can be scheduled this week, with the shifts each can work in full
  * (hard rules 1 and 4). Used by the Schedule page and the auto-scheduler.
  */
-export async function loadSchedulingPeople(businessId: string, monday: IsoDate, shifts: ShiftRow[]) {
+export async function loadSchedulingPeople(businessId: string, monday: IsoDate, shifts: Pick<ShiftRow, "id" | "date" | "startTime" | "endTime">[]) {
   const members = await db.membership.findMany({
     where: { businessId, status: "ACTIVE", schedulingMode: { not: "NOT_SCHEDULED" } },
     include: { user: { select: { name: true } } },
@@ -146,4 +165,36 @@ export async function loadSchedulingPeople(businessId: string, monday: IsoDate, 
     ),
   }));
   return { people, dayFor };
+}
+
+export type EventRow = {
+  id: string;
+  title: string;
+  date: IsoDate;
+  startTime: string;
+  endTime: string;
+  location: string | null;
+  notes: string | null;
+  requiresStaffing: boolean;
+  shiftCount: number;
+};
+
+/** Events between two dates (inclusive), earliest first. */
+export async function loadEvents(businessId: string, from: IsoDate, to?: IsoDate): Promise<EventRow[]> {
+  const events = await db.event.findMany({
+    where: { businessId, date: { gte: toDbDate(from), ...(to ? { lte: toDbDate(to) } : {}) } },
+    include: { _count: { select: { shifts: true } } },
+    orderBy: [{ date: "asc" }, { startTime: "asc" }],
+  });
+  return events.map((e) => ({
+    id: e.id,
+    title: e.title,
+    date: fromDbDate(e.date),
+    startTime: e.startTime,
+    endTime: e.endTime,
+    location: e.location,
+    notes: e.notes,
+    requiresStaffing: e.requiresStaffing,
+    shiftCount: e._count.shifts,
+  }));
 }

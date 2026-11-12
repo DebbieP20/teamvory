@@ -28,6 +28,7 @@ export type GridShift = {
   startTime: string;
   endTime: string;
   requiredCount: number;
+  eventTitle?: string | null;
   label: string;
   assigned: {
     id: string;
@@ -48,11 +49,22 @@ export function ScheduleGrid({
   days,
   rows,
   shifts,
+  events = [],
 }: {
   days: string[];
   rows: { startTime: string; endTime: string }[];
   shifts: GridShift[];
+  /** Shown under each day (planning view, M8) */
+  events?: { id: string; date: string; title: string; startTime: string; endTime: string }[];
 }) {
+  const eventsOn = (date: string) =>
+    events
+      .filter((e) => e.date === date)
+      .map((e) => (
+        <span key={e.id} className="block truncate rounded bg-violet-50 px-1.5 py-0.5 text-xs font-normal text-violet-900" title={e.title}>
+          {e.title} · {formatTime(e.startTime)}
+        </span>
+      ));
   const [openShift, setOpenShift] = useState<GridShift | null>(null);
 
   return (
@@ -63,7 +75,10 @@ export function ScheduleGrid({
           const dayShifts = shifts.filter((s) => s.date === date).sort((a, b) => a.startTime.localeCompare(b.startTime));
           return (
             <li key={date} className="rounded-xl border bg-white p-3">
-              <h3 className="text-base">{formatDay(date)}</h3>
+              <h3 className="space-y-1 text-base">
+                {formatDay(date)}
+                {eventsOn(date)}
+              </h3>
               {dayShifts.length === 0 ? (
                 <p className="mt-1 text-sm text-muted-foreground">No shifts</p>
               ) : (
@@ -87,8 +102,11 @@ export function ScheduleGrid({
             <tr>
               <th scope="col" className="w-24" />
               {days.map((d, i) => (
-                <th key={d} scope="col" className="px-1 text-left font-semibold">
-                  {WEEKDAYS_SHORT[i]} <span className="font-normal text-muted-foreground">{d.slice(8).replace(/^0/, "")}</span>
+                <th key={d} scope="col" className="space-y-1 px-1 text-left align-top font-semibold">
+                  <span className="block">
+                    {WEEKDAYS_SHORT[i]} <span className="font-normal text-muted-foreground">{d.slice(8).replace(/^0/, "")}</span>
+                  </span>
+                  {eventsOn(d)}
                 </th>
               ))}
             </tr>
@@ -145,6 +163,7 @@ function ShiftCell({ shift, onAssign, heading }: { shift: GridShift; onAssign: (
         {short && <span>needs {shift.requiredCount - shift.assigned.length}</span>}
         {extra > 0 && <span>remove {extra}</span>}
       </div>
+      {shift.eventTitle && <p className="mb-1 truncate text-xs font-semibold text-violet-800">For {shift.eventTitle}</p>}
       <ul className="space-y-1">
         {shift.assigned.map((a) => (
           <AssignedChip key={a.id} assignment={a} shiftLabel={shift.label} />

@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { RequestButton } from "@/components/requests/request-forms";
 import { ResultBanner } from "@/components/requests/result-banner";
-import { formatWeek } from "@/lib/dates";
+import { addDays, formatDay, formatTime, formatWeek } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { hasUnpublishedChanges } from "@/lib/publish";
 import { describeShift } from "@/lib/schedule";
-import { draftSnapshot, findWeek, loadPublished, publishedConflicts, selectedWeek } from "@/lib/schedule-data";
+import { draftSnapshot, findWeek, loadEvents, loadPublished, publishedConflicts, selectedWeek } from "@/lib/schedule-data";
 import { reviewRequest } from "@/lib/request-actions";
 import { activeRequests } from "@/lib/requests-data";
 import { requireManager } from "@/lib/session";
@@ -35,15 +35,18 @@ export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function ManagerDashboard() {
   const { user, membership } = await requireManager();
-  const { weeks } = await selectedWeek(membership.businessId, undefined);
-  const [cards, conflicts, { requests, now }] = await Promise.all([
+  const { weeks, now: localNow } = await selectedWeek(membership.businessId, undefined);
+  const [cards, conflicts, { requests, now }, events] = await Promise.all([
     Promise.all([
       weekCard(membership.businessId, weeks.thisWeek, "this", "This week"),
       weekCard(membership.businessId, weeks.nextWeek, "next", "Next week"),
     ]),
     publishedConflicts(membership.businessId),
     activeRequests(membership.businessId),
+    loadEvents(membership.businessId, localNow.date),
   ]);
+  // Events in the next two weeks (wireframe 4); flagged while they need a shift.
+  const upcomingEvents = events.filter((e) => e.date <= addDays(now.date, 14));
   const approvals = requests.filter((r) => r.status === "PENDING_APPROVAL");
   const openShifts = requests.filter((r) => r.type === "COVERAGE" && r.status === "OPEN");
   const attention = conflicts.length + approvals.length + openShifts.length;
@@ -172,6 +175,26 @@ export default async function ManagerDashboard() {
           </section>
         )}
       </ResultBanner>
+
+      {upcomingEvents.length > 0 && (
+        <section aria-labelledby="events-heading" className="space-y-2">
+          <h2 id="events-heading" className="text-lg">Upcoming events</h2>
+          <ul className="divide-y rounded-xl border bg-white">
+            {upcomingEvents.map((e) => (
+              <li key={e.id}>
+                <Link href="/manager/events" className="flex flex-wrap items-center justify-between gap-2 px-5 py-3 hover:bg-slate-50">
+                  <span>
+                    <strong>{formatDay(e.date)}</strong> · {e.title} {formatTime(e.startTime)} – {formatTime(e.endTime)}
+                  </span>
+                  {e.requiresStaffing && e.shiftCount === 0 && (
+                    <span className="rounded bg-amber-100 px-2 py-0.5 text-sm font-semibold text-amber-900">No shift added yet</span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {pendingTimeOff > 0 && (
         <Link

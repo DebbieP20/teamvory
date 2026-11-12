@@ -12,11 +12,13 @@ export type SnapshotShift = {
   startTime: string;
   endTime: string;
   requiredCount: number;
+  /** Set when the shift staffs an event (e.g. "Private party") */
+  eventTitle?: string | null;
   people: SnapshotPerson[];
 };
 export type Snapshot = { shifts: SnapshotShift[] };
 
-type DraftShift = { id: string; date: IsoDate; startTime: string; endTime: string; requiredCount: number };
+type DraftShift = { id: string; date: IsoDate; startTime: string; endTime: string; requiredCount: number; eventTitle?: string | null };
 type DraftAssignment = { shiftId: string; membershipId: string; name: string };
 
 export function buildSnapshot(shifts: DraftShift[], assignments: DraftAssignment[]): Snapshot {
@@ -29,6 +31,7 @@ export function buildSnapshot(shifts: DraftShift[], assignments: DraftAssignment
         startTime: s.startTime,
         endTime: s.endTime,
         requiredCount: s.requiredCount,
+        ...(s.eventTitle ? { eventTitle: s.eventTitle } : {}),
         people: assignments
           .filter((a) => a.shiftId === s.id)
           .map((a) => ({ membershipId: a.membershipId, name: a.name }))

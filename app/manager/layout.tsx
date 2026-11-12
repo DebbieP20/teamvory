@@ -6,6 +6,8 @@ const links = [
   { href: "/manager/availability", label: "Availability" },
   { href: "/manager/shifts", label: "Shifts" },
   { href: "/manager/schedule", label: "Schedule" },
+  { href: "/manager/events", label: "Events" },
+  { href: "/manager/reports", label: "Reports" },
   { href: "/manager/settings", label: "Settings" },
 ];
 

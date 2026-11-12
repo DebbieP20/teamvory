@@ -237,6 +237,12 @@ After completion, hours totals update and everyone involved gets a notification.
 
 ---
 
+## 6a. Events and exports (built in M8)
+
+- **Events** (`/manager/events`): title, date, times, location, notes and *Needs extra staff*. They show under their day on the Shifts and Schedule pages and on the dashboard (next two weeks), flagged "No shift added yet" until a staffing shift exists. **Add a shift for it** creates a shift at the event's times, linked to the event (decision 16), for this week or next. The shift is labelled with the event everywhere, including the employee's My schedule and the published copy. Deleting an event keeps its shifts.
+- **Reports** (`/manager/reports`): hours per person for this week, next week and the last 12 weeks, plus downloads. Exports use the published version when there is one (what the team saw), otherwise the draft, labelled as such.
+- **Downloads** (`/api/exports/{pdf|png|jpg|docx|xlsx}?week=YYYY-MM-DD`, managers only): PDF with @react-pdf/renderer, PNG drawn with satori (DM Sans) and resvg, JPG with sharp, Word with docx, Excel with exceljs (Schedule, Hours and Events sheets). Empty spots show as "N needed".
+
 ## 6b. Availability reminders (and calendar sync, on hold)
 
 ### Availability reminders (decision 26)
