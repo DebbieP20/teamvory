@@ -89,7 +89,7 @@ test("assign people by hand, with hour totals, pins and removal", async ({ page,
   await page.getByRole("button", { name: `Assign: ${afternoon}` }).click();
   const dialog = page.getByRole("dialog");
   // Employees first, the owner last as backup.
-  await expect(dialog.getByRole("button").filter({ hasText: /h this week/ }).first()).toContainText("Eli Employee");
+  await expect(dialog.getByRole("button").filter({ hasText: /h fair share|h · backup/ }).first()).toContainText("Eli Employee");
   await dialog.getByRole("button", { name: "Assign Eli Employee" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByText(`${afternoon} needs 1 more`)).toBeVisible();
@@ -101,8 +101,10 @@ test("assign people by hand, with hour totals, pins and removal", async ({ page,
   const hours = page.getByRole("complementary");
   await expect(hours.getByRole("listitem").filter({ hasText: "Eli Employee" })).toContainText("5 h · 1 shift");
 
-  await page.getByRole("button", { name: `Pin: Eli Employee, ${afternoon}` }).click();
+  // Placed by hand → pinned, so Build and Regenerate keep it. Unpinning lets them change it.
   await expect(page.getByRole("button", { name: `Unpin: Eli Employee, ${afternoon}` })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: `Unpin: Eli Employee, ${afternoon}` }).click();
+  await expect(page.getByRole("button", { name: `Pin: Eli Employee, ${afternoon}` })).toHaveAttribute("aria-pressed", "false");
 
   await page.getByRole("button", { name: `Remove: Eli Employee, ${afternoon}` }).click();
   await expect(page.getByText(`${afternoon} needs 1 more`)).toBeVisible();

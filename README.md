@@ -8,7 +8,7 @@ It replaces the usual routine of collecting availability by text message, typing
 
 ## Status
 
-🟡 **M5: publishing, email and availability reminders in progress.** M0–M4 are done.
+🟡 **M6: auto-scheduler in progress.** M0–M5 are done.
 
 | Milestone | | Status |
 |---|---|---|
@@ -19,8 +19,8 @@ It replaces the usual routine of collecting availability by text message, typing
 | M2 | Accounts (sign up, log in, invitations, roles) | ✅ Done |
 | M3 | Availability (default week, weekly changes, time off) | ✅ Done |
 | M4 | Shift setup and manual scheduling | ✅ Done |
-| M5 | Publishing, email and availability reminders | 🚧 In progress |
-| M6 | Auto-scheduler | |
+| M5 | Publishing, email and availability reminders | ✅ Done |
+| M6 | Auto-scheduler | 🚧 In progress |
 | M7 | Swaps and open shifts | |
 | M8 | Events and exports (PDF, PNG, JPG, Word, Excel) | |
 | M9 | Polish and launch | |

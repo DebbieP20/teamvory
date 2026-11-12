@@ -117,3 +117,33 @@ export async function publishedConflicts(businessId: string, onlyMembershipId?: 
   }
   return result;
 }
+
+/**
+ * Everyone who can be scheduled this week, with the shifts each can work in full
+ * (hard rules 1 and 4). Used by the Schedule page and the auto-scheduler.
+ */
+export async function loadSchedulingPeople(businessId: string, monday: IsoDate, shifts: ShiftRow[]) {
+  const members = await db.membership.findMany({
+    where: { businessId, status: "ACTIVE", schedulingMode: { not: "NOT_SCHEDULED" } },
+    include: { user: { select: { name: true } } },
+    orderBy: { user: { name: "asc" } },
+  });
+  const availability = await loadWeek(members.map((m) => m.id), monday);
+  const dayFor = (membershipId: string, date: IsoDate) => {
+    const a = availability.get(membershipId);
+    return a ? resolveDay(date, a.template, a.overrides, a.timeOff) : null;
+  };
+  const people = members.map((m) => ({
+    id: m.id,
+    name: m.user.name,
+    role: m.role,
+    mode: m.schedulingMode === "BACKUP" ? ("BACKUP" as const) : ("FAIR_SHARE" as const),
+    available: new Set(
+      shifts.filter((s) => {
+        const day = dayFor(m.id, s.date);
+        return !!day && coversShift(day, s);
+      }).map((s) => s.id),
+    ),
+  }));
+  return { people, dayFor };
+}
