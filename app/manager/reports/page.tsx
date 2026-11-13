@@ -1,6 +1,6 @@
-import { DownloadIcon, FileImageIcon, FileSpreadsheetIcon, FileTextIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Downloads } from "@/components/reports/downloads";
 import { addDays, formatWeek, fromDbDate, toDbDate } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { exportData, fmtHours } from "@/lib/exports/data";
@@ -10,13 +10,6 @@ import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Reports" };
 
-const DOWNLOADS = [
-  { format: "pdf", label: "PDF", help: "To print or send", Icon: FileTextIcon },
-  { format: "png", label: "PNG image", help: "For a group chat", Icon: FileImageIcon },
-  { format: "jpg", label: "JPG image", help: "Smaller image", Icon: FileImageIcon },
-  { format: "docx", label: "Word", help: "To edit or print", Icon: FileTextIcon },
-  { format: "xlsx", label: "Excel", help: "Grid, hours and events sheets", Icon: FileSpreadsheetIcon },
-] as const;
 
 /** Hours per person and schedule downloads, for this week, next week and the last few months. */
 export default async function ReportsPage({ searchParams }: PageProps<"/manager/reports">) {
@@ -35,7 +28,8 @@ export default async function ReportsPage({ searchParams }: PageProps<"/manager/
   const asked = String((await searchParams).week ?? "");
   const monday = mondays.includes(asked) ? asked : mondays.includes(weeks.thisWeek) ? weeks.thisWeek : mondays[0];
   const data = monday ? await exportData(membership.businessId, monday) : null;
-  const totalHours = data?.hours.reduce((n, h) => n + h.hours, 0) ?? 0;
+  const hours = data?.hours ?? [];
+  const totalHours = hours.reduce((n, h) => n + h.hours, 0);
 
   const weekName = (m: string) => (m === weeks.thisWeek ? "This week" : m === weeks.nextWeek ? "Next week" : formatWeek(m));
 
@@ -80,7 +74,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/manager/
           <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
             <section aria-labelledby="hours-heading" className="rounded-xl border bg-white">
               <h2 id="hours-heading" className="border-b px-5 py-3 text-lg">Hours this week</h2>
-              {data.hours.length === 0 ? (
+              {hours.length === 0 ? (
                 <p className="px-5 py-4 text-muted-foreground">Nobody is on the schedule yet.</p>
               ) : (
                 <table className="w-full text-sm">
@@ -92,7 +86,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/manager/
                     </tr>
                   </thead>
                   <tbody>
-                    {data.hours.map((h) => (
+                    {hours.map((h) => (
                       <tr key={h.name} className="border-t">
                         <td className="px-5 py-2">{h.name}</td>
                         <td className="px-5 py-2 text-right">{h.shifts}</td>
@@ -103,7 +97,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/manager/
                   <tfoot>
                     <tr className="border-t bg-slate-50 font-semibold">
                       <td className="px-5 py-2">Total</td>
-                      <td className="px-5 py-2 text-right">{data.hours.reduce((n, h) => n + h.shifts, 0)}</td>
+                      <td className="px-5 py-2 text-right">{hours.reduce((n, h) => n + h.shifts, 0)}</td>
                       <td className="px-5 py-2 text-right">{fmtHours(totalHours)}</td>
                     </tr>
                   </tfoot>
@@ -113,24 +107,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/manager/
 
             <section aria-labelledby="downloads-heading" className="space-y-2">
               <h2 id="downloads-heading" className="text-lg">Download the schedule</h2>
-              <ul className="space-y-2">
-                {DOWNLOADS.map(({ format, label, help, Icon }) => (
-                  <li key={format}>
-                    <a
-                      href={`/api/exports/${format}?week=${data.monday}`}
-                      download
-                      className="flex items-center gap-3 rounded-xl border bg-white px-4 py-3 hover:border-teal"
-                    >
-                      <Icon className="size-5 shrink-0 text-teal-dark" aria-hidden />
-                      <span className="flex-1">
-                        <span className="block font-semibold">{label}</span>
-                        <span className="block text-xs text-muted-foreground">{help}</span>
-                      </span>
-                      <DownloadIcon className="size-4 text-muted-foreground" aria-hidden />
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              <Downloads monday={data.monday} />
             </section>
           </div>
         </>

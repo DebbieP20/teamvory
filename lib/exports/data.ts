@@ -16,11 +16,12 @@ export type ExportData = {
   status: string;
   days: { date: IsoDate; short: string; label: string }[];
   rows: { label: string; cells: ExportCell[] }[];
-  hours: { name: string; shifts: number; hours: number }[];
+  /** Null when the download leaves hours out (to share the schedule without them) */
+  hours: { name: string; shifts: number; hours: number }[] | null;
   events: { day: string; title: string; time: string; location: string | null }[];
 };
 
-export async function exportData(businessId: string, monday: IsoDate): Promise<ExportData | null> {
+export async function exportData(businessId: string, monday: IsoDate, { includeHours = true } = {}): Promise<ExportData | null> {
   const week = await findWeek(businessId, monday);
   if (!week) return null;
   const [settings, published, events] = await Promise.all([
@@ -69,7 +70,7 @@ export async function exportData(businessId: string, monday: IsoDate): Promise<E
     status: published ? `Published ${publishedOn} (version ${published.version})` : "Draft, not published yet",
     days,
     rows,
-    hours: [...hours.values()].sort((a, b) => b.hours - a.hours || a.name.localeCompare(b.name)),
+    hours: includeHours ? [...hours.values()].sort((a, b) => b.hours - a.hours || a.name.localeCompare(b.name)) : null,
     events: events.map((e) => ({
       day: formatDay(e.date),
       title: e.title,

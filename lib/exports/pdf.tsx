@@ -50,20 +50,22 @@ function SchedulePdf({ data }: { data: ExportData }) {
         ))}
 
         <View style={s.row}>
-          <View style={{ width: "45%" }}>
-            <Text style={s.h2}>Hours this week</Text>
-            {data.hours.map((h) => (
-              <View key={h.name} style={[s.row, { borderBottom: "1 solid #E2E8F0", paddingVertical: 2 }]}>
-                <Text style={{ flex: 1 }}>{h.name}</Text>
-                <Text style={{ width: 60 }}>
-                  {h.shifts} shift{h.shifts === 1 ? "" : "s"}
-                </Text>
-                <Text style={{ width: 40, textAlign: "right" }}>{fmtHours(h.hours)} h</Text>
-              </View>
-            ))}
-          </View>
+          {data.hours && (
+            <View style={{ width: "45%", marginRight: "10%" }}>
+              <Text style={s.h2}>Hours this week</Text>
+              {data.hours.map((h) => (
+                <View key={h.name} style={[s.row, { borderBottom: "1 solid #E2E8F0", paddingVertical: 2 }]}>
+                  <Text style={{ flex: 1 }}>{h.name}</Text>
+                  <Text style={{ width: 60 }}>
+                    {h.shifts} shift{h.shifts === 1 ? "" : "s"}
+                  </Text>
+                  <Text style={{ width: 40, textAlign: "right" }}>{fmtHours(h.hours)} h</Text>
+                </View>
+              ))}
+            </View>
+          )}
           {data.events.length > 0 && (
-            <View style={{ width: "45%", marginLeft: "10%" }}>
+            <View style={{ width: "45%" }}>
               <Text style={s.h2}>Events</Text>
               {data.events.map((e) => (
                 <Text key={`${e.day}-${e.title}`} style={{ marginBottom: 2 }}>

@@ -5,7 +5,7 @@ import { cellText, type ExportData } from "@/lib/exports/data";
 const NAVY = "FF0B1F44";
 const MINT = "FFE6FFFA";
 
-/** Excel: a "Schedule" sheet laid out like the grid, plus "Hours" and "Events". */
+/** Excel: a "Schedule" sheet laid out like the grid, plus "Hours" (if included) and "Events". */
 export async function toXlsx(data: ExportData): Promise<Buffer> {
   const book = new ExcelJS.Workbook();
   book.creator = "TeamVory";
@@ -29,11 +29,13 @@ export async function toXlsx(data: ExportData): Promise<Buffer> {
   }
   sheet.columns = [{ width: 16 }, ...data.days.map(() => ({ width: 18 }))];
 
-  const hours = book.addWorksheet("Hours");
-  hours.addRow(["Name", "Shifts", "Hours"]).font = { bold: true };
-  for (const h of data.hours) hours.addRow([h.name, h.shifts, h.hours]);
-  hours.columns = [{ width: 24 }, { width: 10 }, { width: 10 }];
-  hours.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: MINT } };
+  if (data.hours) {
+    const hours = book.addWorksheet("Hours");
+    hours.addRow(["Name", "Shifts", "Hours"]).font = { bold: true };
+    for (const h of data.hours) hours.addRow([h.name, h.shifts, h.hours]);
+    hours.columns = [{ width: 24 }, { width: 10 }, { width: 10 }];
+    hours.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: MINT } };
+  }
 
   if (data.events.length) {
     const events = book.addWorksheet("Events");

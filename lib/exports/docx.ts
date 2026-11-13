@@ -30,7 +30,7 @@ const textCell = (lines: { text: string; bold?: boolean; color?: string; italics
       : [new Paragraph("")],
   });
 
-/** Word (.docx): landscape page with the grid, then hours and events. */
+/** Word (.docx): landscape page with the grid, then hours (if included) and events. */
 export async function toDocx(data: ExportData): Promise<Buffer> {
   const grid = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -56,15 +56,17 @@ export async function toDocx(data: ExportData): Promise<Buffer> {
     ],
   });
 
-  const hours = new Table({
-    width: { size: 50, type: WidthType.PERCENTAGE },
-    rows: [
-      new TableRow({ tableHeader: true, children: [headerCell("Name"), headerCell("Shifts"), headerCell("Hours")] }),
-      ...data.hours.map(
-        (h) => new TableRow({ children: [textCell([{ text: h.name }]), textCell([{ text: String(h.shifts) }]), textCell([{ text: fmtHours(h.hours) }])] }),
-      ),
-    ],
-  });
+  const hours =
+    data.hours &&
+    new Table({
+      width: { size: 50, type: WidthType.PERCENTAGE },
+      rows: [
+        new TableRow({ tableHeader: true, children: [headerCell("Name"), headerCell("Shifts"), headerCell("Hours")] }),
+        ...data.hours.map(
+          (h) => new TableRow({ children: [textCell([{ text: h.name }]), textCell([{ text: String(h.shifts) }]), textCell([{ text: fmtHours(h.hours) }])] }),
+        ),
+      ],
+    });
 
   const doc = new Document({
     creator: "TeamVory",
@@ -78,9 +80,13 @@ export async function toDocx(data: ExportData): Promise<Buffer> {
           new Paragraph({ children: [new TextRun({ text: data.status, italics: true, color: "64748B" })] }),
           new Paragraph(""),
           grid,
-          new Paragraph(""),
-          new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "Hours this week", color: NAVY })] }),
-          hours,
+          ...(hours
+            ? [
+                new Paragraph(""),
+                new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "Hours this week", color: NAVY })] }),
+                hours,
+              ]
+            : []),
           ...(data.events.length
             ? [
                 new Paragraph(""),

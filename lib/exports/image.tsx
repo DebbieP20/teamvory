@@ -64,17 +64,19 @@ function Grid({ data }: { data: ExportData }) {
         ))}
       </div>
       <div style={{ display: "flex", marginTop: 28, gap: 40 }}>
-        <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-          <div style={{ display: "flex", fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Hours this week</div>
-          {data.hours.map((h) => (
-            <div key={h.name} style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #E2E8F0", padding: "6px 0" }}>
-              <span>{h.name}</span>
-              <span>
-                {fmtHours(h.hours)} h · {h.shifts} shift{h.shifts === 1 ? "" : "s"}
-              </span>
-            </div>
-          ))}
-        </div>
+        {data.hours && (
+          <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+            <div style={{ display: "flex", fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Hours this week</div>
+            {data.hours.map((h) => (
+              <div key={h.name} style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #E2E8F0", padding: "6px 0" }}>
+                <span>{h.name}</span>
+                <span>
+                  {fmtHours(h.hours)} h · {h.shifts} shift{h.shifts === 1 ? "" : "s"}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
         {data.events.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
             <div style={{ display: "flex", fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Events</div>

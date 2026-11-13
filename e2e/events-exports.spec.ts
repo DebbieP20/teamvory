@@ -149,6 +149,27 @@ test("the schedule downloads as PDF, PNG, JPG, Word and Excel", async ({ page, b
     }
   }
 
+  // Without hours: only the schedule (and events) go in the file.
+  expect(
+    (await (async () => {
+      const book = new ExcelJS.Workbook();
+      const res = await page.request.get((await page.getByRole("link", { name: /^Excel/ }).getAttribute("href"))!);
+      await book.xlsx.load((await res.body()) as unknown as ArrayBuffer);
+      return book.worksheets.map((w) => w.name);
+    })()),
+  ).toEqual(["Schedule", "Hours"]);
+  await page.getByLabel("Include hours this week").uncheck();
+  await expect(page.getByText("Only the schedule and events. Good for sharing with the team.")).toBeVisible();
+  for (const label of ["PDF", "PNG image", "JPG image", "Word"]) {
+    const href = await page.getByRole("link", { name: new RegExp(`^${label}`) }).getAttribute("href");
+    expect(href).toContain("&hours=0");
+    expect((await page.request.get(href!)).status(), label).toBe(200);
+  }
+  const without = new ExcelJS.Workbook();
+  const res = await page.request.get((await page.getByRole("link", { name: /^Excel/ }).getAttribute("href"))!);
+  await without.xlsx.load((await res.body()) as unknown as ArrayBuffer);
+  expect(without.worksheets.map((w) => w.name)).toEqual(["Schedule"]);
+
   // Employees can't download.
   const denied = await employee.request.get(`/api/exports/pdf?week=${next(0)}`, { maxRedirects: 0 });
   expect(denied.status()).toBeGreaterThanOrEqual(300);

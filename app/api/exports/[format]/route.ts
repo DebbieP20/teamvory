@@ -6,7 +6,8 @@ import { toXlsx } from "@/lib/exports/xlsx";
 import { weekStart } from "@/lib/dates";
 import { requireManager } from "@/lib/session";
 
-// Schedule downloads (decision 12): /api/exports/pdf?week=2026-11-16 (pdf, png, jpg, docx, xlsx).
+// Schedule downloads (decision 12): /api/exports/pdf?week=2026-11-16 (pdf, png, jpg, docx, xlsx),
+// with &hours=0 to leave the hours out.
 
 const FORMATS = {
   pdf: { type: "application/pdf", make: toPdf },
@@ -20,11 +21,14 @@ export async function GET(request: Request, { params }: RouteContext<"/api/expor
   const { membership } = await requireManager();
   const { format } = await params;
   const spec = FORMATS[format as keyof typeof FORMATS];
-  const week = new URL(request.url).searchParams.get("week") ?? "";
+  const query = new URL(request.url).searchParams;
+  const week = query.get("week") ?? "";
+  // ?hours=0 leaves "Hours this week" out, to share the schedule without everyone's hours.
+  const includeHours = query.get("hours") !== "0";
   if (!spec) return new Response("Unknown format", { status: 404 });
   if (!/^\d{4}-\d{2}-\d{2}$/.test(week) || weekStart(week) !== week) return new Response("Choose a week (a Monday)", { status: 400 });
 
-  const data = await exportData(membership.businessId, week);
+  const data = await exportData(membership.businessId, week, { includeHours });
   if (!data) return new Response("That week has no schedule yet", { status: 404 });
 
   const body = await spec.make(data);
