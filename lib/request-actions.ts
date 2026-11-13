@@ -5,6 +5,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { errorState, type FormState } from "@/lib/form-state";
 import { notify, type OutgoingNotification } from "@/lib/notifications";
+import { isRateLimited } from "@/lib/rate-limit";
 import { describeShift } from "@/lib/schedule";
 import type { SnapshotShift } from "@/lib/publish";
 import { findShift, type PublishedWeek, publishedWeeks } from "@/lib/requests-data";
@@ -19,6 +20,9 @@ const uuid = z.uuid();
 const noteOf = (formData: FormData) => String(formData.get("note") ?? "").trim().slice(0, 200) || null;
 
 class RequestProblem extends Error {}
+
+const HOUR = 60 * 60 * 1000;
+const TOO_MANY = "You've sent a lot of requests in the last hour. Please try again later, or talk to your manager.";
 
 type Person = { id: string; name: string; email: string; userId: string };
 
@@ -133,6 +137,8 @@ async function attempt(fn: () => Promise<FormState>): Promise<FormState> {
 /** Post one of your shifts as open: anyone eligible can pick it up (you keep it until then). */
 export async function postOpenShift(_prev: FormState, formData: FormData): Promise<FormState> {
   const { membership } = await requireEmployee();
+  // Each post emails coworkers, so posting and cancelling over and over is capped.
+  if (await isRateLimited(`open-shift:${membership.id}`, 10, HOUR)) return errorState(TOO_MANY);
   const found = await findPublished(membership.businessId, String(formData.get("shiftId")));
   if (!found || !found.shift.people.some((p) => p.membershipId === membership.id)) return errorState("That shift isn't yours any more.");
   if (!isUpcoming(found.shift, found.now)) return errorState("That shift has already started.");
@@ -170,6 +176,7 @@ export async function postOpenShift(_prev: FormState, formData: FormData): Promi
 /** Ask a coworker to trade: they take your shift, you take theirs. */
 export async function requestSwap(_prev: FormState, formData: FormData): Promise<FormState> {
   const { membership } = await requireEmployee();
+  if (await isRateLimited(`swap:${membership.id}`, 10, HOUR)) return errorState(TOO_MANY);
   const found = await findPublished(membership.businessId, String(formData.get("shiftId")));
   const [targetShiftId, targetMembershipId] = String(formData.get("target") ?? "").split(":");
   if (!found) return errorState("That shift isn't on the schedule any more.");

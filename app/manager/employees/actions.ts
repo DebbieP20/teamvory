@@ -2,6 +2,7 @@
 
 import { refresh } from "next/cache";
 import { db } from "@/lib/db";
+import { isUuid } from "@/lib/ids";
 import { sendEmail } from "@/lib/email";
 import { errorState, type FormState } from "@/lib/form-state";
 import type { Role } from "@/lib/generated/prisma/enums";
@@ -101,8 +102,10 @@ export async function inviteMember(_prev: FormState, formData: FormData): Promis
 
 export async function resendInvitation(formData: FormData) {
   const { membership, actor } = await actorContext();
+  const invitationId = formData.get("invitationId");
+  if (!isUuid(invitationId)) return;
   const invitation = await db.invitation.findFirst({
-    where: { id: String(formData.get("invitationId")), businessId: membership.businessId, acceptedAt: null },
+    where: { id: invitationId, businessId: membership.businessId, acceptedAt: null },
   });
   if (!invitation || !canInvite(membership.role, invitation.role)) return;
   await issueInvitation(actor, invitation.email, invitation.role);
@@ -111,8 +114,10 @@ export async function resendInvitation(formData: FormData) {
 
 export async function revokeInvitation(formData: FormData) {
   const { membership } = await requireManager();
+  const invitationId = formData.get("invitationId");
+  if (!isUuid(invitationId)) return;
   await db.invitation.updateMany({
-    where: { id: String(formData.get("invitationId")), businessId: membership.businessId, acceptedAt: null, revokedAt: null },
+    where: { id: invitationId, businessId: membership.businessId, acceptedAt: null, revokedAt: null },
     data: { revokedAt: new Date() },
   });
   refresh();
@@ -120,6 +125,7 @@ export async function revokeInvitation(formData: FormData) {
 
 /** Finds a member of the current business, or null (never another business's member). */
 async function findTarget(businessId: string, membershipId: string) {
+  if (!isUuid(membershipId)) return null;
   return db.membership.findFirst({ where: { id: membershipId, businessId }, select: { id: true, role: true } });
 }
 

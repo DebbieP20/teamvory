@@ -62,7 +62,8 @@ export default async function EmployeeHome() {
                     <li
                       key={s.shiftId}
                       className={cn(
-                        "flex items-center gap-4 rounded-xl border bg-white px-4 py-3",
+                        // Small phones: the action wraps under the shift (lined up with it) instead of squeezing it.
+                        "flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border bg-white px-4 py-3",
                         s.date === now.date && "border-teal ring-1 ring-teal",
                         done && "opacity-60",
                       )}
@@ -70,17 +71,17 @@ export default async function EmployeeHome() {
                       <div className="w-24 shrink-0 font-semibold">
                         {s.date === now.date ? "Today" : formatDay(s.date)}
                       </div>
-                      <div className="min-w-0">
-                        <div className="font-medium">
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium whitespace-nowrap">
                           {formatTime(s.startTime)} – {formatTime(s.endTime)}
                         </div>
                         {s.eventTitle && <div className="text-sm font-semibold text-violet-800">{s.eventTitle}</div>}
                         <div className="text-sm text-muted-foreground">{others.length ? `With ${others.join(", ")}` : "Just you"}</div>
                       </div>
                       {done ? (
-                        <span className="ml-auto text-xs text-muted-foreground">Done</span>
+                        <span className="text-xs text-muted-foreground">Done</span>
                       ) : requested.has(s.shiftId) ? (
-                        <Link href="/employee/shifts" className="ml-auto rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                        <Link href="/employee/shifts" className="ml-28 rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900 min-[400px]:ml-0">
                           {requested.get(s.shiftId)!.status === "PENDING_APPROVAL"
                             ? "Waiting for approval"
                             : requested.get(s.shiftId)!.type === "SWAP"
@@ -91,7 +92,7 @@ export default async function EmployeeHome() {
                         isUpcoming(s, now) && (
                           <Link
                             href={`/employee/shifts/${s.shiftId}`}
-                            className="ml-auto shrink-0 text-sm font-semibold text-teal-dark hover:underline"
+                            className="ml-28 shrink-0 text-sm font-semibold text-teal-dark hover:underline min-[400px]:ml-0"
                             aria-label={`Can't make it: ${formatDay(s.date)}, ${formatTime(s.startTime)} – ${formatTime(s.endTime)}`}
                           >
                             Can&apos;t make it?

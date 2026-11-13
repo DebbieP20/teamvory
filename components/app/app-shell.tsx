@@ -21,14 +21,14 @@ export function AppShell({
   return (
     <div className="flex min-h-full flex-1 flex-col bg-slate-50">
       <header className="border-b bg-white">
-        {/* On phones the menu gets its own row below the logo, so every link fits. */}
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:h-16 sm:flex-nowrap sm:py-0 sm:px-6">
+        {/* Below laptop width the menu gets its own row under the logo, scrolling sideways if needed. */}
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 pt-3 pb-2 sm:px-6 lg:h-16 lg:flex-nowrap lg:py-0">
           <Link href={home} aria-label="TeamVory dashboard" className="shrink-0">
             <Image src="/brand/teamvory-icon.svg" alt="TeamVory" width={32} height={32} className="sm:hidden" />
             <Image src="/brand/teamvory-logo.svg" alt="TeamVory" width={157} height={24} className="hidden sm:block" />
           </Link>
           {/* The highlighted link depends on the URL, so it fills in after the static frame. */}
-          <div className="order-last -mx-1 w-full sm:order-none sm:mx-0 sm:w-auto">
+          <div className="order-last -mx-4 w-[calc(100%+2rem)] min-w-0 sm:-mx-6 sm:w-[calc(100%+3rem)] lg:order-none lg:mx-0 lg:w-auto">
             <Suspense fallback={<AppNavLinks links={links} />}>
               <AppNav links={links} />
             </Suspense>

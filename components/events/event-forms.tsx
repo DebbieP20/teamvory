@@ -62,10 +62,16 @@ export function EventForm({ initial, onDone, minDate }: { initial?: EventFormVal
           <TextField name="date" label="Date" type="date" min={minDate} defaultValue={initial?.date} required state={state} />
         </div>
         <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <TimeCombobox id={`${id}-start`} name="start" value={start} onChange={setStart} invalid={!!timeError} errorId={`${id}-time`} label="Start" />
-            <span aria-hidden>–</span>
-            <TimeCombobox id={`${id}-end`} name="end" value={end} onChange={setEnd} invalid={!!timeError} errorId={`${id}-time`} label="End" />
+          <div className="flex flex-wrap items-end gap-2 text-sm">
+            <div className="space-y-2">
+              <label htmlFor={`${id}-start`} className="block font-medium">Start</label>
+              <TimeCombobox id={`${id}-start`} name="start" value={start} onChange={setStart} invalid={!!timeError} errorId={`${id}-time`} />
+            </div>
+            <span aria-hidden className="pb-2.5">–</span>
+            <div className="space-y-2">
+              <label htmlFor={`${id}-end`} className="block font-medium">End</label>
+              <TimeCombobox id={`${id}-end`} name="end" value={end} onChange={setEnd} invalid={!!timeError} errorId={`${id}-time`} />
+            </div>
           </div>
           <p id={`${id}-time`} aria-live="polite" className={cn("text-sm font-medium text-destructive", timeError && "mt-1")}>
             {timeError && (

@@ -101,7 +101,7 @@ export default async function ManagerDashboard() {
         <p className="mt-1 text-muted-foreground">{membership.businessName}</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {cards.map((c) => (
           <section key={c.label} aria-label={c.label} className="flex flex-col gap-2 rounded-xl border bg-white p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">

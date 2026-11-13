@@ -71,7 +71,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/manager/
             <strong className="text-navy">{data.week}</strong> · {data.status}
           </p>
 
-          <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_20rem]">
             <section aria-labelledby="hours-heading" className="rounded-xl border bg-white">
               <h2 id="hours-heading" className="border-b px-5 py-3 text-lg">Hours this week</h2>
               {hours.length === 0 ? (

@@ -8,9 +8,10 @@ import { authorizeAvailability, getBusinessSettings, today } from "@/lib/availab
 import { addDays, daysBetween, formatDay, formatWeek, fromDbDate, type IsoDate, toDbDate, weekStart } from "@/lib/dates";
 import { notifyManagersOfConflicts } from "@/lib/conflicts";
 import { db } from "@/lib/db";
+import { isUuid } from "@/lib/ids";
 import { sendEmail } from "@/lib/email";
 import { errorState, type FormState } from "@/lib/form-state";
-import { requireManager } from "@/lib/session";
+import { requireManager, requireUser } from "@/lib/session";
 
 const NOT_ALLOWED = "You can't change this person's availability.";
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -184,7 +185,10 @@ export async function addTimeOff(_prev: FormState, formData: FormData): Promise<
 }
 
 export async function removeTimeOff(formData: FormData) {
-  const timeOff = await db.timeOff.findUnique({ where: { id: String(formData.get("timeOffId")) } });
+  await requireUser();
+  const timeOffId = formData.get("timeOffId");
+  if (!isUuid(timeOffId)) return;
+  const timeOff = await db.timeOff.findUnique({ where: { id: timeOffId } });
   if (!timeOff) return;
   const access = await authorizeAvailability(timeOff.membershipId);
   if (!access) return;
@@ -203,8 +207,10 @@ export async function removeTimeOff(formData: FormData) {
 export async function reviewTimeOff(formData: FormData) {
   const { membership } = await requireManager();
   const decision = formData.get("decision") === "APPROVED" ? "APPROVED" : "DECLINED";
+  const timeOffId = formData.get("timeOffId");
+  if (!isUuid(timeOffId)) return;
   const timeOff = await db.timeOff.findFirst({
-    where: { id: String(formData.get("timeOffId")), status: "PENDING", membership: { businessId: membership.businessId } },
+    where: { id: timeOffId, status: "PENDING", membership: { businessId: membership.businessId } },
     include: { membership: { include: { user: { select: { name: true, email: true } } } } },
   });
   if (!timeOff) return;

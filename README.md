@@ -8,7 +8,7 @@ It replaces the usual routine of collecting availability by text message, typing
 
 ## Status
 
-🟡 **M8: events and exports in progress.** M0–M7 are done.
+🟡 **M9: review and launch in progress.** M0–M8 are done. See the [launch checklist](docs/launch-checklist.md).
 
 | Milestone | | Status |
 |---|---|---|
@@ -22,8 +22,8 @@ It replaces the usual routine of collecting availability by text message, typing
 | M5 | Publishing, email and availability reminders | ✅ Done |
 | M6 | Auto-scheduler | ✅ Done |
 | M7 | Swaps and open shifts | ✅ Done |
-| M8 | Events and exports (PDF, PNG, JPG, Word, Excel) | 🚧 In progress |
-| M9 | Polish and launch | |
+| M8 | Events and exports (PDF, PNG, JPG, Word, Excel) | ✅ Done |
+| M9 | Polish and launch | 🚧 In progress |
 | M10 | SMS notifications | |
 
 ## Main features
@@ -73,7 +73,8 @@ Check that the app can reach the database at http://localhost:3000/api/health.
 | `npm run build` | Production build |
 | `npm run db:migrate` | Apply database changes (Prisma Migrate) |
 | `npm run db:studio` | Browse the database in a web page (Prisma Studio) |
-| `npm run test:e2e` | Browser tests on desktop and phone sizes (Playwright; run `npm run build` first) |
+| `npm run test:e2e` | Browser tests on desktop and phone sizes (Playwright; run `npm run build` first). They use their own database, `teamvory_test`, created automatically |
+| `node scripts/remove-practice-data.mjs` | Lists practice accounts (`@loren.test`) in your local data; add `--yes` to delete them |
 
 GitHub Actions runs all of these on every pull request.
 
@@ -88,6 +89,7 @@ curl -H "Authorization: Bearer <CRON_SECRET>" http://localhost:3000/api/cron/dai
 | Document | What's in it |
 |---|---|
 | [Technical plan](docs/technical-plan.md) | Stack, data model, scheduling algorithm, decisions and milestones |
+| [Launch checklist](docs/launch-checklist.md) | Accounts, settings, smoke test and security for going online |
 | [Architecture](docs/architecture.md) | How the system is put together |
 | [Database](docs/database.md) | Tables and relationships (ERD) |
 | [Permissions](docs/permissions.md) | What owners, managers and employees can do |
