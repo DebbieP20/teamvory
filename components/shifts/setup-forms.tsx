@@ -104,7 +104,7 @@ export function ShiftRowForm({
   assigned,
   scheduleHref,
 }: {
-  shift: { id: string; startTime: string; endTime: string; requiredCount: number };
+  shift: { id: string; startTime: string; endTime: string; requiredCount: number; eventTitle?: string | null };
   assigned: number;
   scheduleHref: string;
 }) {
@@ -123,6 +123,7 @@ export function ShiftRowForm({
       <div className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
         <div className="min-w-0 flex-1">
           <div className="font-medium">{summary}</div>
+          {shift.eventTitle && <div className="text-xs font-semibold text-violet-800">For {shift.eventTitle}</div>}
           <div className="text-xs text-muted-foreground">
             {shift.requiredCount} {shift.requiredCount === 1 ? "person" : "people"}
             {assigned > 0 && assigned <= shift.requiredCount && ` · ${assigned} assigned`}

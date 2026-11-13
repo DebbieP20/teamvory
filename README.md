@@ -8,7 +8,7 @@ It replaces the usual routine of collecting availability by text message, typing
 
 ## Status
 
-🟡 **M7: swaps and open shifts in progress.** M0–M6 are done.
+🟡 **M8: events and exports in progress.** M0–M7 are done.
 
 | Milestone | | Status |
 |---|---|---|
@@ -21,8 +21,8 @@ It replaces the usual routine of collecting availability by text message, typing
 | M4 | Shift setup and manual scheduling | ✅ Done |
 | M5 | Publishing, email and availability reminders | ✅ Done |
 | M6 | Auto-scheduler | ✅ Done |
-| M7 | Swaps and open shifts | 🚧 In progress |
-| M8 | Events and exports (PDF, PNG, JPG, Word, Excel) | |
+| M7 | Swaps and open shifts | ✅ Done |
+| M8 | Events and exports (PDF, PNG, JPG, Word, Excel) | 🚧 In progress |
 | M9 | Polish and launch | |
 | M10 | SMS notifications | |
 

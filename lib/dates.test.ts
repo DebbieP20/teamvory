@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { QUARTER_HOURS, TIME_OPTIONS, addDays, dayOfWeek, formatTime, formatTimeFull, formatWeek, nowInZone, parseTimeInput, weekDates, weekStart } from "./dates";
+import { QUARTER_HOURS, TIME_OPTIONS, addDays, isTimeTyping, dayOfWeek, formatTime, formatTimeFull, formatWeek, nowInZone, parseTimeInput, weekDates, weekStart } from "./dates";
 
 describe("nowInZone", () => {
   it("uses the business's time zone, not the server's", () => {
@@ -80,5 +80,18 @@ describe("time lists", () => {
   it("formats times with minutes for time boxes", () => {
     expect(formatTimeFull("14:00")).toBe("2:00 PM");
     expect(formatTimeFull("00:15")).toBe("12:15 AM");
+  });
+});
+
+describe("isTimeTyping", () => {
+  it("allows every step of typing a time", () => {
+    for (const t of ["", "2", "12", "12:", "12:1", "12:15", "12:15 ", "12:15 p", "12:15 PM", "2pm", "1430", "9a"]) {
+      expect(isTimeTyping(t), t).toBe(true);
+    }
+  });
+  it("blocks anything after AM/PM and other characters", () => {
+    for (const t of ["2:00 PM22", "2:00 PMx", "12:155", "123:00", "abc", "2:00 PM PM", "12:15 PMM"]) {
+      expect(isTimeTyping(t), t).toBe(false);
+    }
   });
 });

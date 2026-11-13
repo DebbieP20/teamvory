@@ -102,6 +102,14 @@ export const QUARTER_HOURS: string[] = Array.from({ length: 96 }, (_, i) => {
  * "12:15 pm", "12:15pm", "1215p", "2pm", "2 PM", "14:30", "1430", "9.45am".
  * Without AM/PM, 1–6 means afternoon (a typical work day), 7–11 morning, 12 noon.
  */
+/**
+ * Could `text` still become a time while someone types it? ("2", "2:1", "2:15 p", "1430").
+ * Anything else is ignored by the time box, so nothing can be typed after "PM".
+ */
+export function isTimeTyping(text: string): boolean {
+  return text.length <= 8 && /^(\d{1,2}(:\d{0,2})?|\d{3,4})?\s?([ap]m?)?$/i.test(text);
+}
+
 export function parseTimeInput(input: string): string | null {
   const text = input.trim().toLowerCase().replace(/\s+/g, "").replace(/\./g, ":");
   const match = /^(\d{1,2})(?::?(\d{2}))?(a|am|p|pm)?$/.exec(text);

@@ -74,6 +74,7 @@ export default async function EmployeeHome() {
                         <div className="font-medium">
                           {formatTime(s.startTime)} – {formatTime(s.endTime)}
                         </div>
+                        {s.eventTitle && <div className="text-sm font-semibold text-violet-800">{s.eventTitle}</div>}
                         <div className="text-sm text-muted-foreground">{others.length ? `With ${others.join(", ")}` : "Just you"}</div>
                       </div>
                       {done ? (

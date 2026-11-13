@@ -200,3 +200,15 @@ test("lowering the people needed after assigning flags the extra person", async 
   await expect(page.getByText(`${evening} has 2 people`)).toHaveCount(0);
   await employeeContext.close();
 });
+
+test("after a name error, fixing the name lets the pattern save", async ({ page }, testInfo) => {
+  await signUpOwner(page, uniqueEmail(testInfo, "owner"));
+  await page.goto("/manager/shifts/patterns");
+  const form = page.getByRole("region", { name: "New pattern" });
+  await form.getByLabel("Pattern name").fill("Standard"); // already exists
+  await form.getByRole("button", { name: "Create pattern" }).click();
+  await expect(form.getByText("You already have a pattern with this name.")).toBeVisible();
+  await form.getByLabel("Pattern name").fill("Late season");
+  await form.getByRole("button", { name: "Create pattern" }).click();
+  await expect(page.getByRole("region", { name: "Late season" })).toBeVisible();
+});

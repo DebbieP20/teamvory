@@ -4,11 +4,11 @@ import { WeekSwitcher } from "@/components/app/week-switcher";
 import { BuildForm } from "@/components/shifts/build-form";
 import { PublishForm } from "@/components/shifts/publish-form";
 import { type Candidate, type GridShift, ScheduleGrid } from "@/components/shifts/schedule-grid";
-import { formatWeek } from "@/lib/dates";
+import { addDays, formatWeek } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { coversShift, describeShift, hoursOf, overlaps, timeRows, unavailableReason } from "@/lib/schedule";
 import { buildSnapshot, changesByPerson, hasUnpublishedChanges } from "@/lib/publish";
-import { daysOf, findWeek, loadPublished, loadSchedulingPeople, loadShifts, selectedWeek } from "@/lib/schedule-data";
+import { daysOf, findWeek, loadEvents, loadPublished, loadSchedulingPeople, loadShifts, selectedWeek } from "@/lib/schedule-data";
 import { fairTargets } from "@/lib/scheduler";
 import { requireManager } from "@/lib/session";
 
@@ -42,13 +42,14 @@ export default async function SchedulePage({ searchParams }: PageProps<"/manager
     );
   }
 
-  const [{ people, dayFor }, draft, published] = await Promise.all([
+  const [{ people, dayFor }, draft, published, events] = await Promise.all([
     loadSchedulingPeople(membership.businessId, monday, shifts),
     db.schedule.findFirst({
       where: { weekId: week!.id, status: "DRAFT" },
       include: { assignments: { include: { membership: { include: { user: { select: { name: true } } } } } } },
     }),
     loadPublished(week!.id),
+    loadEvents(membership.businessId, monday, addDays(monday, 6)),
   ]);
   const assignments = draft?.assignments ?? [];
   const shiftById = new Map(shifts.map((s) => [s.id, s]));
@@ -214,7 +215,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/manager
       )}
 
       <div className="space-y-8">
-        <ScheduleGrid days={daysOf(monday)} rows={timeRows(shifts)} shifts={gridShifts} />
+        <ScheduleGrid days={daysOf(monday)} rows={timeRows(shifts)} shifts={gridShifts} events={events} />
 
         <aside aria-labelledby="hours-heading" className="space-y-3">
           <h2 id="hours-heading" className="text-lg">Hours this week</h2>

@@ -1,12 +1,12 @@
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon, CalendarHeartIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { WeekSwitcher } from "@/components/app/week-switcher";
 import { AddShiftForm, ApplyPatternForm, CopyLastWeekForm, ShiftRowForm } from "@/components/shifts/setup-forms";
-import { formatDay, formatTime, formatWeek } from "@/lib/dates";
+import { addDays, formatDay, formatTime, formatWeek } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { hoursOf } from "@/lib/schedule";
-import { daysOf, findWeek, loadPatterns, loadShifts, selectedWeek } from "@/lib/schedule-data";
+import { daysOf, findWeek, loadEvents, loadPatterns, loadShifts, selectedWeek } from "@/lib/schedule-data";
 import { requireManager } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Shift setup" };
@@ -17,12 +17,13 @@ export default async function ShiftSetupPage({ searchParams }: PageProps<"/manag
   const { membership } = await requireManager();
   const { weeks, selected, monday } = await selectedWeek(membership.businessId, (await searchParams).week);
   const week = await findWeek(membership.businessId, monday);
-  const [shifts, patterns, assignedCounts] = await Promise.all([
+  const [shifts, patterns, assignedCounts, events] = await Promise.all([
     loadShifts(week?.id),
     loadPatterns(membership.businessId),
     week
       ? db.assignment.groupBy({ by: ["shiftId"], where: { schedule: { weekId: week.id, status: "DRAFT" } }, _count: true })
       : Promise.resolve([]),
+    loadEvents(membership.businessId, monday, addDays(monday, 6)),
   ]);
   const assigned = new Map(assignedCounts.map((a) => [a.shiftId, a._count]));
   const days = daysOf(monday);
@@ -84,6 +85,20 @@ export default async function ShiftSetupPage({ searchParams }: PageProps<"/manag
                   {dayShifts.length ? fmtHours(dayShifts.reduce((h, s) => h + hoursOf(s) * s.requiredCount, 0)) : "No shifts"}
                 </span>
               </h3>
+              {events
+                .filter((e) => e.date === date)
+                .map((e) => (
+                  <Link
+                    key={e.id}
+                    href="/manager/events"
+                    className="flex items-center gap-2 rounded-lg bg-violet-50 px-3 py-1.5 text-sm text-violet-900 hover:bg-violet-100"
+                  >
+                    <CalendarHeartIcon className="size-4 shrink-0" aria-hidden />
+                    <span className="min-w-0 truncate">
+                      {e.title} · {formatTime(e.startTime)} – {formatTime(e.endTime)}
+                    </span>
+                  </Link>
+                ))}
               {dayShifts.map((s) => (
                 <ShiftRowForm key={s.id} shift={s} assigned={assigned.get(s.id) ?? 0} scheduleHref={`/manager/schedule?week=${selected}`} />
               ))}
