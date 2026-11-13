@@ -177,13 +177,25 @@ export type EventRow = {
   notes: string | null;
   requiresStaffing: boolean;
   shiftCount: number;
+  /** Its staffing shifts, with who is on them in the draft */
+  shifts: { id: string; startTime: string; endTime: string; requiredCount: number; people: string[] }[];
 };
 
 /** Events between two dates (inclusive), earliest first. */
 export async function loadEvents(businessId: string, from: IsoDate, to?: IsoDate): Promise<EventRow[]> {
   const events = await db.event.findMany({
     where: { businessId, date: { gte: toDbDate(from), ...(to ? { lte: toDbDate(to) } : {}) } },
-    include: { _count: { select: { shifts: true } } },
+    include: {
+      shifts: {
+        orderBy: { startTime: "asc" },
+        include: {
+          assignments: {
+            where: { schedule: { status: "DRAFT" } },
+            include: { membership: { include: { user: { select: { name: true } } } } },
+          },
+        },
+      },
+    },
     orderBy: [{ date: "asc" }, { startTime: "asc" }],
   });
   return events.map((e) => ({
@@ -195,6 +207,13 @@ export async function loadEvents(businessId: string, from: IsoDate, to?: IsoDate
     location: e.location,
     notes: e.notes,
     requiresStaffing: e.requiresStaffing,
-    shiftCount: e._count.shifts,
+    shiftCount: e.shifts.length,
+    shifts: e.shifts.map((s) => ({
+      id: s.id,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      requiredCount: s.requiredCount,
+      people: s.assignments.map((a) => a.membership.user.name).sort((a, b) => a.localeCompare(b)),
+    })),
   }));
 }

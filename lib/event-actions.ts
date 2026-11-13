@@ -38,8 +38,30 @@ export async function saveEvent(_prev: FormState, formData: FormData): Promise<F
   };
   if (eventId) {
     if (!z.uuid().safeParse(eventId).success) return errorState("That event no longer exists.");
-    const updated = await db.event.updateMany({ where: { id: eventId, businessId: membership.businessId }, data });
-    if (!updated.count) return errorState("That event no longer exists.");
+    const event = await db.event.findFirst({ where: { id: eventId, businessId: membership.businessId }, include: { shifts: true } });
+    if (!event) return errorState("That event no longer exists.");
+
+    // Its staffing shifts follow the event's new date and times.
+    let week = null;
+    if (event.shifts.length && values.date !== fromDbDate(event.date)) {
+      const { weeks } = await selectedWeek(membership.businessId, undefined);
+      const monday = weekStart(values.date);
+      if (monday !== weeks.thisWeek && monday !== weeks.nextWeek) {
+        return errorState(
+          "This event has a shift, and shifts can only be this week or next. Pick a date in those weeks, or delete the event and add it again later.",
+          { date: "Pick a date this week or next week." },
+          values,
+        );
+      }
+      week = await getOrCreateWeek(membership.businessId, monday);
+    }
+    await db.$transaction([
+      db.event.update({ where: { id: event.id }, data }),
+      db.shift.updateMany({
+        where: { eventId: event.id },
+        data: { startTime: values.start, endTime: values.end, date: toDbDate(values.date), ...(week ? { weekId: week.id } : {}) },
+      }),
+    ]);
   } else {
     await db.event.create({ data: { ...data, businessId: membership.businessId } });
   }
@@ -47,13 +69,43 @@ export async function saveEvent(_prev: FormState, formData: FormData): Promise<F
   return { status: "success", message: `${values.title} saved.` };
 }
 
+/** Deletes the event and its staffing shifts (the people on them come off the draft schedule). */
 export async function deleteEvent(formData: FormData) {
   const { membership } = await requireManager();
   const eventId = String(formData.get("eventId"));
   if (!z.uuid().safeParse(eventId).success) return;
-  // Its staffing shifts stay (they may have people on them); they just lose the label.
-  await db.event.deleteMany({ where: { id: eventId, businessId: membership.businessId } });
+  const event = await db.event.findFirst({ where: { id: eventId, businessId: membership.businessId } });
+  if (!event) return;
+  await db.$transaction([db.shift.deleteMany({ where: { eventId: event.id } }), db.event.delete({ where: { id: event.id } })]);
   refresh();
+}
+
+/** Changes how many people an event's shift needs. */
+export async function setEventShiftPeople(_prev: FormState, formData: FormData): Promise<FormState> {
+  const { membership } = await requireManager();
+  const shiftId = String(formData.get("shiftId"));
+  const required = Number(formData.get("required"));
+  if (!z.uuid().safeParse(shiftId).success) return errorState("That shift no longer exists.");
+  if (!Number.isInteger(required) || required < 1 || required > 5) return errorState("Choose how many people (1–5).");
+  const shift = await db.shift.findFirst({
+    where: { id: shiftId, event: { businessId: membership.businessId } },
+    include: { week: true, assignments: { where: { schedule: { status: "DRAFT" } } } },
+  });
+  if (!shift) return errorState("That shift no longer exists.");
+  const { weeks } = await selectedWeek(membership.businessId, undefined);
+  const monday = fromDbDate(shift.week.startDate);
+  if (monday !== weeks.thisWeek && monday !== weeks.nextWeek) return errorState("You can only change this week and next week.");
+
+  await db.shift.update({ where: { id: shift.id }, data: { requiredCount: required } });
+  refresh();
+  const extra = shift.assignments.length - required;
+  return {
+    status: "success",
+    message:
+      extra > 0
+        ? `Saved: ${required} ${required === 1 ? "person" : "people"}. ${shift.assignments.length} are assigned, so remove ${extra} on the Schedule.`
+        : `Saved: ${required} ${required === 1 ? "person" : "people"}.`,
+  };
 }
 
 /** Adds a shift at the event's times, linked to it, for the people it needs. */

@@ -154,7 +154,13 @@ function ShiftCell({ shift, onAssign, heading }: { shift: GridShift; onAssign: (
   const extra = shift.assigned.length - shift.requiredCount;
   const problem = short || extra > 0;
   return (
-    <div className={cn("h-full rounded-lg border p-1.5", problem ? "border-red-200 bg-red-50" : "bg-slate-50")}>
+    <div
+      className={cn(
+        "h-full rounded-lg border p-1.5",
+        // Red needs attention first; event shifts are light purple, like their label.
+        problem ? "border-red-200 bg-red-50" : shift.eventTitle ? "border-violet-200 bg-violet-50" : "bg-slate-50",
+      )}
+    >
       <div className={cn("mb-1 flex justify-between gap-2 text-xs", problem ? "font-semibold text-destructive" : "text-muted-foreground")}>
         <span>
           {heading && <span className="mr-2 text-sm font-semibold text-navy">{heading}</span>}

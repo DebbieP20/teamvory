@@ -5,7 +5,7 @@ import { useActionState, useId, useState } from "react";
 import { FormMessage, SubmitButton, submitWithoutReset, TextField } from "@/components/forms/fields";
 import { TimeCombobox, timeProblem } from "@/components/forms/time-combobox";
 import { Button } from "@/components/ui/button";
-import { addEventShift, deleteEvent, saveEvent } from "@/lib/event-actions";
+import { addEventShift, deleteEvent, saveEvent, setEventShiftPeople } from "@/lib/event-actions";
 import { idleState } from "@/lib/form-state";
 import { cn } from "@/lib/utils";
 
@@ -24,8 +24,9 @@ export type EventFormValues = {
 export function EventForm({ initial, onDone, minDate }: { initial?: EventFormValues; onDone?: () => void; minDate: string }) {
   const [state, action, pending] = useActionState(saveEvent, idleState);
   const id = useId();
-  const [start, setStart] = useState(initial?.startTime ?? "18:00");
-  const [end, setEnd] = useState(initial?.endTime ?? "22:00");
+  // New events start empty, so they can't be saved with times nobody chose.
+  const [start, setStart] = useState(initial?.startTime ?? "");
+  const [end, setEnd] = useState(initial?.endTime ?? "");
   const [staffing, setStaffing] = useState(initial?.requiresStaffing ?? true);
   // Close (editing) or clear (adding) once saved: adjusting state during render.
   const [last, setLast] = useState(state);
@@ -36,21 +37,25 @@ export function EventForm({ initial, onDone, minDate }: { initial?: EventFormVal
       if (onDone) onDone();
       else {
         setFormKey((k) => k + 1);
-        setStart("18:00");
-        setEnd("22:00");
+        setStart("");
+        setEnd("");
         setStaffing(true);
       }
     }
   }
 
-  const fieldError = state.status === "error" ? state.fieldErrors?.time : undefined;
-  const localProblem = timeProblem(start) ?? timeProblem(end) ?? (start && end && start >= end ? "The end time must be after the start time." : null);
+  // The server's time error only applies to the times it was sent; changing either clears it.
+  const fieldError =
+    state.status === "error" && state.values?.start === start && state.values?.end === end ? state.fieldErrors?.time : undefined;
+  // Empty times are only an error once someone tries to save (the server says so).
+  const localProblem =
+    (start && timeProblem(start)) || (end && timeProblem(end)) || (start && end && start >= end ? "The end time must be after the start time." : null) || null;
   const timeError = localProblem ?? fieldError;
 
   return (
     <div className="space-y-3">
       {!onDone && <FormMessage state={state} />}
-      <form key={formKey} onSubmit={submitWithoutReset(action)} noValidate className="space-y-4">
+      <form key={formKey} onSubmit={submitWithoutReset(action)} onKeyDown={enterMovesOn} noValidate className="space-y-4">
         {initial?.id && <input type="hidden" name="eventId" value={initial.id} />}
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField name="title" label="Event" placeholder="e.g. Private party" defaultValue={initial?.title} maxLength={80} required state={state} />
@@ -111,8 +116,31 @@ export function EventForm({ initial, onDone, minDate }: { initial?: EventFormVal
   );
 }
 
+/**
+ * Enter in a text box moves to the next field instead of saving the form, so nobody
+ * saves an event before filling in the times. Enter on the Save button still saves.
+ */
+function enterMovesOn(e: React.KeyboardEvent<HTMLFormElement>) {
+  const target = e.target as HTMLElement;
+  if (e.key !== "Enter" || !(target instanceof HTMLInputElement) || target.type === "checkbox") return;
+  e.preventDefault();
+  const fields = [...e.currentTarget.querySelectorAll<HTMLElement>("input:not([type=hidden]), textarea, button[type=submit]")].filter(
+    (el) => el.tabIndex !== -1,
+  );
+  fields[fields.indexOf(target) + 1]?.focus();
+}
+
 /** Edit / Delete for one event in the list. */
-export function EventActions({ event, minDate }: { event: EventFormValues & { id: string }; minDate: string }) {
+export function EventActions({
+  event,
+  minDate,
+  assigned,
+}: {
+  event: EventFormValues & { id: string };
+  minDate: string;
+  /** People on its staffing shifts (they come off the schedule if it's deleted) */
+  assigned: number;
+}) {
   const [editing, setEditing] = useState(false);
   if (editing) {
     return (
@@ -129,7 +157,10 @@ export function EventActions({ event, minDate }: { event: EventFormValues & { id
       <form
         action={deleteEvent}
         onSubmit={(e) => {
-          if (!confirm(`Delete "${event.title}"? Any shifts you added for it stay on the schedule.`)) e.preventDefault();
+          const message = assigned
+            ? `Delete "${event.title}"? Its shift is removed too, and the ${assigned} ${assigned === 1 ? "person" : "people"} on it come off the schedule. If it's already published, publish again so they're told.`
+            : `Delete "${event.title}"? Its shift, if any, is removed too.`;
+          if (!confirm(message)) e.preventDefault();
         }}
       >
         <input type="hidden" name="eventId" value={event.id} />
@@ -165,6 +196,41 @@ export function EventShiftForm({ eventId, title }: { eventId: string; title: str
         <SubmitButton pending={pending} pendingText="Adding…" className="h-10 px-4" aria-label={`Add a shift for ${title}`}>
           Add a shift for it
         </SubmitButton>
+      </form>
+      <FormMessage state={state} />
+    </div>
+  );
+}
+
+/** How many people an event's shift needs, changeable after it's added. */
+export function EventShiftPeople({ shiftId, required, label }: { shiftId: string; required: number; label: string }) {
+  const [state, action, pending] = useActionState(setEventShiftPeople, idleState);
+  const [value, setValue] = useState(required);
+  const id = useId();
+  return (
+    <div className="space-y-2">
+      <form onSubmit={submitWithoutReset(action)} className="flex flex-wrap items-center gap-2">
+        <input type="hidden" name="shiftId" value={shiftId} />
+        <span className="flex items-center gap-2 whitespace-nowrap text-sm">
+          <select
+            id={`${id}-required`}
+            name="required"
+            value={value}
+            onChange={(e) => setValue(Number(e.target.value))}
+            aria-label={`People needed: ${label}`}
+            className="h-10 rounded-lg border border-input bg-white px-2 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            {[1, 2, 3, 4, 5].map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
+          <span aria-hidden>people</span>
+        </span>
+        {value !== required && (
+          <SubmitButton pending={pending} pendingText="Saving…" className="h-10 px-4">
+            Save
+          </SubmitButton>
+        )}
       </form>
       <FormMessage state={state} />
     </div>

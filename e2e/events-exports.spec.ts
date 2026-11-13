@@ -33,7 +33,13 @@ test("events show in planning and get a staffing shift", async ({ page }, testIn
   await page.goto("/manager/events");
   await event.getByLabel("people", { exact: true }).selectOption("3");
   await event.getByRole("button", { name: "Add a shift for Private party" }).click();
-  await expect(event.getByText("✓ A shift is set up for it.")).toBeVisible();
+  await expect(event.getByText("0 of 3 assigned: 3 more needed")).toBeVisible();
+
+  // The number of people can change after it's added.
+  await event.getByLabel("People needed: Private party").selectOption("2");
+  await event.getByRole("button", { name: "Save" }).click();
+  await expect(event.getByText("Saved: 2 people.")).toBeVisible();
+  await expect(event.getByText("0 of 2 assigned: 2 more needed")).toBeVisible();
 
   // The shift shows on Shift setup (labelled) and on the Schedule, with the event under the day.
   await page.goto("/manager/shifts?week=next");
@@ -41,19 +47,66 @@ test("events show in planning and get a staffing shift", async ({ page }, testIn
   await expect(day.getByText("Private party · 6 PM – 10 PM")).toBeVisible();
   await expect(day.getByText("For Private party")).toBeVisible();
   await page.goto("/manager/schedule?week=next");
-  await expect(page.getByText(`${shiftLabel(5, "18:00", "22:00")} needs 3 more`)).toBeVisible();
+  const label = shiftLabel(5, "18:00", "22:00");
+  await expect(page.getByText(`${label} needs 2 more`)).toBeVisible();
+  await page.getByRole("button", { name: `Assign: ${label}` }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Assign Dana Owner" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 
-  // Rename, then delete: the shift stays on the schedule.
+  // The event says who is on it.
   await page.goto("/manager/events");
+  await expect(event.getByText("1 of 2 assigned: 1 more needed")).toBeVisible();
+  await expect(event.getByText("Dana Owner")).toBeVisible();
+  await expect(event.getByRole("link", { name: "Change people on the Schedule →" })).toBeVisible();
+
+  // Moving it to 7 PM moves its shift too.
   await page.getByRole("button", { name: "Edit: Private party" }).click();
   await event.getByLabel("Event", { exact: true }).fill("Birthday party");
+  await event.getByRole("combobox", { name: "Start" }).fill("7pm");
+  await page.keyboard.press("Tab");
   await event.getByRole("button", { name: "Save event" }).click();
-  await expect(page.getByRole("listitem", { name: "Birthday party" })).toBeVisible();
-  page.once("dialog", (d) => d.accept());
+  const renamed = page.getByRole("listitem", { name: "Birthday party" });
+  await expect(renamed.getByText("Shift 7 PM – 10 PM · Dana Owner")).toBeVisible();
+
+  // Deleting the event removes its shift and the people on it.
+  page.once("dialog", (d) => {
+    expect(d.message()).toContain("the 1 person on it come off the schedule");
+    void d.accept();
+  });
   await page.getByRole("button", { name: "Delete: Birthday party" }).click();
   await expect(page.getByText("No events coming up.")).toBeVisible();
   await page.goto("/manager/shifts?week=next");
-  await expect(page.getByRole("listitem", { name: formatDay(saturday) }).getByRole("button", { name: "Edit: 6 PM – 10 PM" })).toBeVisible();
+  await expect(page.getByRole("listitem", { name: formatDay(saturday) }).getByRole("button", { name: /^Edit:/ })).toHaveCount(0);
+});
+
+test("the event form doesn't save on Enter, and the time box only takes times", async ({ page }, testInfo) => {
+  await signUpOwner(page, uniqueEmail(testInfo, "owner"));
+  await page.goto("/manager/events");
+  const form = page.getByRole("region", { name: "Add an event" });
+  await form.getByLabel("Event", { exact: true }).fill("Market");
+  await form.getByLabel("Date").fill(next(2));
+  await form.getByLabel("Date").press("Enter");
+  // Enter moved on to the start time instead of saving.
+  await expect(form.getByRole("combobox", { name: "Start" })).toBeFocused();
+  await expect(page.getByText("Market saved.")).toHaveCount(0);
+
+  // "2" becomes 2:00 PM when leaving the box; nothing can be typed after PM.
+  await page.keyboard.type("2");
+  await page.keyboard.press("Tab");
+  await expect(form.getByRole("combobox", { name: "Start" })).toHaveValue("2:00 PM");
+  await form.getByRole("combobox", { name: "Start" }).click();
+  await page.keyboard.press("End");
+  await page.keyboard.type("22");
+  await expect(form.getByRole("combobox", { name: "Start" })).toHaveValue("2:00 PM");
+  await page.keyboard.press("Escape");
+
+  // Saving without an end time explains what's missing.
+  await form.getByRole("button", { name: "Add event" }).click();
+  await expect(form.getByText("Choose a start and end time.")).toBeVisible();
+  await form.getByRole("combobox", { name: "End" }).fill("5pm");
+  await page.keyboard.press("Tab");
+  await form.getByRole("button", { name: "Add event" }).click();
+  await expect(page.getByText("Market saved.")).toBeVisible();
 });
 
 test("the schedule downloads as PDF, PNG, JPG, Word and Excel", async ({ page, browser }, testInfo) => {

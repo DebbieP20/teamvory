@@ -2,12 +2,13 @@
 
 import { ClockIcon } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
-import { QUARTER_HOURS, formatTimeFull, parseTimeInput } from "@/lib/dates";
+import { QUARTER_HOURS, formatTimeFull, isTimeTyping, parseTimeInput } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 
 /**
  * A time box people can type into ("12:15 pm", "2pm", "1430"...) or pick from a
- * list. The list always shows :00, :15, :30 and :45, whatever was typed. (The
+ * list. Only keys that can make a time are accepted; "2" becomes 2:00 PM when the
+ * box is left (Tab, Enter or a click elsewhere). The list always shows :00, :15, :30 and :45, whatever was typed. (The
  * browser's own time picker builds its list from the typed minutes, so after
  * 12:22 it would offer :07, :22, :37 and :52.)
  *
@@ -101,6 +102,8 @@ export function TimeCombobox({
           aria-invalid={invalid}
           aria-describedby={invalid ? errorId : undefined}
           onChange={(e) => {
+            // Ignore keys that can't be part of a time (e.g. digits after "PM").
+            if (!isTimeTyping(e.target.value)) return;
             setText(e.target.value);
             setOpen(true);
             const parsed = parseTimeInput(e.target.value);

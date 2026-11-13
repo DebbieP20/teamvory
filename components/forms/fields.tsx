@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2Icon } from "lucide-react";
-import { startTransition, useId } from "react";
+import { startTransition, useId, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,10 @@ export function TextField({
   hint?: string;
 } & Omit<React.ComponentProps<"input">, "name">) {
   const id = useId();
-  const error = state.status === "error" ? state.fieldErrors?.[name] : undefined;
+  // A server error stays until the person edits the field. (Clearing it matters:
+  // submitWithoutReset won't send a form that still has an invalid field.)
+  const [editedSince, setEditedSince] = useState<FormState | null>(null);
+  const error = state.status === "error" && editedSince !== state ? state.fieldErrors?.[name] : undefined;
   const value = state.status === "error" && props.type !== "password" ? state.values?.[name] : undefined;
   const describedBy = [error && `${id}-error`, hint && `${id}-hint`].filter(Boolean).join(" ") || undefined;
 
@@ -40,6 +43,10 @@ export function TextField({
         id={id}
         name={name}
         defaultValue={value ?? props.defaultValue}
+        onChange={(e) => {
+          setEditedSince(state);
+          props.onChange?.(e);
+        }}
         aria-invalid={!!error}
         aria-describedby={describedBy}
         className="h-10"

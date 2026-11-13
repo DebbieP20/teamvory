@@ -1,7 +1,7 @@
 import { CalendarHeartIcon, MapPinIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { EventActions, EventForm, EventShiftForm } from "@/components/events/event-forms";
+import { EventActions, EventForm, EventShiftForm, EventShiftPeople } from "@/components/events/event-forms";
 import { addDays, formatDay, formatTime } from "@/lib/dates";
 import { loadEvents, selectedWeek } from "@/lib/schedule-data";
 import { requireManager } from "@/lib/session";
@@ -68,26 +68,50 @@ export default async function EventsPage() {
                         notes: e.notes ?? "",
                         requiresStaffing: e.requiresStaffing,
                       }}
+                      assigned={e.shifts.reduce((n, x) => n + x.people.length, 0)}
                     />
                   </div>
 
-                  {e.requiresStaffing && (
-                    <div className="border-t pt-3">
-                      {e.shiftCount > 0 ? (
-                        <p className="text-sm text-teal-dark">
-                          ✓ {e.shiftCount === 1 ? "A shift is" : `${e.shiftCount} shifts are`} set up for it.{" "}
-                          <Link href={`/manager/schedule?week=${e.date >= weeks.nextWeek ? "next" : "this"}`} className="font-semibold hover:underline">
-                            Assign people
-                          </Link>
-                        </p>
-                      ) : canStaff ? (
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium text-amber-800">Needs extra staff: no shift added yet.</p>
-                          <EventShiftForm eventId={e.id} title={e.title} />
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">Needs extra staff. You can add its shift once it&apos;s this week or next.</p>
-                      )}
+                  {(e.requiresStaffing || e.shifts.length > 0) && (
+                    <div className="space-y-3 border-t pt-3">
+                      {e.shifts.map((shift) => {
+                        const missing = shift.requiredCount - shift.people.length;
+                        const scheduleHref = `/manager/schedule?week=${e.date >= weeks.nextWeek ? "next" : "this"}`;
+                        return (
+                          <div key={shift.id} className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="space-y-1 text-sm">
+                              <p
+                                className={
+                                  missing === 0 ? "font-semibold text-teal-dark" : missing > 0 ? "font-semibold text-amber-800" : "font-semibold text-destructive"
+                                }
+                              >
+                                {missing === 0
+                                  ? `✓ Staffed: ${shift.people.length} of ${shift.requiredCount}`
+                                  : missing > 0
+                                    ? `${shift.people.length} of ${shift.requiredCount} assigned: ${missing} more needed`
+                                    : `${shift.people.length} assigned but only ${shift.requiredCount} needed: remove ${-missing}`}
+                              </p>
+                              <p className="text-muted-foreground">
+                                Shift {formatTime(shift.startTime)} – {formatTime(shift.endTime)}
+                                {shift.people.length > 0 && <> · {shift.people.join(", ")}</>}
+                              </p>
+                              <Link href={scheduleHref} className="inline-block font-semibold text-teal-dark hover:underline">
+                                {shift.people.length ? "Change people on the Schedule" : "Assign people on the Schedule"} →
+                              </Link>
+                            </div>
+                            <EventShiftPeople shiftId={shift.id} required={shift.requiredCount} label={e.title} />
+                          </div>
+                        );
+                      })}
+                      {e.shifts.length === 0 &&
+                        (canStaff ? (
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-amber-800">Needs extra staff: no shift added yet.</p>
+                            <EventShiftForm eventId={e.id} title={e.title} />
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">Needs extra staff. You can add its shift once it&apos;s this week or next.</p>
+                        ))}
                     </div>
                   )}
                 </li>
