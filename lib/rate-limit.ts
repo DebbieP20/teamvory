@@ -1,14 +1,15 @@
 import "server-only";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
+import { rateLimitsOff } from "@/lib/test-switches";
 import { sha256 } from "@/lib/tokens";
 
 /**
  * Records an attempt and returns true if the limit for `key` is exceeded.
- * Set RATE_LIMITS=off to disable (only for automated tests).
+ * RATE_LIMITS=off disables it for automated tests (never on the live site).
  */
 export async function isRateLimited(key: string, max: number, windowMs: number): Promise<boolean> {
-  if (process.env.RATE_LIMITS === "off") return false;
+  if (rateLimitsOff()) return false;
   const since = new Date(Date.now() - windowMs);
   const recent = await db.rateLimitEvent.count({ where: { key, createdAt: { gte: since } } });
   if (recent >= max) return true;

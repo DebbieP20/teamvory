@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/dates";
 import { idleState } from "@/lib/form-state";
 import { addShift, applyPattern, copyLastWeek, deleteShift, updateShift } from "@/lib/schedule-actions";
+import { cn } from "@/lib/utils";
 import { ShiftFields } from "./shift-fields";
 
 const selectClass =
@@ -69,9 +70,10 @@ export function ApplyPatternForm({
     >
       <input type="hidden" name="monday" value={monday} />
       <div className="flex flex-wrap items-end gap-3">
-        <label className="space-y-1 text-sm font-medium">
+        {/* min-w-0 + max-w-full: long pattern names shrink the list instead of widening the page on phones. */}
+        <label className="min-w-0 max-w-full space-y-1 text-sm font-medium">
           <span className="block">Pattern</span>
-          <select name="patternId" className={selectClass}>
+          <select name="patternId" className={cn(selectClass, "w-full max-w-full truncate")}>
             {patterns.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name} ({p.summary})

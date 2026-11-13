@@ -92,7 +92,7 @@ export function TimeCombobox({
           role="combobox"
           inputMode="text"
           autoComplete="off"
-          placeholder="12:15 PM"
+          placeholder="Pick a time"
           value={text}
           aria-label={label}
           aria-expanded={open}
