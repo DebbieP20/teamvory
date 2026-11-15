@@ -49,7 +49,6 @@ export default async function ManagerDashboard() {
   const upcomingEvents = events.filter((e) => e.date <= addDays(now.date, 14));
   const approvals = requests.filter((r) => r.status === "PENDING_APPROVAL");
   const openShifts = requests.filter((r) => r.type === "COVERAGE" && r.status === "OPEN");
-  const attention = conflicts.length + approvals.length + openShifts.length;
   const [teamCount, pendingInvites, missingAvailability, pendingTimeOff, hasShifts, hasAssignments, hasPublished] = await Promise.all([
     db.membership.count({ where: { businessId: membership.businessId, status: "ACTIVE", role: { not: "OWNER" } } }),
     db.invitation.count({
@@ -68,6 +67,7 @@ export default async function ManagerDashboard() {
     db.assignment.count({ where: { schedule: { week: { businessId: membership.businessId } } } }).then((n) => n > 0),
     db.schedule.count({ where: { status: { not: "DRAFT" }, week: { businessId: membership.businessId } } }).then((n) => n > 0),
   ]);
+  const attention = pendingTimeOff + conflicts.length + approvals.length + openShifts.length;
 
   const steps = [
     { done: true, label: "Create your business", href: null },
@@ -121,6 +121,16 @@ export default async function ManagerDashboard() {
           <section aria-labelledby="attention-heading" className="space-y-2">
             <h2 id="attention-heading" className="text-lg">Needs your attention</h2>
             <ul className="space-y-2">
+              {pendingTimeOff > 0 && (
+                <li>
+                  <Link
+                    href="/manager/availability#requests-heading"
+                    className="block rounded-xl border border-teal/40 bg-white px-5 py-3 font-medium hover:bg-slate-50"
+                  >
+                    {pendingTimeOff === 1 ? "1 time-off request is" : `${pendingTimeOff} time-off requests are`} waiting for you →
+                  </Link>
+                </li>
+              )}
               {approvals.map((r) => (
                 <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-teal/40 bg-white px-5 py-3">
                   <div>
@@ -194,15 +204,6 @@ export default async function ManagerDashboard() {
             ))}
           </ul>
         </section>
-      )}
-
-      {pendingTimeOff > 0 && (
-        <Link
-          href="/manager/availability#requests-heading"
-          className="block rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 font-medium text-amber-900 hover:bg-amber-100"
-        >
-          {pendingTimeOff === 1 ? "1 time-off request is" : `${pendingTimeOff} time-off requests are`} waiting for you →
-        </Link>
       )}
 
       {/* Hidden once every step is done. */}

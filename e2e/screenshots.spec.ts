@@ -118,7 +118,22 @@ test("home page screenshots", async ({ page, browser }, testInfo) => {
   }
   expect(asked, `someone can swap with ${firstName}`).toBe(true);
 
+  // Emma asks for a long weekend later in the month, and Maya approves time off herself.
+  await page.goto("/manager/settings");
+  await page.getByLabel("Managers approve time off").check();
+  await page.getByRole("button", { name: "Save settings" }).click();
+  await expect(page.getByText("Settings saved.")).toBeVisible();
+  const emma = staff.find((p) => p.name.startsWith("Emma"))!.employee;
+  await emma.goto("/employee/availability/time-off");
+  await emma.getByLabel("First day").fill(next(11));
+  await emma.getByLabel("Last day").fill(next(13));
+  await emma.getByLabel("Note (optional)").fill("Family trip");
+  await emma.getByRole("button", { name: "Add time off" }).click();
+  await expect(emma.getByText("Time off requested.")).toBeVisible();
+
   // The owner's view, on a laptop.
+  await page.goto("/manager/availability?week=next");
+  await shot(page, "availability", { fit: true });
   await page.goto("/manager/schedule?week=next");
   await shot(page, "schedule");
   await page.goto("/manager");

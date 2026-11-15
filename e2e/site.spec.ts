@@ -8,8 +8,8 @@ const pages = [
 
 test("home page shows the main sections", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 2, name: "How it works" })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 2, name: "Everything your team needs" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Your week, step by step" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Also included" })).toBeVisible();
 });
 
 test("main menu reaches every page", async ({ page, isMobile }) => {
