@@ -9,13 +9,14 @@ export const weeks = () => editableWeeks(nowInZone("America/New_York").date);
 export const next = (offset: number) => addDays(weeks().nextWeek, offset);
 export const shiftLabel = (offset: number, startTime: string, endTime: string) => describeShift({ date: next(offset), startTime, endTime });
 
-/** Shift setup for next week: apply a pattern to some days (0 = Monday). */
-export async function applyPattern(page: Page, pattern: string, dayOffsets: number[]) {
-  await page.goto("/manager/shifts?week=next");
+/** Shift setup (next week unless told): apply a pattern to some days (0 = Monday). */
+export async function applyPattern(page: Page, pattern: string, dayOffsets: number[], week: "this" | "next" = "next") {
+  const monday = week === "next" ? weeks().nextWeek : weeks().thisWeek;
+  await page.goto(`/manager/shifts?week=${week}`);
   const select = page.getByLabel("Pattern");
   const value = await select.getByRole("option", { name: new RegExp(`^${pattern} \\(`) }).getAttribute("value");
   await select.selectOption(value!);
-  for (const d of dayOffsets) await page.getByRole("checkbox", { name: formatDay(next(d)) }).check();
+  for (const d of dayOffsets) await page.getByRole("checkbox", { name: formatDay(addDays(monday, d)) }).check();
   // Replacing existing shifts asks for confirmation.
   const accept = (d: { accept: () => Promise<void> }) => void d.accept();
   page.on("dialog", accept);

@@ -7,10 +7,19 @@ import {
   ScaleIcon,
   SunIcon,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import { BrowserFrame, PhoneFrame } from "@/components/site/screens";
 import { CtaBand, Section } from "@/components/site/sections";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import dashboardShot from "@/public/screenshots/dashboard.webp";
+import exportShot from "@/public/screenshots/export.webp";
+import phoneAvailabilityShot from "@/public/screenshots/phone-availability.webp";
+import phoneScheduleShot from "@/public/screenshots/phone-schedule.webp";
+import phoneShiftsShot from "@/public/screenshots/phone-shifts.webp";
+import reportsShot from "@/public/screenshots/reports.webp";
+import scheduleShot from "@/public/screenshots/schedule.webp";
 
 const steps = [
   {
@@ -24,6 +33,24 @@ const steps = [
   {
     title: "Publish, and you're done",
     text: "Publish the schedule and your team receives an email with their shifts. Shift swaps and open shifts can be managed right in the app.",
+  },
+];
+
+const phones = [
+  {
+    image: phoneScheduleShot,
+    caption: "My schedule",
+    alt: "An employee's phone showing their shifts for this week and next, each with a \"Can't make it?\" link.",
+  },
+  {
+    image: phoneShiftsShot,
+    caption: "Open shifts and swaps",
+    alt: "The Shifts page on a phone: an open shift to pick up and a swap request to accept or decline.",
+  },
+  {
+    image: phoneAvailabilityShot,
+    caption: "Availability",
+    alt: "The availability page on a phone: Off, All day or Custom for each day of the week.",
   },
 ];
 
@@ -136,8 +163,79 @@ export default function Home() {
         </Link>
       </Section>
 
+      {/* Real screens */}
+      <Section title="See it in action" intro="Real screens from TeamVory, with a sample café and its team of seven.">
+        <div className="space-y-16 sm:space-y-24">
+          <TourRow
+            wide
+            title="Build a fair week in one click"
+            text="Set the shifts you need and press Build schedule. TeamVory fills every spot from your team's availability and shares the hours fairly. Move anyone by hand, then publish: everyone gets an email."
+          >
+            <BrowserFrame
+              image={scheduleShot}
+              alt="The Schedule page: next week with every spot filled, two people per shift, and a birthday party shift on Saturday in violet."
+              sizes="(min-width: 1152px) 1104px, 100vw"
+            />
+          </TourRow>
+
+          <TourRow
+            wide
+            title="Your team has it on their phone"
+            text="Employees see their shifts, tell you when they can work, and pick up or swap shifts. There's nothing to install: it works in any phone browser."
+          >
+            {/* Phones swipe sideways on small screens; larger screens show all three. */}
+            <div
+              role="region"
+              aria-label="Phone screens"
+              tabIndex={0}
+              className="-mx-4 scroll-px-4 overflow-x-auto px-4 pb-2 sm:mx-auto sm:max-w-4xl sm:overflow-visible sm:px-0"
+            >
+              <ul className="flex snap-x snap-mandatory gap-5 sm:grid sm:grid-cols-3 sm:gap-8">
+                {phones.map((p) => (
+                  <li key={p.caption} className="w-[70%] shrink-0 snap-start sm:w-auto">
+                    <PhoneFrame image={p.image} alt={p.alt} sizes="(min-width: 640px) 280px, 70vw" />
+                    <p className="mt-3 text-center text-sm font-semibold">{p.caption}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </TourRow>
+
+          <TourRow
+            reverse
+            title="See what needs you"
+            text="Both weeks at a glance, plus anything waiting on you: open shifts, swaps to approve and upcoming events."
+          >
+            <BrowserFrame
+              image={dashboardShot}
+              alt="The owner's dashboard: this week and next week published, an open shift that needs attention, and an upcoming event."
+              sizes="(min-width: 1024px) 720px, 100vw"
+            />
+          </TourRow>
+
+          <TourRow
+            title="Hours and downloads"
+            text="Check everyone's hours for the week, then download the schedule as a PDF, image, Word or Excel file, ready to print or share in the team chat."
+          >
+            <div className="relative lg:pb-20">
+              <BrowserFrame
+                image={reportsShot}
+                alt="The Reports page: hours and shifts per person, and download buttons for PDF, PNG, JPG, Word and Excel."
+                sizes="(min-width: 1024px) 720px, 100vw"
+              />
+              <Image
+                src={exportShot}
+                alt="A downloaded schedule image with the week's shifts and each person's hours."
+                sizes="320px"
+                className="absolute bottom-0 -left-10 hidden h-auto w-1/2 rounded-lg border shadow-2xl shadow-navy/25 lg:block"
+              />
+            </div>
+          </TourRow>
+        </div>
+      </Section>
+
       {/* Features */}
-      <Section title="Everything your team needs">
+      <Section title="Everything your team needs" tone="gray">
         <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {features.map(({ icon: Icon, title, text }) => (
             <li key={title} className="rounded-xl border bg-white p-6">
@@ -153,6 +251,30 @@ export default function Home() {
 
       <CtaBand />
     </>
+  );
+}
+
+/** One stop of the screen tour: text beside a screenshot (sides swapped with `reverse`), or above it when `wide`. */
+function TourRow({ title, text, reverse, wide, children }: { title: string; text: string; reverse?: boolean; wide?: boolean; children: React.ReactNode }) {
+  if (wide) {
+    return (
+      <div>
+        <div className="max-w-2xl">
+          <h3 className="text-xl sm:text-2xl">{title}</h3>
+          <p className="mt-3 text-muted-foreground">{text}</p>
+        </div>
+        <div className="mt-8">{children}</div>
+      </div>
+    );
+  }
+  return (
+    <div className={cn("grid items-center gap-8 lg:gap-12", reverse ? "lg:grid-cols-[2fr_1fr]" : "lg:grid-cols-[1fr_2fr]")}>
+      <div className={cn(reverse && "lg:order-last")}>
+        <h3 className="text-xl sm:text-2xl">{title}</h3>
+        <p className="mt-3 text-muted-foreground">{text}</p>
+      </div>
+      {children}
+    </div>
   );
 }
 

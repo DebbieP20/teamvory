@@ -74,6 +74,7 @@ Check that the app can reach the database at http://localhost:3000/api/health.
 | `npm run db:migrate` | Apply database changes (Prisma Migrate) |
 | `npm run db:studio` | Browse the database in a web page (Prisma Studio) |
 | `npm run test:e2e` | Browser tests on desktop and phone sizes (Playwright; run `npm run build` first). They use their own database, `teamvory_test`, created automatically |
+| `npm run screenshots` | Retakes the home page screenshots (`public/screenshots`) from a sample café in the test database (run `npm run build` first) |
 | `node scripts/remove-practice-data.mjs` | Lists practice accounts (`@loren.test`) in your local data; add `--yes` to delete them |
 
 GitHub Actions runs all of these on every pull request.
