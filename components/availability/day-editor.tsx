@@ -65,25 +65,30 @@ export function DayEditor({
       </div>
       {kind === "CUSTOM" && (
         <div className="mt-2 space-y-1">
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <label htmlFor={`${id}-start`}>From</label>
-            <TimeCombobox
-              id={`${id}-start`}
-              name={`${prefix}start`}
-              value={start}
-              onChange={setStart}
-              invalid={!!startProblem || orderProblem}
-              errorId={`${id}-error`}
-            />
-            <label htmlFor={`${id}-end`}>to</label>
-            <TimeCombobox
-              id={`${id}-end`}
-              name={`${prefix}end`}
-              value={end}
-              onChange={setEnd}
-              invalid={!!endProblem || orderProblem}
-              errorId={`${id}-error`}
-            />
+          {/* Labels above the boxes, so both fit side by side on a small phone. */}
+          <div className="flex flex-wrap gap-x-3 gap-y-2 text-sm">
+            <div className="space-y-1">
+              <label htmlFor={`${id}-start`} className="block font-medium">From</label>
+              <TimeCombobox
+                id={`${id}-start`}
+                name={`${prefix}start`}
+                value={start}
+                onChange={setStart}
+                invalid={!!startProblem || orderProblem}
+                errorId={`${id}-error`}
+              />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor={`${id}-end`} className="block font-medium">To</label>
+              <TimeCombobox
+                id={`${id}-end`}
+                name={`${prefix}end`}
+                value={end}
+                onChange={setEnd}
+                invalid={!!endProblem || orderProblem}
+                errorId={`${id}-error`}
+              />
+            </div>
           </div>
           <p className="text-xs text-muted-foreground">Type a time (like 12:15 PM) or pick one from the list. Times go in 15-minute steps.</p>
         </div>

@@ -25,10 +25,24 @@ export async function applyPattern(page: Page, pattern: string, dayOffsets: numb
   page.off("dialog", accept);
 }
 
-export async function setDefaultWeek(employee: Page, kinds: ("Off" | "All day")[]) {
+/** A day in someone's regular week: off, all day, or custom hours like ["12pm", "5pm"]. */
+export type DayChoice = "Off" | "All day" | [from: string, to: string];
+
+export async function setDefaultWeek(employee: Page, kinds: DayChoice[]) {
   await employee.goto("/employee/availability");
   const names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  for (let i = 0; i < 7; i++) await employee.getByRole("group", { name: names[i] }).getByText(kinds[i], { exact: true }).click();
+  for (let i = 0; i < 7; i++) {
+    const day = employee.getByRole("group", { name: names[i] });
+    const kind = kinds[i];
+    if (typeof kind === "string") {
+      await day.getByText(kind, { exact: true }).click();
+      continue;
+    }
+    await day.getByText("Custom", { exact: true }).click();
+    await day.getByLabel("From", { exact: true }).fill(kind[0]);
+    await day.getByLabel("To", { exact: true }).fill(kind[1]);
+    await day.getByLabel("To", { exact: true }).blur();
+  }
   await employee.getByRole("button", { name: "Save default week" }).click();
   await expect(employee.getByText("Default week saved.")).toBeVisible();
 }

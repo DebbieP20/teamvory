@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
 import sharp from "sharp";
 import { inviteEmployee, logIn, signUpOwner, uniqueEmail } from "./helpers";
-import { applyPattern, next, setDefaultWeek } from "./schedule-helpers";
+import { applyPattern, type DayChoice, next, setDefaultWeek } from "./schedule-helpers";
 
 // Screenshots of a made-up café for the home page (public/screenshots).
 // `npm run build`, then `npm run screenshots`. Skipped in the normal test run.
@@ -11,16 +11,17 @@ const OUT = "public/screenshots";
 const PHONE = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
 test.use({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 });
 
-type Day = "Off" | "All day";
-const A: Day = "All day";
-const team: [string, Day[]][] = [
-  ["Ana López", ["Off", "Off", A, A, A, A, A]],
-  ["Ben Carter", [A, A, A, A, A, "Off", "Off"]],
-  ["Chloe Kim", [A, A, "Off", A, A, A, A]],
-  ["Diego Ramos", [A, A, A, "Off", A, A, A]],
-  ["Emma Wilson", ["Off", A, A, A, A, A, A]],
-  ["Farah Ali", [A, A, A, A, "Off", A, A]],
-  ["Jamal Brooks", [A, "Off", A, A, A, A, A]],
+// Regular weeks with days off, whole days and custom hours (still enough people for every shift).
+const A: DayChoice = "All day";
+const O: DayChoice = "Off";
+const team: [string, DayChoice[]][] = [
+  ["Ana López", [O, O, A, ["12pm", "5pm"], A, A, ["5pm", "9pm"]]],
+  ["Ben Carter", [["9am", "5pm"], ["9am", "5pm"], A, A, ["9am", "5pm"], O, O]],
+  ["Chloe Kim", [A, ["5pm", "9pm"], O, A, ["2pm", "8pm"], A, A]],
+  ["Diego Ramos", [A, A, ["12pm", "5pm"], O, A, ["4pm", "10pm"], A]],
+  ["Emma Wilson", [O, A, A, ["5pm", "9pm"], A, A, ["12pm", "5pm"]]],
+  ["Farah Ali", [["5pm", "9pm"], A, ["5pm", "9pm"], A, O, A, A]],
+  ["Jamal Brooks", [A, O, A, A, ["12pm", "5pm"], A, ["9am", "5pm"]]],
 ];
 
 /** The visible screen, or (fit) just down to the end of the page's content. */
