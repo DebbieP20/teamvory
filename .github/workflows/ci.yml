@@ -26,7 +26,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://teamvory:teamvory@localhost:5432/teamvory
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
