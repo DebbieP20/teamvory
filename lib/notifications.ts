@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { sendEmail } from "@/lib/email";
+import { emailService, sendEmail } from "@/lib/email";
+import { type TeamSender, teamSender } from "@/lib/team-sender";
 
 // The notification outbox (technical plan, section 3): automatic emails are saved
 // first, then sent. The dedupeKey means the same notification never goes out twice,
@@ -29,17 +30,20 @@ export async function notify(items: OutgoingNotification[]): Promise<number> {
   if (!fresh.length) return 0;
   await db.notification.createMany({ data: fresh, skipDuplicates: true });
   const saved = await db.notification.findMany({ where: { dedupeKey: { in: fresh.map((i) => i.dedupeKey) }, status: "PENDING" } });
-  await Promise.all(saved.map(deliver));
+  const senderFor = senders();
+  await Promise.all(saved.map((n) => deliver(n, senderFor)));
   return fresh.length;
 }
 
-async function deliver(n: { id: string; to: string; subject: string; text: string; attempts: number }) {
+type Pending = { id: string; businessId: string; to: string; subject: string; text: string; attempts: number };
+
+async function deliver(n: Pending, senderFor: (businessId: string) => Promise<TeamSender>) {
   let sent = false;
   let error: string | null = null;
   try {
-    sent = await sendEmail({ to: n.to, subject: n.subject, text: n.text });
+    sent = await sendEmail({ to: n.to, subject: n.subject, text: n.text, ...(await senderFor(n.businessId)) });
     // Without an email service (a developer's computer) it was printed to the log: don't retry.
-    if (!sent && !process.env.RESEND_API_KEY) return markSent(n.id, attempts(n), "Printed to the server log (no email service)");
+    if (!sent && !emailService()) return markSent(n.id, attempts(n), "Printed to the server log (no email service)");
     if (!sent) error = "Email service unavailable";
   } catch (e) {
     error = e instanceof Error ? e.message : String(e);
@@ -53,6 +57,15 @@ async function deliver(n: { id: string; to: string; subject: string; text: strin
 
 const attempts = (n: { attempts: number }) => n.attempts + 1;
 
+/** Looks up each business's sender once per batch of emails. */
+function senders() {
+  const found = new Map<string, Promise<TeamSender>>();
+  return (businessId: string) => {
+    if (!found.has(businessId)) found.set(businessId, teamSender(businessId));
+    return found.get(businessId)!;
+  };
+}
+
 async function markSent(id: string, attempts: number, note: string | null) {
   await db.notification.update({ where: { id }, data: { status: "SENT", attempts, sentAt: new Date(), lastError: note } });
 }
@@ -64,6 +77,7 @@ export async function retryPending(limit = 100): Promise<number> {
     orderBy: { createdAt: "asc" },
     take: limit,
   });
-  for (const n of pending) await deliver(n);
+  const senderFor = senders();
+  for (const n of pending) await deliver(n, senderFor);
   return pending.length;
 }

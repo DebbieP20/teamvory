@@ -10,6 +10,7 @@ import { notifyManagersOfConflicts } from "@/lib/conflicts";
 import { db } from "@/lib/db";
 import { isUuid } from "@/lib/ids";
 import { sendEmail } from "@/lib/email";
+import { teamSender } from "@/lib/team-sender";
 import { errorState, type FormState } from "@/lib/form-state";
 import { requireManager, requireUser } from "@/lib/session";
 
@@ -224,6 +225,7 @@ export async function reviewTimeOff(formData: FormData) {
   const end = fromDbDate(timeOff.endDate);
   const dates = start === end ? formatDay(start) : `${formatDay(start)} to ${formatDay(end)}`;
   await sendEmail({
+    ...(await teamSender(membership.businessId)),
     to: timeOff.membership.user.email,
     subject: `Your time off was ${decision === "APPROVED" ? "approved" : "declined"}`,
     text:
