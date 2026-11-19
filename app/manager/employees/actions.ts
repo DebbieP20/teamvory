@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 import { db } from "@/lib/db";
 import { isUuid } from "@/lib/ids";
 import { sendEmail } from "@/lib/email";
+import { teamSender } from "@/lib/team-sender";
 import { errorState, type FormState } from "@/lib/form-state";
 import type { Role } from "@/lib/generated/prisma/enums";
 import { canChangeRole, canInvite, canManageMember } from "@/lib/permissions";
@@ -41,6 +42,7 @@ async function issueInvitation(
   ]);
 
   await sendEmail({
+    ...(await teamSender(actor.businessId)),
     to: email,
     subject: `${actor.userName} invited you to ${actor.businessName} on TeamVory`,
     text:

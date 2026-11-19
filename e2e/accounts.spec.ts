@@ -86,6 +86,8 @@ test("owner invites an employee, who joins, and can be set inactive", async ({ p
 
   // The employee opens the link in their own browser.
   const invite = await waitForEmail(employeeEmail, /invited you to Dana's Café/);
+  expect(invite.fromName).toBe("Dana's Café via TeamVory");
+  expect(invite.replyTo).toBe(ownerEmail);
   const employeeContext = await browser.newContext();
   const employee = await employeeContext.newPage();
   await employee.goto(linkIn(invite));

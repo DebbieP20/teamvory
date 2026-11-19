@@ -8,7 +8,7 @@ It replaces the usual routine of collecting availability by text message, typing
 
 ## Status
 
-🟡 **M9: review and launch in progress.** M0–M8 are done. See the [launch checklist](docs/launch-checklist.md).
+🟡 **M9: review and launch in progress.** M0–M8 are done. See the [launch checklist](docs/launch-checklist.md): a free trial first, then the business launch.
 
 | Milestone | | Status |
 |---|---|---|
@@ -40,7 +40,7 @@ Future features (positions, multiple locations, billing, calendar sync and more)
 
 ## Planned stack
 
-Next.js + TypeScript · Tailwind CSS + shadcn/ui · PostgreSQL + Prisma · Better Auth · Resend (email) · Vitest + Playwright · Vercel + Neon
+Next.js + TypeScript · Tailwind CSS + shadcn/ui · PostgreSQL + Prisma · Better Auth · Gmail (free trial) or Resend (email) · Vitest + Playwright · Vercel + Neon
 
 ## Run it locally
 
@@ -90,7 +90,7 @@ curl -H "Authorization: Bearer <CRON_SECRET>" http://localhost:3000/api/cron/dai
 | Document | What's in it |
 |---|---|
 | [Technical plan](docs/technical-plan.md) | Stack, data model, scheduling algorithm, decisions and milestones |
-| [Launch checklist](docs/launch-checklist.md) | Accounts, settings, smoke test and security for going online |
+| [Launch checklist](docs/launch-checklist.md) | Free trial ($0, Gmail) and business launch (domain, Resend): accounts, settings, smoke test and security |
 | [Architecture](docs/architecture.md) | How the system is put together |
 | [Database](docs/database.md) | Tables and relationships (ERD) |
 | [Permissions](docs/permissions.md) | What owners, managers and employees can do |

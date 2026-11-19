@@ -26,7 +26,7 @@ async function emailsTo(to: string) {
 }
 
 test("publish emails the team, and re-publishing only emails people whose shifts changed", async ({ page, browser }, testInfo) => {
-  const { employee, employeeEmail, employeeContext } = await ownerWithEmployee(page, browser, testInfo);
+  const { employee, employeeEmail, employeeContext, ownerEmail } = await ownerWithEmployee(page, browser, testInfo);
   await setDefaultWeek(employee, ALL_DAY);
   await applyPattern(page, "Standard", [0]);
   const afternoon = shiftLabel(0, "12:00", "17:00");
@@ -46,6 +46,9 @@ test("publish emails the team, and re-publishing only emails people whose shifts
 
   const first = await waitForEmail(employeeEmail, /^Your schedule for/);
   expect(first.text).toContain(`• ${afternoon}`);
+  // It comes from the business, and a reply goes to the owner.
+  expect(first.fromName).toBe("Dana's Café via TeamVory");
+  expect(first.replyTo).toBe(ownerEmail);
 
   await employee.reload();
   const nextWeek = employee.getByRole("region", { name: "Next week" });

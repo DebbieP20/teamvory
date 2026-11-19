@@ -15,7 +15,7 @@
 | ORM | **Prisma** | Type-safe queries and easy migrations. |
 | Auth | **Better Auth** (email + password, database sessions) plus our own invitation links | Stable, built-in sign-up, login and password reset. Chosen in M2 instead of Auth.js, whose v5 was still in beta and which discourages passwords. |
 | Validation | **Zod** | One schema validates both forms and server actions. |
-| Email | **Resend + React Email** | Notification emails built as templates. Free tier is enough for 10 employees. |
+| Email | **Gmail** (free trial) → **Resend** (business launch) | Plain-text emails. The free trial sends through a Gmail app password; once `RESEND_API_KEY` is set, Resend sends from the business domain. Team emails show "*Business* via TeamVory" and replies go to the owner (decision 31). |
 | SMS (later) | **Twilio** | Employees already use text messages. Added after v1 through the same notification layer. |
 | Exports | **@react-pdf/renderer** (PDF), **satori + resvg** (PNG), **sharp** (JPG), **docx** (Word .docx), **exceljs** (Excel .xlsx) | Covers all five formats the manager asked for. |
 | Dates / time zone | **date-fns + date-fns-tz**, zone `America/New_York` | Switches automatically between EDT (summer) and EST (winter). |
@@ -315,6 +315,7 @@ One **Vercel Cron job runs once a day in the morning** (`/api/cron/daily`, prote
 | 28 | Hosting and cost | **Build and test on free plans** (Vercel Hobby, Neon free). Scheduled jobs run once a day, so no paid plan is needed for features. Vercel's free plan doesn't allow commercial use, so **before launch (M9)** choose Vercel Pro (~$20/month) or another host whose free plan allows it, and include hosting in the monthly price. SMS stays after v1 (Twilio charges per message) |
 | 29 | Availability deadline setting | **Optional, off by default.** Owner picks a day and time; after it, that week is locked for employees and only managers can change it (section 3) |
 | 30 | Time-off approval setting | **Optional, off by default.** When on, employee time off is *Pending* until a manager approves or declines it (section 3) |
+| 31 | Free trial and team emails | **Free trial first** (Vercel Hobby, Neon free, Gmail app password, `*.vercel.app` address), then the business launch (domain, Resend, paid hosting): settings only, see `docs/launch-checklist.md`. Emails to a team come from "*Business* via TeamVory" and replies go to the business owner; password resets come from TeamVory |
 
 **Brand colors** (from the brand sheet)
 
