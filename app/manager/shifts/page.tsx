@@ -50,7 +50,7 @@ export default async function ShiftSetupPage({ searchParams }: PageProps<"/manag
             <p className="text-sm text-muted-foreground">The usual one-click start:</p>
             <CopyLastWeekForm monday={monday} hasShifts={shifts.length > 0} />
           </div>
-          <div className="space-y-1 lg:border-l lg:pl-6">
+          <div className="min-w-0 space-y-1 lg:border-l lg:pl-6">
             <p className="text-sm text-muted-foreground">Or apply a pattern to some days, e.g. Slow day when rain is forecast:</p>
             <ApplyPatternForm
               monday={monday}
@@ -74,7 +74,7 @@ export default async function ShiftSetupPage({ searchParams }: PageProps<"/manag
         </div>
       </section>
 
-      <ol className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <ol className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {days.map((date) => {
           const dayShifts = shifts.filter((s) => s.date === date);
           return (

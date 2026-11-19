@@ -15,12 +15,14 @@ export function PageHeader({ title, intro }: { title: string; intro?: React.Reac
 }
 
 export function Section({
+  id,
   title,
   intro,
   tone = "white",
   className,
   children,
 }: {
+  id?: string;
   title?: string;
   intro?: React.ReactNode;
   tone?: "white" | "gray" | "mint";
@@ -29,6 +31,7 @@ export function Section({
 }) {
   return (
     <section
+      id={id}
       className={cn(
         tone === "gray" && "bg-slate-50",
         tone === "mint" && "bg-mint",

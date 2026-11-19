@@ -2,6 +2,7 @@ import "server-only";
 import { type DaySetting, type DeadlineSettings, type TimeOffEntry } from "@/lib/availability";
 import { addDays, fromDbDate, type IsoDate, nowInZone, toDbDate } from "@/lib/dates";
 import { db } from "@/lib/db";
+import { isUuid } from "@/lib/ids";
 import { isManagerRole } from "@/lib/permissions";
 import type { ReminderSettings } from "@/lib/reminders";
 import { getMembership, requireUser } from "@/lib/session";
@@ -44,7 +45,7 @@ export const today = (settings: BusinessSettings) => nowInZone(settings.timezone
 export async function authorizeAvailability(targetMembershipId: string) {
   const user = await requireUser();
   const actor = await getMembership(user.id);
-  if (!actor || actor.status !== "ACTIVE") return null;
+  if (!actor || actor.status !== "ACTIVE" || !isUuid(targetMembershipId)) return null;
 
   const target = await db.membership.findFirst({
     where: { id: targetMembershipId, businessId: actor.businessId, status: "ACTIVE" },

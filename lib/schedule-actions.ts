@@ -7,6 +7,7 @@ import { resolveDay } from "@/lib/availability";
 import { loadWeek } from "@/lib/availability-data";
 import { addDays, formatWeek, fromDbDate, type IsoDate, toDbDate, weekStart } from "@/lib/dates";
 import { db } from "@/lib/db";
+import { isUuid } from "@/lib/ids";
 import { errorState, type FormState } from "@/lib/form-state";
 import { notify } from "@/lib/notifications";
 import { changesByPerson, hasUnpublishedChanges, scheduleEmail, shiftsFor } from "@/lib/publish";
@@ -59,6 +60,7 @@ export async function savePattern(_prev: FormState, formData: FormData): Promise
   const membership = await manager();
   const name = String(formData.get("name") ?? "").trim();
   const patternId = String(formData.get("patternId") ?? "");
+  if (patternId && !isUuid(patternId)) return errorState("That pattern no longer exists.");
   if (!name || name.length > 40) return errorState(undefined, { name: "Give the pattern a name (up to 40 characters)." });
 
   const { shifts, error } = readShifts(formData);
@@ -86,7 +88,9 @@ export async function savePattern(_prev: FormState, formData: FormData): Promise
 
 export async function deletePattern(formData: FormData) {
   const membership = await manager();
-  await db.shiftPattern.deleteMany({ where: { id: String(formData.get("patternId")), businessId: membership.businessId } });
+  const patternId = formData.get("patternId");
+  if (!isUuid(patternId)) return;
+  await db.shiftPattern.deleteMany({ where: { id: patternId, businessId: membership.businessId } });
   refresh();
 }
 
@@ -103,9 +107,8 @@ export async function applyPattern(_prev: FormState, formData: FormData): Promis
   if (!dates.length) return errorState("Tick the days to apply the pattern to.");
   if (dates.some((d) => !isoDate.safeParse(d).success || weekStart(d) !== monday)) return errorState("Those days aren't in this week.");
 
-  const pattern = await db.shiftPattern.findFirst({
-    where: { id: String(formData.get("patternId")), businessId: membership.businessId },
-  });
+  const patternId = formData.get("patternId");
+  const pattern = isUuid(patternId) ? await db.shiftPattern.findFirst({ where: { id: patternId, businessId: membership.businessId } }) : null;
   if (!pattern) return errorState("Choose a pattern.");
 
   const week = await getOrCreateWeek(membership.businessId, monday);

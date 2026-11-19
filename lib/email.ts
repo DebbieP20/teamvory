@@ -1,6 +1,7 @@
 import "server-only";
 import { appendFile } from "node:fs/promises";
 import { Resend } from "resend";
+import { emailCaptureFile } from "@/lib/test-switches";
 
 type Email = {
   to: string;
@@ -15,8 +16,8 @@ type Email = {
  * printed to the server console, so everything else keeps working.
  */
 export async function sendEmail(email: Email): Promise<boolean> {
-  // Automated tests read emails from a file instead (never set in production).
-  const captureFile = process.env.EMAIL_CAPTURE_FILE;
+  // Automated tests read emails from a file instead (ignored on the live site).
+  const captureFile = emailCaptureFile();
   if (captureFile) {
     await appendFile(captureFile, JSON.stringify({ ...email, sentAt: new Date().toISOString() }) + "\n");
     return true;

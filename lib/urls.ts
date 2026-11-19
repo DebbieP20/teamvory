@@ -1,6 +1,10 @@
-/** The app's public address, used in emailed links. No trailing slash. */
+/**
+ * The app's public address, used in emailed links. No trailing slash.
+ * BETTER_AUTH_URL when set; on a Vercel preview without it, that deployment's own address.
+ */
 export function appUrl(): string {
-  return (process.env.BETTER_AUTH_URL ?? "http://localhost:3000").replace(/\/+$/, "");
+  const preview = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null;
+  return (process.env.BETTER_AUTH_URL || preview || "http://localhost:3000").replace(/\/+$/, "");
 }
 
 /**

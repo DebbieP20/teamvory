@@ -21,7 +21,10 @@ export function WeekSwitcher({
           aria-current={selected === w ? "page" : undefined}
           className={cn("px-3 py-2 text-center text-sm", selected === w ? "bg-navy font-semibold text-white" : "bg-white hover:bg-slate-50")}
         >
-          {w === "this" ? "This week" : "Next week"} · {formatWeek(w === "this" ? weeks.thisWeek : weeks.nextWeek)}
+          {/* Phones: the dates go on their own line instead of breaking in the middle. */}
+          {w === "this" ? "This week" : "Next week"}
+          <span className="hidden sm:inline"> · </span>
+          <span className="block whitespace-nowrap sm:inline">{formatWeek(w === "this" ? weeks.thisWeek : weeks.nextWeek)}</span>
         </Link>
       ))}
     </nav>

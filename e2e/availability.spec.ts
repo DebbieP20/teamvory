@@ -23,14 +23,14 @@ test("employee sets a default week and the manager sees it", async ({ page, brow
   // Pick the start from the list, and type the end.
   await day(employee, "Tuesday").getByLabel("From", { exact: true }).click();
   await employee.getByRole("option", { name: "2:00 PM", exact: true }).click();
-  await day(employee, "Tuesday").getByLabel("to", { exact: true }).fill("9pm");
+  await day(employee, "Tuesday").getByLabel("To", { exact: true }).fill("9pm");
   await employee.getByRole("button", { name: "Save default week" }).click();
   await expect(employee.getByText("Default week saved.")).toBeVisible();
 
   await employee.reload();
   await expect(day(employee, "Monday").getByRole("radio", { name: "All day" })).toBeChecked();
   await expect(day(employee, "Tuesday").getByLabel("From", { exact: true })).toHaveValue("2:00 PM");
-  await expect(day(employee, "Tuesday").getByLabel("to", { exact: true })).toHaveValue("9:00 PM");
+  await expect(day(employee, "Tuesday").getByLabel("To", { exact: true })).toHaveValue("9:00 PM");
 
   await page.goto("/manager/availability?week=next");
   const row = page.getByRole("row", { name: /Eli Employee/ });
@@ -45,8 +45,8 @@ test("custom times must end after they start", async ({ page, browser }, testInf
   await employee.goto("/employee/availability");
   await choose(employee, "Friday", "Custom");
   await day(employee, "Friday").getByLabel("From", { exact: true }).fill("5 pm");
-  await day(employee, "Friday").getByLabel("to", { exact: true }).fill("12:00 pm");
-  await day(employee, "Friday").getByLabel("to", { exact: true }).blur();
+  await day(employee, "Friday").getByLabel("To", { exact: true }).fill("12:00 pm");
+  await day(employee, "Friday").getByLabel("To", { exact: true }).blur();
   await expect(day(employee, "Friday").getByText("The end time must be after the start time.")).toBeVisible();
   await employee.getByRole("button", { name: "Save default week" }).click();
   await expect(employee.getByText("Default week saved.")).toHaveCount(0);
@@ -69,15 +69,15 @@ test("custom times must end after they start", async ({ page, browser }, testInf
 
   // Times can be typed, in 15-minute steps.
   await from.fill("6:15 am");
-  await day(employee, "Friday").getByLabel("to", { exact: true }).fill("1:45 pm");
-  await day(employee, "Friday").getByLabel("to", { exact: true }).blur();
+  await day(employee, "Friday").getByLabel("To", { exact: true }).fill("1:45 pm");
+  await day(employee, "Friday").getByLabel("To", { exact: true }).blur();
   await expect(from).toHaveAttribute("aria-invalid", "false");
   await expect(day(employee, "Friday").getByText("Double-check the time")).toHaveCount(0);
   await employee.getByRole("button", { name: "Save default week" }).click();
   await expect(employee.getByText("Default week saved.")).toBeVisible();
   await employee.reload();
   await expect(day(employee, "Friday").getByLabel("From", { exact: true })).toHaveValue("6:15 AM");
-  await expect(day(employee, "Friday").getByLabel("to", { exact: true })).toHaveValue("1:45 PM");
+  await expect(day(employee, "Friday").getByLabel("To", { exact: true })).toHaveValue("1:45 PM");
   await employeeContext.close();
 });
 

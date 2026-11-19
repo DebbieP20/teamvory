@@ -1,0 +1,30 @@
+# Weekly update pull requests (docs/launch-checklist.md, "After launch").
+# CI runs every test on each one; merge when it's green.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 5
+    groups:
+      # Small, safe updates arrive together in one pull request.
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Prisma's CLI and client must stay on the same version; upgraded together by hand
+      # (see the technical plan). Next.js majors need the migration guide first.
+      - dependency-name: "prisma"
+      - dependency-name: "@prisma/*"
+      - dependency-name: "next"
+        update-types: [version-update:semver-major]
+    labels: [dependencies]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels: [dependencies]
