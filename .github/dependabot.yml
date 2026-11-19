@@ -21,6 +21,12 @@ updates:
       - dependency-name: "@prisma/*"
       - dependency-name: "next"
         update-types: [version-update:semver-major]
+      # @types/node matches the Node version the app runs on (22, see "engines"), not the newest.
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
+      # TypeScript majors wait until typescript-eslint supports them.
+      - dependency-name: "typescript"
+        update-types: [version-update:semver-major]
     labels: [dependencies]
 
   - package-ecosystem: github-actions
