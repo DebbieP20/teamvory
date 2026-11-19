@@ -54,7 +54,7 @@
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.2.1",
     "dotenv": "^18.0.9",
-    "eslint": "^9",
+    "eslint": "^10",
     "eslint-config-next": "16.4.5",
     "jsdom": "^29.1.1",
     "prisma": "^7.10.1",
