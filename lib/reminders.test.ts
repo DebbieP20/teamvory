@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { describeReminderDays, isReminderDay, reminderEmail, reminderKind } from "./reminders";
+import { describeReminderDays, isReminderDay, reminderEmail } from "./reminders";
 
-const settings = { enabled: true, startDay: 3, days: 2, includeDefaultOnly: false }; // Wed + Thu
+const settings = { enabled: true, startDay: 3, days: 2 }; // Wed + Thu
 
 describe("isReminderDay", () => {
   it("is the start day and the days after it", () => {
@@ -15,18 +15,6 @@ describe("isReminderDay", () => {
   });
 });
 
-describe("reminderKind", () => {
-  it("reminds only people who haven't set availability", () => {
-    expect(reminderKind({ hasDefaultWeek: false, hasChangesNextWeek: false }, false)).toBe("missing");
-    expect(reminderKind({ hasDefaultWeek: true, hasChangesNextWeek: false }, false)).toBeNull();
-    expect(reminderKind({ hasDefaultWeek: false, hasChangesNextWeek: true }, false)).toBeNull();
-  });
-  it("with the extra option, also asks people on their default week to check", () => {
-    expect(reminderKind({ hasDefaultWeek: true, hasChangesNextWeek: false }, true)).toBe("check");
-    expect(reminderKind({ hasDefaultWeek: true, hasChangesNextWeek: true }, true)).toBeNull();
-  });
-});
-
 it("describes the days", () => {
   expect(describeReminderDays({ startDay: 3, days: 2 })).toBe("Wednesday and Thursday");
   expect(describeReminderDays({ startDay: 5, days: 1 })).toBe("Friday");
@@ -36,15 +24,15 @@ it("describes the days", () => {
 describe("reminderEmail", () => {
   const base = { name: "Grace Kim", businessName: "Loren", nextMonday: "2026-11-16", link: "http://x/employee/availability" };
   it("mentions the deadline only when there is one", () => {
-    const off = reminderEmail({ ...base, kind: "missing", deadline: { enabled: false, day: 4, time: "18:00" } });
-    expect(off.subject).toBe("Reminder: add your availability for Nov 16 – 22");
+    const off = reminderEmail({ ...base, deadline: { enabled: false, day: 4, time: "18:00" } });
+    expect(off.subject).toBe("Reminder: send your availability for Nov 16 – 22");
     expect(off.text).not.toContain("due");
-    const on = reminderEmail({ ...base, kind: "missing", deadline: { enabled: true, day: 4, time: "18:00" } });
+    const on = reminderEmail({ ...base, deadline: { enabled: true, day: 4, time: "18:00" } });
     expect(on.text).toContain("It's due Thu, Nov 12 at 6 PM.");
   });
-  it("asks default-week people to check", () => {
-    expect(reminderEmail({ ...base, kind: "check", deadline: { enabled: false, day: 4, time: "18:00" } }).subject).toBe(
-      "Is your availability for Nov 16 – 22 still right?",
-    );
+  it("links to the week and says what happens if they don't send it", () => {
+    const email = reminderEmail({ ...base, deadline: { enabled: false, day: 4, time: "18:00" } });
+    expect(email.html).toContain("http://x/employee/availability");
+    expect(email.text).toContain("you won't be scheduled that week");
   });
 });

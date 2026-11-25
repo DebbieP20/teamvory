@@ -15,6 +15,7 @@ const choices: { kind: Kind; label: string }[] = [
 /**
  * One day's availability: Off / All day / Custom (one time range, decision 21).
  * Field names are `${prefix}kind`, `${prefix}start`, `${prefix}end`.
+ * With no `initial`, nothing is chosen yet: a week starts empty until it's filled in.
  */
 export function DayEditor({
   legend,
@@ -24,26 +25,34 @@ export function DayEditor({
 }: {
   legend: string;
   prefix?: string;
-  initial: DaySetting;
+  initial: DaySetting | null;
   error?: string;
 }) {
   const id = useId();
-  const [kind, setKind] = useState<Kind>(initial.kind);
-  const [start, setStart] = useState(initial.startTime ?? "12:00");
-  const [end, setEnd] = useState(initial.endTime ?? "17:00");
+  const [kind, setKind] = useState<Kind | null>(initial?.kind ?? null);
+  const [start, setStart] = useState(initial?.startTime ?? "12:00");
+  const [end, setEnd] = useState(initial?.endTime ?? "17:00");
   const timesRef = useRef<HTMLDivElement>(null);
+  // A message from the last send (e.g. "Choose Off, All day or Custom.") goes away once the day is changed.
+  const [dismissed, setDismissed] = useState<string | undefined>();
+  const serverError = error !== dismissed ? error : undefined;
 
   // Checked as soon as a time changes, so mistakes show right away (the server checks again).
   const startProblem = timeProblem(start);
   const endProblem = timeProblem(end);
   const orderProblem = !startProblem && !endProblem && start >= end;
   const message = startProblem ?? endProblem ?? (orderProblem ? "The end time must be after the start time." : null);
-  const shownError = kind === "CUSTOM" ? (message ?? error) : error;
+  const shownError = kind === "CUSTOM" ? (message ?? serverError) : serverError;
 
   return (
     <fieldset aria-describedby={shownError ? `${id}-error` : undefined}>
       <legend className="sr-only">{legend}</legend>
-      <div className="grid grid-cols-3 overflow-hidden rounded-lg border border-input">
+      <div
+        className={cn(
+          "grid grid-cols-3 overflow-hidden rounded-lg border",
+          serverError && !kind ? "border-destructive" : "border-input",
+        )}
+      >
         {choices.map((c) => (
           <label
             key={c.kind}
@@ -60,6 +69,7 @@ export function DayEditor({
               checked={kind === c.kind}
               onChange={() => {
                 setKind(c.kind);
+                setDismissed(error);
                 // Then bring the time boxes on screen: on a phone they can open below the bottom edge.
                 if (c.kind === "CUSTOM") {
                   requestAnimationFrame(() => timesRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }));

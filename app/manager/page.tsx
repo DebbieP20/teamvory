@@ -4,6 +4,7 @@ import Link from "next/link";
 import { RequestButton } from "@/components/requests/request-forms";
 import { ResultBanner } from "@/components/requests/result-banner";
 import { addDays, formatDay, formatTime, formatWeek } from "@/lib/dates";
+import { missingAvailabilityWhere } from "@/lib/availability-data";
 import { db } from "@/lib/db";
 import { hasUnpublishedChanges } from "@/lib/publish";
 import { describeShift } from "@/lib/schedule";
@@ -54,20 +55,19 @@ export default async function ManagerDashboard() {
     db.invitation.count({
       where: { businessId: membership.businessId, acceptedAt: null, revokedAt: null, expiresAt: { gt: new Date() } },
     }),
-    db.membership.count({
-      where: {
-        businessId: membership.businessId,
-        status: "ACTIVE",
-        schedulingMode: { not: "NOT_SCHEDULED" },
-        availabilityTemplate: { none: {} },
-      },
+    // Who hasn't sent availability for next week, the week being scheduled.
+    db.membership.findMany({
+      where: missingAvailabilityWhere(membership.businessId, weeks.nextWeek),
+      select: { user: { select: { name: true } } },
+      orderBy: { user: { name: "asc" } },
     }),
     db.timeOff.count({ where: { status: "PENDING", membership: { businessId: membership.businessId } } }),
     db.shift.count({ where: { week: { businessId: membership.businessId } } }).then((n) => n > 0),
     db.assignment.count({ where: { schedule: { week: { businessId: membership.businessId } } } }).then((n) => n > 0),
     db.schedule.count({ where: { status: { not: "DRAFT" }, week: { businessId: membership.businessId } } }).then((n) => n > 0),
   ]);
-  const attention = pendingTimeOff + conflicts.length + approvals.length + openShifts.length;
+  const missingNames = missingAvailability.map((m) => m.user.name);
+  const attention = pendingTimeOff + conflicts.length + approvals.length + openShifts.length + missingNames.length;
 
   const steps = [
     { done: true, label: "Create your business", href: null },
@@ -82,10 +82,10 @@ export default async function ManagerDashboard() {
       href: "/manager/employees",
     },
     {
-      done: teamCount > 0 && missingAvailability === 0,
+      done: teamCount > 0 && missingNames.length === 0,
       label:
-        teamCount > 0 && missingAvailability > 0
-          ? `Collect availability (${missingAvailability} ${missingAvailability === 1 ? "person hasn't" : "people haven't"} set it yet)`
+        teamCount > 0 && missingNames.length > 0
+          ? `Collect availability (${missingNames.length} ${missingNames.length === 1 ? "person hasn't" : "people haven't"} sent next week yet)`
           : "Collect availability",
       href: "/manager/availability",
     },
@@ -121,6 +121,20 @@ export default async function ManagerDashboard() {
           <section aria-labelledby="attention-heading" className="space-y-2">
             <h2 id="attention-heading" className="text-lg">Needs your attention</h2>
             <ul className="space-y-2">
+              {missingNames.length > 0 && (
+                <li>
+                  <Link
+                    href="/manager/availability?week=next"
+                    className="block rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 text-amber-900 hover:bg-amber-100"
+                  >
+                    <strong>
+                      {missingNames.length === 1 ? "1 person hasn't" : `${missingNames.length} people haven't`} sent their availability
+                      for {formatWeek(weeks.nextWeek)}:
+                    </strong>{" "}
+                    {missingNames.join(", ")} →
+                  </Link>
+                </li>
+              )}
               {pendingTimeOff > 0 && (
                 <li>
                   <Link

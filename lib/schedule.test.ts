@@ -24,7 +24,7 @@ describe("coversShift", () => {
 describe("unavailableReason", () => {
   it("explains why in plain words", () => {
     expect(unavailableReason(day({ source: "time-off" }))).toBe("Time off");
-    expect(unavailableReason(day({ source: "not-set" }))).toBe("Availability not set");
+    expect(unavailableReason(day({ source: "not-set" }))).toBe("Availability not sent");
     expect(unavailableReason(day({ kind: "OFF" }))).toBe("Not available that day");
     expect(unavailableReason(day({ kind: "CUSTOM", startTime: "12:00", endTime: "17:00" }))).toBe("Only available 12 PM – 5 PM");
   });

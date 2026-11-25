@@ -135,7 +135,6 @@ model Business {
   reminderStartDay           Int     @default(3) @map("reminder_start_day")
   /// How many days in a row, starting on reminderStartDay (never past Sunday)
   reminderDays               Int     @default(2) @map("reminder_days")
-  reminderIncludeDefaultOnly Boolean @default(false) @map("reminder_include_default_only")
 
   /// Swaps and open-shift pickups: complete at once, or wait for a manager (section 6)
   swapApprovalMode SwapApprovalMode @default(AUTOMATIC) @map("swap_approval_mode")
@@ -169,6 +168,7 @@ model Membership {
   invitationsSent       Invitation[]
   availabilityTemplate  AvailabilityTemplate[]
   availabilityOverrides AvailabilityOverride[]
+  availabilityWeeks     AvailabilityWeek[]
   timeOff               TimeOff[]
   assignments           Assignment[]
   requestsMade          ShiftRequest[]         @relation("requestsMade")
@@ -224,7 +224,9 @@ enum AvailabilityKind {
   CUSTOM
 }
 
-/// Someone's usual week: one row per weekday (1 = Monday ... 7 = Sunday).
+/// The owner's usual week: one row per weekday (1 = Monday ... 7 = Sunday). It starts as
+/// "all day" so the owner only marks days off. Employees and managers have none: they send
+/// each week's availability on its own (AvailabilityWeek).
 model AvailabilityTemplate {
   id           String           @id @default(uuid()) @db.Uuid
   membershipId String           @map("membership_id") @db.Uuid
@@ -239,7 +241,7 @@ model AvailabilityTemplate {
   @@map("availability_templates")
 }
 
-/// A change for one specific date ("this week only"). Replaces the default for that day.
+/// Someone's availability for one date, from the week they sent (or a manager entered for them).
 model AvailabilityOverride {
   id           String           @id @default(uuid()) @db.Uuid
   membershipId String           @map("membership_id") @db.Uuid
@@ -254,6 +256,21 @@ model AvailabilityOverride {
 
   @@unique([membershipId, date])
   @@map("availability_overrides")
+}
+
+/// Someone sent their availability for the week starting `weekStart` (a Monday).
+/// Until they do, that week counts as "not available" and they're listed as missing.
+model AvailabilityWeek {
+  id           String     @id @default(uuid()) @db.Uuid
+  membershipId String     @map("membership_id") @db.Uuid
+  membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  weekStart    DateTime   @map("week_start") @db.Date
+  sentAt       DateTime   @default(now()) @map("sent_at")
+  /// The membership that sent it (the person, or a manager on their behalf)
+  sentById     String     @map("sent_by_id") @db.Uuid
+
+  @@unique([membershipId, weekStart])
+  @@map("availability_weeks")
 }
 
 enum TimeOffStatus {

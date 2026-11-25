@@ -66,7 +66,8 @@
   },
   "overrides": {
     "uuid": "^11.1.1",
-    "fflate": "^0.8.3"
+    "fflate": "^0.8.3",
+    "effect": "^3.22.5"
   },
   "engines": {
     "node": "22.x"

@@ -1,7 +1,8 @@
 import { addDays, dayOfWeek, formatTime, type IsoDate, weekStart } from "@/lib/dates";
 
 // How someone's availability for a day is worked out (technical plan, section 3):
-// start from their default week, apply that date's change, then time off on top.
+// what they sent for that date, then time off on top. Only the owner has a usual
+// week ("all day" unless they mark a day off); everyone else sends each week.
 // Pure functions, so the rules are easy to test.
 
 export type Kind = "OFF" | "ALL_DAY" | "CUSTOM";
@@ -9,7 +10,7 @@ export type DaySetting = { kind: Kind; startTime?: string | null; endTime?: stri
 export type TimeOffEntry = { startDate: IsoDate; endDate: IsoDate; status: "PENDING" | "APPROVED" | "DECLINED" };
 
 export type ResolvedDay = DaySetting & {
-  /** Where the answer came from, for labels like "Default" / "Changed". */
+  /** Where the answer came from: the owner's usual week, the week someone sent, time off, or nothing yet. */
   source: "default" | "change" | "time-off" | "pending-time-off" | "not-set";
 };
 
@@ -76,8 +77,18 @@ export function isWeekLocked(monday: IsoDate, settings: DeadlineSettings, now: {
   return `${now.date}T${now.time}` >= `${deadline.date}T${deadline.time}`;
 }
 
-/** The weeks people can change one at a time: this week and next (decision 22). */
+/** The weeks a manager schedules and can change availability for: this week and next (decision 22). */
 export function editableWeeks(today: IsoDate): { thisWeek: IsoDate; nextWeek: IsoDate } {
   const thisWeek = weekStart(today);
   return { thisWeek, nextWeek: addDays(thisWeek, 7) };
+}
+
+/**
+ * The weeks employees send availability for: the coming week (`first`, the one being
+ * scheduled now) and the week after (`second`, if they want to send early). The week
+ * already under way is planned, so it isn't offered; time off still covers it.
+ */
+export function sendableWeeks(today: IsoDate): { first: IsoDate; second: IsoDate } {
+  const first = addDays(weekStart(today), 7);
+  return { first, second: addDays(first, 7) };
 }

@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { formatDay } from "../lib/dates";
 import { ownerWithEmployee, signUpOwner, uniqueEmail } from "./helpers";
-import { applyPattern, next, setDefaultWeek, shiftLabel, weeks } from "./schedule-helpers";
+import { applyPattern, next, sendWeek, shiftLabel, weeks } from "./schedule-helpers";
 
 test("new businesses start with Standard and Slow day patterns, which set up days", async ({ page }, testInfo) => {
   await signUpOwner(page, uniqueEmail(testInfo, "owner"));
@@ -21,9 +21,9 @@ test("add, edit and remove a single shift", async ({ page }, testInfo) => {
   await page.goto("/manager/shifts?week=next");
   const wednesday = page.getByRole("listitem", { name: formatDay(next(2)) });
   await wednesday.getByRole("button", { name: /^Add shift/ }).click();
-  await wednesday.getByRole("combobox", { name: "Start" }).fill("6pm");
+  await wednesday.getByLabel("Start", { exact: true }).fill("18:00");
   await page.keyboard.press("Tab");
-  await wednesday.getByRole("combobox", { name: "End" }).fill("10pm");
+  await wednesday.getByLabel("End", { exact: true }).fill("22:00");
   await page.keyboard.press("Tab");
   await wednesday.getByLabel("people", { exact: true }).selectOption("3");
   await wednesday.getByRole("button", { name: "Add", exact: true }).click();
@@ -60,9 +60,9 @@ test("create and delete a pattern", async ({ page }, testInfo) => {
   await page.goto("/manager/shifts/patterns");
   const form = page.getByRole("region", { name: "New pattern" });
   await form.getByLabel("Pattern name").fill("Event night");
-  await form.getByRole("combobox", { name: "Start" }).fill("6pm");
+  await form.getByLabel("Start", { exact: true }).fill("18:00");
   await page.keyboard.press("Tab");
-  await form.getByRole("combobox", { name: "End" }).fill("10:30pm");
+  await form.getByLabel("End", { exact: true }).fill("22:30");
   await page.keyboard.press("Tab");
   await form.getByLabel("people", { exact: true }).selectOption("3");
   await form.getByRole("button", { name: "Create pattern" }).click();
@@ -79,7 +79,7 @@ test("create and delete a pattern", async ({ page }, testInfo) => {
 
 test("assign people by hand, with hour totals, pins and removal", async ({ page, browser }, testInfo) => {
   const { employee, employeeContext } = await ownerWithEmployee(page, browser, testInfo);
-  await setDefaultWeek(employee, ["All day", "All day", "All day", "All day", "All day", "Off", "Off"]);
+  await sendWeek(employee, ["All day", "All day", "All day", "All day", "All day", "Off", "Off"]);
   await applyPattern(page, "Standard", [0]);
 
   await page.goto("/manager/schedule?week=next");
@@ -114,7 +114,7 @@ test("assign people by hand, with hour totals, pins and removal", async ({ page,
 
 test("someone marked not available needs a 'we agreed' confirmation", async ({ page, browser }, testInfo) => {
   const { employee, employeeContext } = await ownerWithEmployee(page, browser, testInfo);
-  await setDefaultWeek(employee, ["All day", "Off", "All day", "All day", "All day", "Off", "Off"]);
+  await sendWeek(employee, ["All day", "Off", "All day", "All day", "All day", "Off", "Off"]);
   await applyPattern(page, "Standard", [1]);
 
   await page.goto("/manager/schedule?week=next");
@@ -134,15 +134,15 @@ test("someone marked not available needs a 'we agreed' confirmation", async ({ p
 
 test("overlapping shifts are blocked, and later availability changes are flagged", async ({ page, browser }, testInfo) => {
   const { employee, employeeContext } = await ownerWithEmployee(page, browser, testInfo);
-  await setDefaultWeek(employee, ["All day", "All day", "All day", "All day", "All day", "All day", "All day"]);
+  await sendWeek(employee, ["All day", "All day", "All day", "All day", "All day", "All day", "All day"]);
   await applyPattern(page, "Standard", [0]);
 
   // An extra 4–8 PM shift on Monday overlaps both standard shifts.
   const monday = page.getByRole("listitem", { name: formatDay(next(0)) });
   await monday.getByRole("button", { name: /^Add shift/ }).click();
-  await monday.getByRole("combobox", { name: "Start" }).fill("4pm");
+  await monday.getByLabel("Start", { exact: true }).fill("16:00");
   await page.keyboard.press("Tab");
-  await monday.getByRole("combobox", { name: "End" }).fill("8pm");
+  await monday.getByLabel("End", { exact: true }).fill("20:00");
   await page.keyboard.press("Tab");
   await monday.getByRole("button", { name: "Add", exact: true }).click();
   await expect(monday.getByRole("button", { name: /^Edit:/ })).toHaveCount(3);
@@ -171,7 +171,7 @@ test("overlapping shifts are blocked, and later availability changes are flagged
 
 test("lowering the people needed after assigning flags the extra person", async ({ page, browser }, testInfo) => {
   const { employee, employeeContext } = await ownerWithEmployee(page, browser, testInfo);
-  await setDefaultWeek(employee, ["All day", "All day", "All day", "All day", "All day", "All day", "All day"]);
+  await sendWeek(employee, ["All day", "All day", "All day", "All day", "All day", "All day", "All day"]);
   await applyPattern(page, "Standard", [1]);
   const evening = shiftLabel(1, "17:00", "21:00");
 

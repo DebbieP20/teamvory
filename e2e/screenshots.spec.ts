@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
 import sharp from "sharp";
 import { inviteEmployee, logIn, signUpOwner, uniqueEmail } from "./helpers";
-import { applyPattern, type DayChoice, next, setDefaultWeek } from "./schedule-helpers";
+import { applyPattern, type DayChoice, next, sendWeek } from "./schedule-helpers";
 
 // Screenshots of a made-up café for the home page (public/screenshots).
 // `npm run build`, then `npm run screenshots`. Skipped in the normal test run.
@@ -15,13 +15,13 @@ test.use({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 });
 const A: DayChoice = "All day";
 const O: DayChoice = "Off";
 const team: [string, DayChoice[]][] = [
-  ["Ana López", [O, O, A, ["12pm", "5pm"], A, A, ["5pm", "9pm"]]],
-  ["Ben Carter", [["9am", "5pm"], ["9am", "5pm"], A, A, ["9am", "5pm"], O, O]],
-  ["Chloe Kim", [A, ["5pm", "9pm"], O, A, ["2pm", "8pm"], A, A]],
-  ["Diego Ramos", [A, A, ["12pm", "5pm"], O, A, ["4pm", "10pm"], A]],
-  ["Emma Wilson", [O, A, A, ["5pm", "9pm"], A, A, ["12pm", "5pm"]]],
-  ["Farah Ali", [["5pm", "9pm"], A, ["5pm", "9pm"], A, O, A, A]],
-  ["Jamal Brooks", [A, O, A, A, ["12pm", "5pm"], A, ["9am", "5pm"]]],
+  ["Ana López", [O, O, A, ["12:00", "17:00"], A, A, ["17:00", "21:00"]]],
+  ["Ben Carter", [["09:00", "17:00"], ["09:00", "17:00"], A, A, ["09:00", "17:00"], O, O]],
+  ["Chloe Kim", [A, ["17:00", "21:00"], O, A, ["14:00", "20:00"], A, A]],
+  ["Diego Ramos", [A, A, ["12:00", "17:00"], O, A, ["16:00", "22:00"], A]],
+  ["Emma Wilson", [O, A, A, ["17:00", "21:00"], A, A, ["12:00", "17:00"]]],
+  ["Farah Ali", [["17:00", "21:00"], A, ["17:00", "21:00"], A, O, A, A]],
+  ["Jamal Brooks", [A, O, A, A, ["12:00", "17:00"], A, ["09:00", "17:00"]]],
 ];
 
 /** The visible screen, or (fit) just down to the end of the page's content. */
@@ -44,7 +44,7 @@ test("home page screenshots", async ({ page, browser }, testInfo) => {
   const people = [];
   for (const [name, week] of team) {
     const person = await inviteEmployee(page, browser, testInfo, name, name.split(" ")[0].toLowerCase());
-    await setDefaultWeek(person.employee, week);
+    await sendWeek(person.employee, week);
     people.push(person);
   }
 
@@ -57,9 +57,9 @@ test("home page screenshots", async ({ page, browser }, testInfo) => {
   const form = page.getByRole("region", { name: "Add an event" });
   await form.getByLabel("Event", { exact: true }).fill("Birthday party");
   await form.getByLabel("Date").fill(next(5));
-  await form.getByRole("combobox", { name: "Start" }).fill("6pm");
+  await form.getByLabel("Start", { exact: true }).fill("18:00");
   await page.keyboard.press("Tab");
-  await form.getByRole("combobox", { name: "End" }).fill("10pm");
+  await form.getByLabel("End", { exact: true }).fill("22:00");
   await page.keyboard.press("Tab");
   await form.getByLabel("Location (optional)").fill("Patio");
   await form.getByRole("button", { name: "Add event" }).click();

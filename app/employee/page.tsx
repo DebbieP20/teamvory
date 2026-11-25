@@ -2,7 +2,7 @@ import { CalendarCheckIcon } from "lucide-react";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import type { Metadata } from "next";
-import { formatDay, formatTime, formatWeek } from "@/lib/dates";
+import { formatDay, formatTime, formatWeek, toDbDate } from "@/lib/dates";
 import { shiftsFor } from "@/lib/publish";
 import { shortName } from "@/lib/schedule";
 import { findWeek, loadPublished, selectedWeek } from "@/lib/schedule-data";
@@ -14,8 +14,12 @@ export const metadata: Metadata = { title: "Home" };
 
 export default async function EmployeeHome() {
   const { user, membership } = await requireEmployee();
-  const hasDefaultWeek = (await db.availabilityTemplate.count({ where: { membershipId: membership.id } })) > 0;
   const { now, weeks } = await selectedWeek(membership.businessId, undefined);
+  // The coming week is the one employees send availability for.
+  const sendWeek = weeks.nextWeek;
+  const hasSent = !!(await db.availabilityWeek.findUnique({
+    where: { membershipId_weekStart: { membershipId: membership.id, weekStart: toDbDate(sendWeek) } },
+  }));
   // Shifts with a swap or open-shift request in progress.
   const requested = new Map(
     (
@@ -110,18 +114,18 @@ export default async function EmployeeHome() {
       <Link
         href="/employee/availability"
         className={
-          hasDefaultWeek
+          hasSent
             ? "flex items-start gap-4 rounded-xl border bg-white p-6 hover:border-teal"
             : "flex items-start gap-4 rounded-xl border border-teal/40 bg-mint p-6 hover:border-teal"
         }
       >
         <CalendarCheckIcon className="size-8 shrink-0 text-teal-dark" aria-hidden />
         <div>
-          <h2 className="text-lg">{hasDefaultWeek ? "My availability" : "Set your availability"}</h2>
+          <h2 className="text-lg">{hasSent ? "My availability" : `Send your availability for ${formatWeek(sendWeek)}`}</h2>
           <p className="mt-1 text-muted-foreground">
-            {hasDefaultWeek
-              ? "Change a week, or add time off."
-              : "Tell your manager when you can usually work. It takes a minute, and you only do it once."}
+            {hasSent
+              ? `Sent for ${formatWeek(sendWeek)}. Change it, send the week after, or add time off.`
+              : "Your manager is planning that week. Choose when you can work each day and send it. It takes a minute."}
           </p>
         </div>
       </Link>

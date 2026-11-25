@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { deadlineText } from "@/components/availability/deadline-text";
 import { ReviewButtons } from "@/components/availability/review-buttons";
-import { type DaySetting, editableWeeks, resolveDay } from "@/lib/availability";
+import { WeekSwitcher, managerWeeks, pickWeek } from "@/components/availability/week-switcher";
+import { type DaySetting, resolveDay } from "@/lib/availability";
 import { getBusinessSettings, loadWeek, today } from "@/lib/availability-data";
 import { formatDay, formatTime, formatWeek, fromDbDate, toDbDate, WEEKDAYS_SHORT, weekDates, addDays } from "@/lib/dates";
 import { db } from "@/lib/db";
@@ -23,11 +24,11 @@ function short(d: DaySetting) {
 
 export default async function AvailabilityOverview({ searchParams }: PageProps<"/manager/availability">) {
   const { membership } = await requireManager();
-  const selected = (await searchParams).week === "next" ? "next" : "this";
+  const selected = pickWeek((await searchParams).week);
   const settings = await getBusinessSettings(membership.businessId);
   const now = today(settings);
-  const weeks = editableWeeks(now.date);
-  const monday = selected === "next" ? weeks.nextWeek : weeks.thisWeek;
+  const weeks = managerWeeks(now.date);
+  const monday = weeks[selected];
   const dates = weekDates(monday);
 
   const people = await db.membership.findMany({
@@ -36,7 +37,8 @@ export default async function AvailabilityOverview({ searchParams }: PageProps<"
     orderBy: { user: { name: "asc" } },
   });
   const week = await loadWeek(people.map((p) => p.id), monday);
-  const notSet = people.filter((p) => week.get(p.id)!.template.size === 0);
+  // The owner is available unless they say otherwise; everyone else sends each week.
+  const notSent = people.filter((p) => p.role !== "OWNER" && !week.get(p.id)!.sent);
 
   const [pending, upcoming] = await Promise.all([
     db.timeOff.findMany({
@@ -62,29 +64,25 @@ export default async function AvailabilityOverview({ searchParams }: PageProps<"
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl sm:text-3xl">Availability</h1>
-        <p className="mt-1 text-muted-foreground">When your team can work. Click a name to change it for them.</p>
+        <p className="mt-1 text-muted-foreground">
+          When your team can work, as each person sent it for the week. Click a name to enter or change it for them.
+        </p>
       </div>
 
-      <nav aria-label="Week" className="grid max-w-xl grid-cols-2 overflow-hidden rounded-lg border">
-        {(["this", "next"] as const).map((w) => (
-          <Link
-            key={w}
-            href={`/manager/availability?week=${w}`}
-            aria-current={selected === w ? "page" : undefined}
-            className={cn("px-3 py-2 text-center text-sm", selected === w ? "bg-navy font-semibold text-white" : "bg-white hover:bg-slate-50")}
-          >
-            {w === "this" ? "This week" : "Next week"} · {formatWeek(w === "this" ? weeks.thisWeek : weeks.nextWeek)}
-          </Link>
-        ))}
-      </nav>
+      <WeekSwitcher basePath="/manager/availability" weeks={weeks} selected={selected} />
       {deadlineText(monday, settings.deadline) && <p className="-mt-4 text-sm text-muted-foreground">{deadlineText(monday, settings.deadline)}</p>}
 
-      {notSet.length > 0 && (
-        <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {notSet.length === 1 ? "1 person hasn't" : `${notSet.length} people haven't`} set their default week yet:{" "}
-          {notSet.map((p) => p.user.name).join(", ")}.
-        </p>
-      )}
+      {people.some((p) => p.role !== "OWNER") &&
+        (notSent.length > 0 ? (
+          <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {notSent.length === 1 ? "1 person hasn't" : `${notSent.length} people haven't`} sent their availability for{" "}
+            {formatWeek(monday)} yet: {notSent.map((p) => p.user.name).join(", ")}. Until they do, they count as not available.
+          </p>
+        ) : (
+          <p role="status" className="rounded-lg bg-mint px-4 py-3 text-sm text-teal-dark">
+            Everyone has sent their availability for {formatWeek(monday)}.
+          </p>
+        ))}
 
       <div className="overflow-x-auto rounded-xl border bg-white">
         <table className="w-full min-w-[720px] border-collapse text-sm">
@@ -122,11 +120,9 @@ export default async function AvailabilityOverview({ searchParams }: PageProps<"
                           r.kind === "OFF" && "text-muted-foreground",
                           r.source === "time-off" && "bg-violet-50 text-violet-800",
                           r.source === "pending-time-off" && "bg-amber-50 text-amber-900",
-                          r.source === "change" && "font-semibold text-teal-dark",
                         )}
                       >
                         {text}
-                        {r.source === "change" && <span className="sr-only"> (changed this week)</span>}
                       </td>
                     );
                   })}
@@ -137,9 +133,8 @@ export default async function AvailabilityOverview({ searchParams }: PageProps<"
         </table>
       </div>
       <p className="-mt-6 text-xs text-muted-foreground">
-        <span className="font-semibold text-teal-dark">Bold teal</span> = changed for this week only ·{" "}
         <span className="text-violet-800">Time off</span> · <span className="text-amber-900">Pending</span> = time off waiting for approval ·
-        “–” = not set
+        “–” = not sent yet
       </p>
 
       {pending.length > 0 && (

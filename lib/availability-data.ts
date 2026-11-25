@@ -29,7 +29,6 @@ export async function getBusinessSettings(businessId: string): Promise<BusinessS
       enabled: b.reminderEnabled,
       startDay: b.reminderStartDay,
       days: b.reminderDays,
-      includeDefaultOnly: b.reminderIncludeDefaultOnly,
     },
     swapApprovalMode: b.swapApprovalMode,
   };
@@ -69,18 +68,20 @@ export async function authorizeAvailability(targetMembershipId: string) {
   };
 }
 
-export async function loadTemplate(membershipId: string): Promise<Map<number, DaySetting>> {
-  const rows = await db.availabilityTemplate.findMany({ where: { membershipId } });
-  return new Map(rows.map((r) => [r.dayOfWeek, { kind: r.kind, startTime: r.startTime, endTime: r.endTime }]));
-}
+export type PersonWeek = {
+  /** The owner's usual week; empty for everyone else. */
+  template: Map<number, DaySetting>;
+  overrides: Map<IsoDate, DaySetting>;
+  timeOff: TimeOffEntry[];
+  /** They (or a manager for them) sent this week's availability. */
+  sent: boolean;
+};
 
-export type PersonWeek = { template: Map<number, DaySetting>; overrides: Map<IsoDate, DaySetting>; timeOff: TimeOffEntry[] };
-
-/** Changes and time off for several people over one week, for the overview and week pages. */
+/** Availability and time off for several people over one week, for the overview, week and schedule pages. */
 export async function loadWeek(membershipIds: string[], monday: IsoDate) {
   const sunday = addDays(monday, 6);
-  const [templates, overrides, timeOff] = await Promise.all([
-    db.availabilityTemplate.findMany({ where: { membershipId: { in: membershipIds } } }),
+  const [templates, overrides, timeOff, sent] = await Promise.all([
+    db.availabilityTemplate.findMany({ where: { membershipId: { in: membershipIds }, membership: { role: "OWNER" } } }),
     db.availabilityOverride.findMany({
       where: { membershipId: { in: membershipIds }, date: { gte: toDbDate(monday), lte: toDbDate(sunday) } },
     }),
@@ -91,15 +92,34 @@ export async function loadWeek(membershipIds: string[], monday: IsoDate) {
         endDate: { gte: toDbDate(monday) },
       },
     }),
+    db.availabilityWeek.findMany({
+      where: { membershipId: { in: membershipIds }, weekStart: toDbDate(monday) },
+      select: { membershipId: true },
+    }),
   ]);
 
   const byPerson = new Map<string, PersonWeek>(
-    membershipIds.map((id) => [id, { template: new Map(), overrides: new Map(), timeOff: [] }]),
+    membershipIds.map((id) => [id, { template: new Map(), overrides: new Map(), timeOff: [], sent: false }]),
   );
   for (const t of templates) byPerson.get(t.membershipId)?.template.set(t.dayOfWeek, t);
   for (const o of overrides) byPerson.get(o.membershipId)?.overrides.set(fromDbDate(o.date), o);
   for (const t of timeOff) {
     byPerson.get(t.membershipId)?.timeOff.push({ startDate: fromDbDate(t.startDate), endDate: fromDbDate(t.endDate), status: t.status });
   }
+  for (const s of sent) {
+    const person = byPerson.get(s.membershipId);
+    if (person) person.sent = true;
+  }
   return byPerson;
+}
+
+/** Active, scheduled employees and managers who haven't sent their availability for the week starting `monday`. */
+export function missingAvailabilityWhere(businessId: string, monday: IsoDate) {
+  return {
+    businessId,
+    status: "ACTIVE" as const,
+    role: { not: "OWNER" as const },
+    schedulingMode: { not: "NOT_SCHEDULED" as const },
+    availabilityWeeks: { none: { weekStart: toDbDate(monday) } },
+  };
 }
