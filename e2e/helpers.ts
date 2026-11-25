@@ -11,7 +11,7 @@ export function uniqueEmail(testInfo: TestInfo, label: string) {
   return `${label}-${testInfo.project.name}-${id}@example.com`;
 }
 
-type CapturedEmail = { to: string; subject: string; text: string; fromName?: string; replyTo?: string };
+type CapturedEmail = { to: string; subject: string; text: string; html?: string; fromName?: string; replyTo?: string };
 
 /** Waits for an email to `to` (the app writes emails to EMAIL_FILE during tests). */
 export async function waitForEmail(to: string, subject: RegExp): Promise<CapturedEmail> {

@@ -10,9 +10,11 @@ import { notifyManagersOfConflicts } from "@/lib/conflicts";
 import { db } from "@/lib/db";
 import { isUuid } from "@/lib/ids";
 import { sendEmail } from "@/lib/email";
+import { renderEmail } from "@/lib/email-content";
 import { teamSender } from "@/lib/team-sender";
 import { errorState, type FormState } from "@/lib/form-state";
 import { requireManager, requireUser } from "@/lib/session";
+import { appUrl } from "@/lib/urls";
 
 const NOT_ALLOWED = "You can't change this person's availability.";
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -224,14 +226,22 @@ export async function reviewTimeOff(formData: FormData) {
   const start = fromDbDate(timeOff.startDate);
   const end = fromDbDate(timeOff.endDate);
   const dates = start === end ? formatDay(start) : `${formatDay(start)} to ${formatDay(end)}`;
+  const approved = decision === "APPROVED";
   await sendEmail({
     ...(await teamSender(membership.businessId)),
     to: timeOff.membership.user.email,
-    subject: `Your time off was ${decision === "APPROVED" ? "approved" : "declined"}`,
-    text:
-      `Hi ${timeOff.membership.user.name},\n\n` +
-      `Your time off for ${dates} at ${membership.businessName} was ${decision === "APPROVED" ? "approved" : "declined"}.` +
-      (decision === "DECLINED" ? "\n\nIf you have questions, talk to your manager." : ""),
+    ...renderEmail({
+      subject: `Your time off was ${approved ? "approved" : "declined"}`,
+      icon: approved ? "approved" : "declined",
+      heading: `Your time off was ${approved ? "approved" : "declined"}`,
+      greeting: `Hi ${timeOff.membership.user.name.split(" ")[0]},`,
+      businessName: membership.businessName,
+      blocks: [
+        { type: "p", text: `Your time off for ${dates} at ${membership.businessName} was ${approved ? "approved" : "declined"}.` },
+        ...(approved ? [] : [{ type: "p" as const, text: "If you have questions, talk to your manager." }]),
+        { type: "button", label: "See my time off", url: `${appUrl()}/employee/availability/time-off` },
+      ],
+    }),
   });
   refresh();
 }

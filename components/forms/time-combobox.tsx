@@ -40,11 +40,23 @@ export function TimeCombobox({
   const listRef = useRef<HTMLUListElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Keep the highlighted choice visible while the list is open.
+  // Keep the highlighted choice visible while the list is open. Only the list scrolls, never
+  // the page (scrollIntoView would also move the page, which jumps on phones).
   useEffect(() => {
-    if (!open) return;
-    listRef.current?.querySelector<HTMLElement>(`[data-index="${active}"]`)?.scrollIntoView({ block: "nearest" });
+    const list = listRef.current;
+    const option = list?.querySelector<HTMLElement>(`[data-index="${active}"]`);
+    if (!open || !list || !option) return;
+    if (option.offsetTop < list.scrollTop) list.scrollTop = option.offsetTop;
+    else if (option.offsetTop + option.offsetHeight > list.scrollTop + list.clientHeight) {
+      list.scrollTop = option.offsetTop + option.offsetHeight - list.clientHeight;
+    }
   }, [open, active]);
+
+  // Tapping a box that shows a time selects it, so typing replaces it. Some phones drop the
+  // selection, so the first character typed after focusing also starts a new time. A second
+  // tap, or an arrow key, places the cursor for a small fix instead.
+  const replaceOnType = useRef(false);
+  const justFocused = useRef(false);
 
   function commit(raw: string) {
     const parsed = parseTimeInput(raw);
@@ -61,6 +73,7 @@ export function TimeCombobox({
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) replaceOnType.current = false;
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
       if (!open) {
@@ -102,15 +115,35 @@ export function TimeCombobox({
           aria-invalid={invalid}
           aria-describedby={invalid ? errorId : undefined}
           onChange={(e) => {
+            let next = e.target.value;
+            const typed = (e.nativeEvent as InputEvent).data;
+            if (replaceOnType.current && typed && next !== typed && next.length === text.length + typed.length) next = typed;
+            replaceOnType.current = false;
             // Ignore keys that can't be part of a time (e.g. digits after "PM").
-            if (!isTimeTyping(e.target.value)) return;
-            setText(e.target.value);
+            if (!isTimeTyping(next)) return;
+            setText(next);
             setOpen(true);
-            const parsed = parseTimeInput(e.target.value);
+            const parsed = parseTimeInput(next);
             if (parsed) setActive(nearestIndex(parsed));
+          }}
+          onFocus={(e) => {
+            replaceOnType.current = e.currentTarget.value !== "";
+            justFocused.current = true;
+            const box = e.currentTarget;
+            box.select();
+            // Again just after the tap (phones can undo it), unless a key was pressed already.
+            setTimeout(() => document.activeElement === box && replaceOnType.current && box.select(), 0);
+          }}
+          onMouseUp={(e) => {
+            // Releasing the first tap would put the cursor in the text and undo the selection.
+            if (justFocused.current) e.preventDefault();
+            else replaceOnType.current = false;
+            justFocused.current = false;
           }}
           onClick={() => setOpen(true)}
           onBlur={() => {
+            replaceOnType.current = false;
+            justFocused.current = false;
             setOpen(false);
             commit(text);
           }}

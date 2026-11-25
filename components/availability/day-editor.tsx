@@ -1,7 +1,7 @@
 "use client";
 
 import { TriangleAlertIcon } from "lucide-react";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import type { DaySetting, Kind } from "@/lib/availability";
 import { TimeCombobox, timeProblem } from "@/components/forms/time-combobox";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ export function DayEditor({
   const [kind, setKind] = useState<Kind>(initial.kind);
   const [start, setStart] = useState(initial.startTime ?? "12:00");
   const [end, setEnd] = useState(initial.endTime ?? "17:00");
+  const timesRef = useRef<HTMLDivElement>(null);
 
   // Checked as soon as a time changes, so mistakes show right away (the server checks again).
   const startProblem = timeProblem(start);
@@ -47,7 +48,8 @@ export function DayEditor({
           <label
             key={c.kind}
             className={cn(
-              "cursor-pointer border-r border-input px-2 py-2 text-center text-sm last:border-r-0 has-focus-visible:ring-3 has-focus-visible:ring-ring/50",
+              // relative: keeps the hidden radio inside its label, so Safari doesn't jump the page when it's tapped.
+              "relative cursor-pointer border-r border-input px-2 py-2 text-center text-sm last:border-r-0 has-focus-visible:ring-3 has-focus-visible:ring-ring/50",
               kind === c.kind ? "bg-mint font-semibold text-teal-dark" : "bg-white hover:bg-slate-50",
             )}
           >
@@ -56,7 +58,13 @@ export function DayEditor({
               name={`${prefix}kind`}
               value={c.kind}
               checked={kind === c.kind}
-              onChange={() => setKind(c.kind)}
+              onChange={() => {
+                setKind(c.kind);
+                // Then bring the time boxes on screen: on a phone they can open below the bottom edge.
+                if (c.kind === "CUSTOM") {
+                  requestAnimationFrame(() => timesRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }));
+                }
+              }}
               className="sr-only"
             />
             {c.label}
@@ -64,7 +72,7 @@ export function DayEditor({
         ))}
       </div>
       {kind === "CUSTOM" && (
-        <div className="mt-2 space-y-1">
+        <div ref={timesRef} className="mt-2 scroll-mb-4 space-y-1">
           {/* Labels above the boxes, so both fit side by side on a small phone. */}
           <div className="flex flex-wrap gap-x-3 gap-y-2 text-sm">
             <div className="space-y-1">

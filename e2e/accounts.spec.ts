@@ -88,6 +88,9 @@ test("owner invites an employee, who joins, and can be set inactive", async ({ p
   const invite = await waitForEmail(employeeEmail, /invited you to Dana's Café/);
   expect(invite.fromName).toBe("Dana's Café via TeamVory");
   expect(invite.replyTo).toBe(ownerEmail);
+  // The designed version comes with it (lib/email-content.ts).
+  expect(invite.html).toContain("Join Dana&#39;s Café on TeamVory");
+  expect(invite.html).toContain("Accept invitation &rarr;");
   const employeeContext = await browser.newContext();
   const employee = await employeeContext.newPage();
   await employee.goto(linkIn(invite));

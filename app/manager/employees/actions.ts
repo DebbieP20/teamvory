@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 import { db } from "@/lib/db";
 import { isUuid } from "@/lib/ids";
 import { sendEmail } from "@/lib/email";
+import { renderEmail } from "@/lib/email-content";
 import { teamSender } from "@/lib/team-sender";
 import { errorState, type FormState } from "@/lib/form-state";
 import type { Role } from "@/lib/generated/prisma/enums";
@@ -44,12 +45,23 @@ async function issueInvitation(
   await sendEmail({
     ...(await teamSender(actor.businessId)),
     to: email,
-    subject: `${actor.userName} invited you to ${actor.businessName} on TeamVory`,
-    text:
-      `Hi,\n\n${actor.userName} invited you to join ${actor.businessName} on TeamVory as a ${roleWord[role]}. ` +
-      `TeamVory is where you'll set your availability and see your shifts.\n\n` +
-      `Open this link to join (it works for ${INVITE_DAYS} days):\n\n${appUrl()}/invite/${token}\n\n` +
-      `If you weren't expecting this, you can ignore this email.`,
+    ...renderEmail({
+      subject: `${actor.userName} invited you to ${actor.businessName} on TeamVory`,
+      icon: "invite",
+      heading: `Join ${actor.businessName} on TeamVory`,
+      greeting: "Hi,",
+      businessName: actor.businessName,
+      blocks: [
+        { type: "p", text: `${actor.userName} invited you to join ${actor.businessName} on TeamVory as a ${roleWord[role]}.` },
+        { type: "button", label: "Accept invitation", url: `${appUrl()}/invite/${token}` },
+        {
+          type: "box",
+          title: "What's TeamVory?",
+          text: `It's where you'll tell ${actor.businessName} when you can work, see your shifts, and swap or give away a shift, all from your phone.`,
+        },
+        { type: "small", text: `The invitation works for ${INVITE_DAYS} days. If you weren't expecting it, you can ignore this email.` },
+      ],
+    }),
   });
 }
 

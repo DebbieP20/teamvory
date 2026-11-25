@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { renderEmail } from "@/lib/email-content";
 import { errorState, type FormState } from "@/lib/form-state";
 import { notify, type OutgoingNotification } from "@/lib/notifications";
 import { isRateLimited } from "@/lib/rate-limit";
@@ -39,15 +40,31 @@ async function managersOf(businessId: string): Promise<Person[]> {
   return ms.map((m) => ({ id: m.id, name: m.user.name, email: m.user.email, userId: m.user.id }));
 }
 
+const BUTTONS: Record<string, string> = {
+  "/employee": "See my schedule",
+  "/employee/shifts": "See shifts",
+  "/manager": "Open the dashboard",
+  "/manager/schedule": "Open the schedule",
+};
+
 function email(businessId: string, to: Person, key: string, subject: string, body: string, link: string): OutgoingNotification {
+  const kind = key.split(":")[0];
   return {
     businessId,
     userId: to.userId,
     type: "shift-request",
     dedupeKey: `${key}:${to.id}`,
     to: to.email,
-    subject,
-    text: `Hi ${to.name.split(" ")[0]},\n\n${body}\n\n${appUrl()}${link}\n`,
+    ...renderEmail({
+      subject,
+      icon: ["declined", "swap-declined"].includes(kind) ? "declined" : ["approved", "swap-done"].includes(kind) ? "approved" : "swap",
+      heading: subject,
+      greeting: `Hi ${to.name.split(" ")[0]},`,
+      blocks: [
+        ...body.split("\n\n").map((text) => ({ type: "p" as const, text })),
+        { type: "button", label: BUTTONS[link] ?? "Open TeamVory", url: `${appUrl()}${link}` },
+      ],
+    }),
   };
 }
 
@@ -273,7 +290,7 @@ export async function answerSwap(_prev: FormState, formData: FormData): Promise<
       await notify([
         email(membership.businessId, requester, `swap-accepted:${request.id}`, `${me.name} accepted your swap`, `${me.name} accepted. It now waits for your manager's approval. Until then you both keep your own shifts.`, "/employee/shifts"),
         ...(await managersOf(membership.businessId)).map((m) =>
-          email(membership.businessId, m, `swap-approval:${request.id}`, `Swap to approve: ${requester.name} and ${me.name}`, `${what}. Both agreed. Approve or decline it on your dashboard:`, "/manager"),
+          email(membership.businessId, m, `swap-approval:${request.id}`, `Swap to approve: ${requester.name} and ${me.name}`, `${what}. Both agreed. Approve or decline it on your dashboard.`, "/manager"),
         ),
       ]);
       refresh();
@@ -315,7 +332,7 @@ export async function pickUpShift(_prev: FormState, formData: FormData): Promise
       await notify([
         email(membership.businessId, requester, `picked:${request.id}`, `${me.name} offered to take ${label}`, `${me.name} picked up your open shift. It waits for your manager's approval. Until then you still work it.`, "/employee/shifts"),
         ...(await managersOf(membership.businessId)).map((m) =>
-          email(membership.businessId, m, `pickup-approval:${request.id}`, `To approve: ${me.name} takes ${requester.name}'s shift`, `${me.name} picked up ${requester.name}'s open shift, ${label}. Approve or decline it on your dashboard:`, "/manager"),
+          email(membership.businessId, m, `pickup-approval:${request.id}`, `To approve: ${me.name} takes ${requester.name}'s shift`, `${me.name} picked up ${requester.name}'s open shift, ${label}. Approve or decline it on your dashboard.`, "/manager"),
         ),
       ]);
       refresh();

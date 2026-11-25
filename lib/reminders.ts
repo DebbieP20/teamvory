@@ -1,5 +1,6 @@
 import { type DeadlineSettings, deadlineFor } from "@/lib/availability";
 import { dayOfWeek, formatDay, formatTime, formatWeek, type IsoDate, WEEKDAYS } from "@/lib/dates";
+import { type EmailBlock, type RenderedEmail, renderEmail } from "@/lib/email-content";
 
 // Availability reminders (decision 26, section 6b). Pure rules, unit tested;
 // the daily job in lib/reminders-job.ts sends them.
@@ -38,19 +39,32 @@ export function reminderEmail(opts: {
   kind: "missing" | "check";
   deadline: DeadlineSettings;
   link: string;
-}): { subject: string; text: string } {
+}): RenderedEmail {
   const week = formatWeek(opts.nextMonday);
   const due = opts.deadline.enabled ? deadlineFor(opts.nextMonday, opts.deadline) : null;
-  const dueLine = due ? `\nIt's due ${formatDay(due.date)} at ${formatTime(due.time)}.\n` : "";
-  const first = opts.name.split(" ")[0];
+  const dueLine: EmailBlock[] = due ? [{ type: "p", text: `It's due ${formatDay(due.date)} at ${formatTime(due.time)}.` }] : [];
+  const common = { greeting: `Hi ${opts.name.split(" ")[0]},`, businessName: opts.businessName, icon: "reminder" as const };
   if (opts.kind === "missing") {
-    return {
+    return renderEmail({
+      ...common,
       subject: `Reminder: add your availability for ${week}`,
-      text: `Hi ${first},\n\n${opts.businessName} is planning the schedule for ${week}, and your availability isn't in yet.\n${dueLine}\nIt takes a minute: ${opts.link}\n`,
-    };
+      heading: `Add your availability for ${week}`,
+      blocks: [
+        { type: "p", text: `${opts.businessName} is planning the schedule for ${week}, and your availability isn't in yet. It takes a minute.` },
+        ...dueLine,
+        { type: "button", label: "Add my availability", url: opts.link },
+      ],
+    });
   }
-  return {
+  return renderEmail({
+    ...common,
     subject: `Is your availability for ${week} still right?`,
-    text: `Hi ${first},\n\n${opts.businessName} is planning the schedule for ${week}. You're using your usual week. If anything is different, change it here:\n${opts.link}\n${dueLine}\nIf nothing changed, you don't need to do anything.\n`,
-  };
+    heading: `Is your availability for ${week} still right?`,
+    blocks: [
+      { type: "p", text: `${opts.businessName} is planning the schedule for ${week}. You're using your usual week. If anything is different, change it here.` },
+      ...dueLine,
+      { type: "button", label: "Check my availability", url: opts.link },
+      { type: "small", text: "If nothing changed, you don't need to do anything." },
+    ],
+  });
 }

@@ -15,6 +15,7 @@ export type OutgoingNotification = {
   to: string;
   subject: string;
   text: string;
+  html?: string;
 };
 
 const MAX_ATTEMPTS = 5;
@@ -35,13 +36,13 @@ export async function notify(items: OutgoingNotification[]): Promise<number> {
   return fresh.length;
 }
 
-type Pending = { id: string; businessId: string; to: string; subject: string; text: string; attempts: number };
+type Pending = { id: string; businessId: string; to: string; subject: string; text: string; html: string | null; attempts: number };
 
 async function deliver(n: Pending, senderFor: (businessId: string) => Promise<TeamSender>) {
   let sent = false;
   let error: string | null = null;
   try {
-    sent = await sendEmail({ to: n.to, subject: n.subject, text: n.text, ...(await senderFor(n.businessId)) });
+    sent = await sendEmail({ to: n.to, subject: n.subject, text: n.text, html: n.html ?? undefined, ...(await senderFor(n.businessId)) });
     // Without an email service (a developer's computer) it was printed to the log: don't retry.
     if (!sent && !emailService()) return markSent(n.id, attempts(n), "Printed to the server log (no email service)");
     if (!sent) error = "Email service unavailable";

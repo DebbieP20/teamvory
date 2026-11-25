@@ -15,7 +15,7 @@
 | ORM | **Prisma** | Type-safe queries and easy migrations. |
 | Auth | **Better Auth** (email + password, database sessions) plus our own invitation links | Stable, built-in sign-up, login and password reset. Chosen in M2 instead of Auth.js, whose v5 was still in beta and which discourages passwords. |
 | Validation | **Zod** | One schema validates both forms and server actions. |
-| Email | **Gmail** (free trial) → **Resend** (business launch) | Plain-text emails. The free trial sends through a Gmail app password; once `RESEND_API_KEY` is set, Resend sends from the business domain. Team emails show "*Business* via TeamVory" and replies go to the owner (decision 31). |
+| Email | **Gmail** (free trial) → **Resend** (business launch) | Designed HTML emails in the brand colors with a plain-text version (`lib/email-content.ts`; images in `public/email`). The free trial sends through a Gmail app password; once `RESEND_API_KEY` is set, Resend sends from the business domain. Team emails show "*Business* via TeamVory" and replies go to the owner (decision 31). |
 | SMS (later) | **Twilio** | Employees already use text messages. Added after v1 through the same notification layer. |
 | Exports | **@react-pdf/renderer** (PDF), **satori + resvg** (PNG), **sharp** (JPG), **docx** (Word .docx), **exceljs** (Excel .xlsx) | Covers all five formats the manager asked for. |
 | Dates / time zone | **date-fns + date-fns-tz**, zone `America/New_York` | Switches automatically between EDT (summer) and EST (winter). |

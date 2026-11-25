@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { renderEmail } from "@/lib/email-content";
 import { notify } from "@/lib/notifications";
 import { describeShift } from "@/lib/schedule";
 import { publishedConflicts, selectedWeek } from "@/lib/schedule-data";
@@ -30,11 +31,19 @@ export async function notifyManagersOfConflicts(businessId: string, membershipId
         type: "availability-conflict" as const,
         dedupeKey: `conflict:${c.scheduleId}:${c.shift.shiftId}:${c.membershipId}:${m.id}`,
         to: m.user.email,
-        subject: `${c.name} can't work ${describeShift(c.shift)}`,
-        text:
-          `Hi ${m.user.name.split(" ")[0]},\n\n${c.name} changed their availability and can no longer work a shift on ` +
-          `${business.name}'s published schedule:\n\n• ${describeShift(c.shift)} (${c.reason})\n\n` +
-          `The schedule hasn't changed. Open it to find cover or talk with them:\n${appUrl()}/manager/schedule?week=${week}\n`,
+        ...renderEmail({
+          subject: `${c.name} can't work ${describeShift(c.shift)}`,
+          icon: "alert",
+          heading: `${c.name} can't work a shift`,
+          greeting: `Hi ${m.user.name.split(" ")[0]},`,
+          businessName: business.name,
+          blocks: [
+            { type: "p", text: `${c.name} changed their availability and can no longer work a shift on ${business.name}'s published schedule.` },
+            { type: "list", title: "The shift", items: [`${describeShift(c.shift)} (${c.reason})`] },
+            { type: "p", text: "The schedule hasn't changed. Open it to find cover or talk with them." },
+            { type: "button", label: "Open the schedule", url: `${appUrl()}/manager/schedule?week=${week}` },
+          ],
+        }),
       }));
     }),
   );

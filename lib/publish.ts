@@ -1,4 +1,5 @@
 import type { IsoDate } from "@/lib/dates";
+import { type EmailBlock, type RenderedEmail, renderEmail } from "@/lib/email-content";
 import { describeShift, shortName } from "@/lib/schedule";
 
 // Publishing (technical plan, section 3): the draft is the working copy, and each
@@ -85,7 +86,7 @@ export function describeForEmail(shift: SnapshotShift, membershipId: string): st
   return `${describeShift(shift)}${withWho}`;
 }
 
-/** Plain-text email for one person after a publish. */
+/** The email for one person after a publish (designed HTML and plain text). */
 export function scheduleEmail(opts: {
   name: string;
   businessName: string;
@@ -95,27 +96,42 @@ export function scheduleEmail(opts: {
   shifts: SnapshotShift[];
   membershipId: string;
   link: string;
-}): { subject: string; text: string } {
-  const first = opts.name.split(" ")[0];
-  const list = opts.shifts.length
-    ? opts.shifts.map((s) => `• ${describeForEmail(s, opts.membershipId)}`).join("\n")
-    : "You're not on the schedule this week.";
+}): RenderedEmail {
+  const yourShifts = (title: string): EmailBlock => ({
+    type: "list",
+    title,
+    items: opts.shifts.map((s) => describeForEmail(s, opts.membershipId)),
+    empty: "You're not on the schedule this week.",
+  });
+  const common = { greeting: `Hi ${opts.name.split(" ")[0]},`, businessName: opts.businessName };
+  const button: EmailBlock = { type: "button", label: "See my schedule", url: opts.link };
 
   if (opts.firstPublish || !opts.change) {
-    return {
+    return renderEmail({
+      ...common,
       subject: `Your schedule for ${opts.week}`,
-      text: `Hi ${first},\n\n${opts.businessName} published the schedule for ${opts.week}.\n\nYour shifts:\n${list}\n\nSee it any time: ${opts.link}\n`,
-    };
+      icon: "schedule",
+      heading: `Your schedule for ${opts.week}`,
+      blocks: [{ type: "p", text: `${opts.businessName} published the schedule for ${opts.week}.` }, yourShifts("Your shifts"), button],
+    });
   }
 
-  const lines = [
+  const changes = [
     ...opts.change.added.map((s) => `+ Added: ${describeShift(s)}`),
     ...opts.change.removed.map((s) => `− Removed: ${describeShift(s)}`),
-  ].join("\n");
-  return {
+  ];
+  return renderEmail({
+    ...common,
     subject: `Your schedule changed: ${opts.week}`,
-    text: `Hi ${first},\n\n${opts.businessName} updated the schedule for ${opts.week}.\n\nWhat changed:\n${lines}\n\nYour shifts now:\n${list}\n\nSee it any time: ${opts.link}\n`,
-  };
+    icon: "changed",
+    heading: `Your schedule changed`,
+    blocks: [
+      { type: "p", text: `${opts.businessName} updated the schedule for ${opts.week}.` },
+      { type: "list", title: "What changed", items: changes, bullets: false },
+      yourShifts("Your shifts now"),
+      button,
+    ],
+  });
 }
 
 
