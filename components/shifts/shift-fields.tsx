@@ -2,7 +2,7 @@
 
 import { TriangleAlertIcon } from "lucide-react";
 import { useId, useState } from "react";
-import { TimeCombobox, timeProblem } from "@/components/forms/time-combobox";
+import { TimeInput, timeProblem } from "@/components/forms/time-input";
 import { MAX_PEOPLE } from "@/lib/schedule";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +30,7 @@ export function ShiftFields({
     <fieldset className="space-y-1">
       <legend className="sr-only">{label}</legend>
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <TimeCombobox
+        <TimeInput
           id={`${id}-start`}
           name="start"
           value={start}
@@ -40,7 +40,7 @@ export function ShiftFields({
           label="Start"
         />
         <span aria-hidden>–</span>
-        <TimeCombobox
+        <TimeInput
           id={`${id}-end`}
           name="end"
           value={end}

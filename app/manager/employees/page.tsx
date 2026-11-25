@@ -51,7 +51,15 @@ export default async function EmployeesPage() {
               return (
                 <li key={inv.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
                   <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{inv.email}</div>
+                    <div className="truncate font-medium">
+                      {inv.name ? (
+                        <>
+                          {inv.name} <span className="font-normal text-muted-foreground">· {inv.email}</span>
+                        </>
+                      ) : (
+                        inv.email
+                      )}
+                    </div>
                     <div className="text-sm text-muted-foreground">
                       {roleLabel[inv.role]} ·{" "}
                       {expired ? (

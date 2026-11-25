@@ -14,6 +14,7 @@ export function InviteForm({ canInviteManagers }: { canInviteManagers: boolean }
     <form key={state.status === "success" ? state.message : "form"} action={action} noValidate className="mt-5 space-y-4">
       <FormMessage state={state} />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <TextField name="name" label="Name" autoComplete="off" required state={state} className="flex-1" />
         <TextField name="email" label="Email" type="email" autoComplete="off" required state={state} className="flex-1" />
         {canInviteManagers && (
           <div className="space-y-2 sm:w-44">

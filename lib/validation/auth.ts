@@ -44,6 +44,7 @@ export const resetPasswordSchema = z
 export const createBusinessSchema = z.object({ businessName: signUpSchema.shape.businessName });
 
 export const inviteSchema = z.object({
+  name: z.string().trim().min(1, "Please enter their name.").max(100, "Please keep it under 100 characters."),
   email,
   role: z.enum(["EMPLOYEE", "MANAGER"]),
 });

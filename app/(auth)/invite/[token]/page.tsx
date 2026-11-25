@@ -95,7 +95,7 @@ export default async function InvitePage({ params }: PageProps<"/invite/[token]"
   return (
     <>
       {heading}
-      <NewAccountForm token={token} email={invitation.email} />
+      <NewAccountForm token={token} email={invitation.email} name={invitation.name} />
     </>
   );
 }

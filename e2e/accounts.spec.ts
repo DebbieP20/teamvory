@@ -79,15 +79,20 @@ test("owner invites an employee, who joins, and can be set inactive", async ({ p
   await signUpOwner(page, ownerEmail);
 
   await page.getByRole("link", { name: "Employees" }).first().click();
+  // The name is required.
   await field(page, "Email").fill(employeeEmail);
   await page.getByRole("button", { name: "Send invitation" }).click();
-  await expect(page.getByText(`Invitation sent to ${employeeEmail}.`)).toBeVisible();
+  await expect(page.getByText("Please enter their name.")).toBeVisible();
+  await field(page, "Name").fill("Eli Employee");
+  await page.getByRole("button", { name: "Send invitation" }).click();
+  await expect(page.getByText(`Invitation sent to Eli Employee (${employeeEmail}).`)).toBeVisible();
   await expect(page.getByRole("region", { name: "Invited" }).getByText(employeeEmail)).toBeVisible();
 
   // The employee opens the link in their own browser.
   const invite = await waitForEmail(employeeEmail, /invited you to Dana's Café/);
   expect(invite.fromName).toBe("Dana's Café via TeamVory");
   expect(invite.replyTo).toBe(ownerEmail);
+  expect(invite.text).toMatch(/^Hi Eli,/);
   // The designed version comes with it (lib/email-content.ts).
   expect(invite.html).toContain("Join Dana&#39;s Café on TeamVory");
   expect(invite.html).toContain("Accept invitation &rarr;");
@@ -95,7 +100,7 @@ test("owner invites an employee, who joins, and can be set inactive", async ({ p
   const employee = await employeeContext.newPage();
   await employee.goto(linkIn(invite));
   await expect(employee.getByRole("heading", { name: "Join Dana's Café" })).toBeVisible();
-  await field(employee, "Your name").fill("Eli Employee");
+  await expect(field(employee, "Your name")).toHaveValue("Eli Employee");
   await field(employee, "Choose a password").fill(PASSWORD);
   await employee.getByRole("button", { name: "Create account and join" }).click();
   await expect(employee).toHaveURL("/employee");
@@ -134,10 +139,11 @@ test("owner invites a manager, who can manage employees but not other managers",
   const managerEmail = uniqueEmail(testInfo, "manager");
   await signUpOwner(page, ownerEmail);
   await page.goto("/manager/employees");
+  await field(page, "Name").fill("Max Manager");
   await field(page, "Email").fill(managerEmail);
   await field(page, "Role").selectOption("MANAGER");
   await page.getByRole("button", { name: "Send invitation" }).click();
-  await expect(page.getByText(`Invitation sent to ${managerEmail}.`)).toBeVisible();
+  await expect(page.getByText(`Invitation sent to Max Manager (${managerEmail}).`)).toBeVisible();
 
   const invite = await waitForEmail(managerEmail, /invited you/);
   const managerContext = await browser.newContext();

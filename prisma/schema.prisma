@@ -187,6 +187,8 @@ model Invitation {
   businessId  String     @map("business_id") @db.Uuid
   business    Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
   email       String
+  /// The name the inviter typed, used to greet them and to fill in the join form. Older invitations have none.
+  name        String?
   role        Role
   tokenHash   String     @unique @map("token_hash")
   invitedById String     @map("invited_by_id") @db.Uuid

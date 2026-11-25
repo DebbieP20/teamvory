@@ -25,7 +25,12 @@ describe("resetPasswordSchema", () => {
 
 describe("inviteSchema", () => {
   it("only allows employee or manager invitations", () => {
-    expect(inviteSchema.safeParse({ email: "a@b.co", role: "OWNER" }).success).toBe(false);
-    expect(inviteSchema.safeParse({ email: "a@b.co", role: "MANAGER" }).success).toBe(true);
+    expect(inviteSchema.safeParse({ name: "Ana", email: "a@b.co", role: "OWNER" }).success).toBe(false);
+    expect(inviteSchema.safeParse({ name: "Ana", email: "a@b.co", role: "MANAGER" }).success).toBe(true);
+  });
+
+  it("requires the person's name", () => {
+    const r = inviteSchema.safeParse({ name: "  ", email: "a@b.co", role: "EMPLOYEE" });
+    expect(r.error?.issues[0]?.path).toEqual(["name"]);
   });
 });

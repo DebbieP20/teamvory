@@ -10,7 +10,6 @@ const invite: EmailContent = {
   blocks: [
     { type: "p", text: "Debbie invited you to join PPP on TeamVory as a team member." },
     { type: "button", label: "Accept invitation", url: "https://teamvory.vercel.app/invite/abc" },
-    { type: "box", title: "What's TeamVory?", text: "Where you'll see your shifts." },
     { type: "small", text: "If you weren't expecting it, you can ignore this email." },
   ],
 };
@@ -21,7 +20,6 @@ describe("renderEmail", () => {
     expect(text).toBe(
       "Hi,\n\nDebbie invited you to join PPP on TeamVory as a team member.\n\n" +
         "Accept invitation: https://teamvory.vercel.app/invite/abc\n\n" +
-        "What's TeamVory? Where you'll see your shifts.\n\n" +
         "If you weren't expecting it, you can ignore this email.\n\nSent by TeamVory for PPP\n",
     );
   });
@@ -34,6 +32,8 @@ describe("renderEmail", () => {
     expect(html).toContain('href="https://teamvory.vercel.app/invite/abc"');
     expect(html).toContain("Accept invitation &rarr;");
     expect(html).toContain("Sent by TeamVory for PPP.");
+    // Only the button links to the invitation (no "copy this link" line).
+    expect(html.split("https://teamvory.vercel.app/invite/abc").length - 1).toBe(1);
   });
 
   it("lists items with bullets in text, or without when asked", () => {

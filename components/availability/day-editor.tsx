@@ -3,7 +3,7 @@
 import { TriangleAlertIcon } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import type { DaySetting, Kind } from "@/lib/availability";
-import { TimeCombobox, timeProblem } from "@/components/forms/time-combobox";
+import { TimeInput, timeProblem } from "@/components/forms/time-input";
 import { cn } from "@/lib/utils";
 
 const choices: { kind: Kind; label: string }[] = [
@@ -77,7 +77,7 @@ export function DayEditor({
           <div className="flex flex-wrap gap-x-3 gap-y-2 text-sm">
             <div className="space-y-1">
               <label htmlFor={`${id}-start`} className="block font-medium">From</label>
-              <TimeCombobox
+              <TimeInput
                 id={`${id}-start`}
                 name={`${prefix}start`}
                 value={start}
@@ -88,7 +88,7 @@ export function DayEditor({
             </div>
             <div className="space-y-1">
               <label htmlFor={`${id}-end`} className="block font-medium">To</label>
-              <TimeCombobox
+              <TimeInput
                 id={`${id}-end`}
                 name={`${prefix}end`}
                 value={end}
@@ -98,7 +98,7 @@ export function DayEditor({
               />
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">Type a time (like 12:15 PM) or pick one from the list. Times go in 15-minute steps.</p>
+          <p className="text-xs text-muted-foreground">Times go in 15-minute steps.</p>
         </div>
       )}
       <p id={`${id}-error`} aria-live="polite" className={cn("text-sm font-medium text-destructive", shownError && "mt-2")}>

@@ -1,6 +1,6 @@
 import { appUrl } from "@/lib/urls";
 
-// Every email TeamVory sends is described once (heading, paragraphs, lists, a button...)
+// Every email TeamVory sends is described once (heading, paragraphs, lists, a button)
 // and turned into two versions: a designed HTML email in the brand colors, and plain text
 // for email apps that don't show HTML. Images live in public/email (npm run email-images).
 
@@ -10,7 +10,6 @@ export type EmailBlock =
   | { type: "p"; text: string }
   | { type: "list"; title: string; items: string[]; empty?: string; bullets?: boolean }
   | { type: "button"; label: string; url: string }
-  | { type: "box"; title: string; text: string }
   | { type: "small"; text: string };
 
 export type EmailContent = {
@@ -36,7 +35,6 @@ export function emailText(c: EmailContent): string {
   for (const b of c.blocks) {
     if (b.type === "p" || b.type === "small") parts.push(b.text);
     else if (b.type === "button") parts.push(`${b.label}: ${b.url}`);
-    else if (b.type === "box") parts.push(`${b.title} ${b.text}`);
     else {
       const lines = b.items.length ? b.items.map((i) => (b.bullets === false ? i : `• ${i}`)) : [b.empty ?? ""];
       parts.push(`${b.title}:\n${lines.join("\n")}`);
@@ -51,8 +49,6 @@ export function emailText(c: EmailContent): string {
 
 const NAVY = "#0B1F44";
 const TEAL = "#14B8A6";
-const TEAL_DARK = "#0F766E";
-const MINT = "#E6FFFA";
 const TEXT = "#334155";
 const MUTED = "#64748B";
 const LINE = "#E2E8F0";
@@ -76,19 +72,9 @@ function block(b: EmailBlock): string {
       return p(b.text, `font-size:13px;color:${MUTED};`);
     case "button":
       return (
-        `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:28px auto 12px;"><tr>` +
+        `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:28px auto;"><tr>` +
         `<td style="border-radius:999px;background:${TEAL};">` +
         `<a href="${escapeHtml(b.url)}" style="display:inline-block;padding:14px 32px;border-radius:999px;font-family:${HEADING_FONT};font-size:16px;font-weight:600;color:${NAVY};text-decoration:none;">${escapeHtml(b.label)} &rarr;</a>` +
-        `</td></tr></table>` +
-        `<p style="margin:0 0 24px;text-align:center;font-family:${BODY_FONT};font-size:12px;line-height:1.5;color:${MUTED};word-break:break-all;">` +
-        `Button not working? Copy this link: <a href="${escapeHtml(b.url)}" style="color:${TEAL_DARK};">${escapeHtml(b.url)}</a></p>`
-      );
-    case "box":
-      return (
-        `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 20px;background:${MINT};border:1px solid #99F6E4;border-radius:12px;"><tr>` +
-        `<td style="padding:18px 20px;">` +
-        `<p style="margin:0 0 6px;font-family:${HEADING_FONT};font-size:16px;font-weight:600;color:${NAVY};">${escapeHtml(b.title)}</p>` +
-        `<p style="margin:0;font-family:${BODY_FONT};font-size:15px;line-height:1.55;color:${TEXT};">${escapeHtml(b.text)}</p>` +
         `</td></tr></table>`
       );
     case "list": {
