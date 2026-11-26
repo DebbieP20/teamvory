@@ -1,7 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 import { formatDay, formatTime } from "../lib/dates";
 import { inviteEmployee, ownerWithEmployee, waitForEmail } from "./helpers";
-import { applyPattern, next, setDefaultWeek, shiftLabel } from "./schedule-helpers";
+import { applyPattern, next, sendWeek, shiftLabel } from "./schedule-helpers";
 
 const ALL_DAY = Array(7).fill("All day") as "All day"[];
 
@@ -23,8 +23,8 @@ async function publish(page: Page) {
 async function team(page: Page, browser: import("@playwright/test").Browser, testInfo: import("@playwright/test").TestInfo) {
   const eli = await ownerWithEmployee(page, browser, testInfo);
   const fay = await inviteEmployee(page, browser, testInfo, "Fay Employee", "fay");
-  await setDefaultWeek(eli.employee, ALL_DAY);
-  await setDefaultWeek(fay.employee, ALL_DAY);
+  await sendWeek(eli.employee, ALL_DAY);
+  await sendWeek(fay.employee, ALL_DAY);
   await applyPattern(page, "Standard", [0, 1]);
   return { eli, fay };
 }

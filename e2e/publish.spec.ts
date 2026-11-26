@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
 import { dayOfWeek, formatTime, nowInZone, WEEKDAYS } from "../lib/dates";
 import { E2E_CRON_SECRET, EMAIL_FILE, ownerWithEmployee, waitForEmail } from "./helpers";
-import { applyPattern, next, setDefaultWeek, shiftLabel } from "./schedule-helpers";
+import { applyPattern, next, sendWeek, shiftLabel } from "./schedule-helpers";
 
 const ALL_DAY = Array(7).fill("All day") as "All day"[];
 
@@ -27,7 +27,7 @@ async function emailsTo(to: string) {
 
 test("publish emails the team, and re-publishing only emails people whose shifts changed", async ({ page, browser }, testInfo) => {
   const { employee, employeeEmail, employeeContext, ownerEmail } = await ownerWithEmployee(page, browser, testInfo);
-  await setDefaultWeek(employee, ALL_DAY);
+  await sendWeek(employee, ALL_DAY);
   await applyPattern(page, "Standard", [0]);
   const afternoon = shiftLabel(0, "12:00", "17:00");
   const evening = shiftLabel(0, "17:00", "21:00");
@@ -76,7 +76,7 @@ test("publish emails the team, and re-publishing only emails people whose shifts
 
 test("an availability change after publishing alerts the owner and shows on the dashboard", async ({ page, browser }, testInfo) => {
   const { employee, employeeContext, ownerEmail } = await ownerWithEmployee(page, browser, testInfo);
-  await setDefaultWeek(employee, ALL_DAY);
+  await sendWeek(employee, ALL_DAY);
   await applyPattern(page, "Standard", [0]);
   const afternoon = shiftLabel(0, "12:00", "17:00");
 
@@ -118,7 +118,7 @@ test("the daily job reminds people missing availability, once a day, and needs t
 
   const auth = { headers: { authorization: `Bearer ${E2E_CRON_SECRET}` } };
   expect((await request.get("/api/cron/daily", auth)).ok()).toBe(true);
-  const reminder = await waitForEmail(employeeEmail, /^Reminder: add your availability/);
+  const reminder = await waitForEmail(employeeEmail, /^Reminder: send your availability/);
   expect(reminder.text).toContain("/employee/availability");
 
   // Running again the same day sends nothing new.

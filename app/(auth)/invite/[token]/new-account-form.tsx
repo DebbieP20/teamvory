@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { idleState } from "@/lib/form-state";
 import { acceptInvitationNewAccount } from "../../actions";
 
-export function NewAccountForm({ token, email }: { token: string; email: string }) {
+export function NewAccountForm({ token, email, name }: { token: string; email: string; name: string | null }) {
   const [state, action] = useActionState(acceptInvitationNewAccount, idleState);
   const emailId = useId();
   return (
@@ -18,7 +18,7 @@ export function NewAccountForm({ token, email }: { token: string; email: string 
         <Label htmlFor={emailId}>Email</Label>
         <Input id={emailId} value={email} readOnly disabled className="h-10" />
       </div>
-      <TextField name="name" label="Your name" autoComplete="name" required state={state} />
+      <TextField name="name" label="Your name" autoComplete="name" required defaultValue={name ?? undefined} state={state} />
       <TextField
         name="password"
         label="Choose a password"

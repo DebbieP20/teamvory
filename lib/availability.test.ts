@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type DaySetting, deadlineFor, describe as describeDay, editableWeeks, isWeekLocked, resolveDay, validateDay } from "./availability";
+import { type DaySetting, deadlineFor, describe as describeDay, editableWeeks, isWeekLocked, resolveDay, sendableWeeks, validateDay } from "./availability";
 
 const template = new Map<number, DaySetting>([
   [1, { kind: "ALL_DAY" }],
@@ -75,5 +75,14 @@ describe("availability deadline", () => {
 describe("editableWeeks", () => {
   it("gives this week and next week only", () => {
     expect(editableWeeks("2026-06-10")).toEqual({ thisWeek: "2026-06-08", nextWeek: "2026-06-15" });
+  });
+});
+
+describe("sendableWeeks", () => {
+  it("is the coming week and the one after, whatever day it is", () => {
+    // Wednesday Nov 25, 2026: employees send Nov 30 – Dec 6, and may send Dec 7 – 13 early.
+    expect(sendableWeeks("2026-11-25")).toEqual({ first: "2026-11-30", second: "2026-12-07" });
+    expect(sendableWeeks("2026-11-29")).toEqual({ first: "2026-11-30", second: "2026-12-07" }); // Sunday
+    expect(sendableWeeks("2026-11-30")).toEqual({ first: "2026-12-07", second: "2026-12-14" }); // Monday: on to the next
   });
 });

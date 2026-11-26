@@ -15,7 +15,6 @@ type Initial = {
   reminderEnabled: boolean;
   reminderStartDay: number;
   reminderDays: number;
-  reminderIncludeDefaultOnly: boolean;
   swapApprovalMode: "AUTOMATIC" | "MANAGER_APPROVAL";
 };
 
@@ -40,7 +39,7 @@ export function AvailabilitySettingsForm({ initial, disabled }: { initial: Initi
         <section className="rounded-xl border bg-white p-6" aria-labelledby={`${id}-deadline`}>
           <h2 id={`${id}-deadline`} className="text-lg">Availability deadline</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Off by default. When it&apos;s on, employees must set next week&apos;s availability by this time. After it, only managers can
+            Off by default. When it&apos;s on, employees must send next week&apos;s availability by this time. After it, only managers can
             change that week.
           </p>
           <label className="mt-4 flex items-center gap-3 font-medium">
@@ -77,8 +76,8 @@ export function AvailabilitySettingsForm({ initial, disabled }: { initial: Initi
         <section className="rounded-xl border bg-white p-6" aria-labelledby={`${id}-reminders`}>
           <h2 id={`${id}-reminders`} className="text-lg">Availability reminders</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            An email in the morning to people who haven&apos;t set their availability for next week. It stops for each person as soon
-            as they set it.
+            An email in the morning to people who haven&apos;t sent their availability for next week. It stops for each person as soon
+            as they send it.
           </p>
           <label className="mt-4 flex items-center gap-3 font-medium">
             <input
@@ -128,15 +127,6 @@ export function AvailabilitySettingsForm({ initial, disabled }: { initial: Initi
             <p className="text-sm text-muted-foreground" aria-live="polite">
               Sent each {describeReminderDays({ startDay, days })} morning, about 9 AM.
             </p>
-            <label className="flex items-start gap-3 text-sm">
-              <input
-                type="checkbox"
-                name="reminderIncludeDefaultOnly"
-                defaultChecked={initial.reminderIncludeDefaultOnly}
-                className="mt-0.5 size-5 accent-teal-600"
-              />
-              Also remind people who only use their default week, to check it&apos;s still right
-            </label>
           </div>
         </section>
 

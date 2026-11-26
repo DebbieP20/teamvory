@@ -11,7 +11,7 @@ export function uniqueEmail(testInfo: TestInfo, label: string) {
   return `${label}-${testInfo.project.name}-${id}@example.com`;
 }
 
-type CapturedEmail = { to: string; subject: string; text: string; fromName?: string; replyTo?: string };
+type CapturedEmail = { to: string; subject: string; text: string; html?: string; fromName?: string; replyTo?: string };
 
 /** Waits for an email to `to` (the app writes emails to EMAIL_FILE during tests). */
 export async function waitForEmail(to: string, subject: RegExp): Promise<CapturedEmail> {
@@ -74,15 +74,17 @@ export async function logOut(page: Page) {
 export async function inviteEmployee(page: Page, browser: Browser, testInfo: TestInfo, employeeName: string, label = "employee") {
   const employeeEmail = uniqueEmail(testInfo, label);
   await page.goto("/manager/employees");
+  await field(page, "Name").fill(employeeName);
   await field(page, "Email").fill(employeeEmail);
   await page.getByRole("button", { name: "Send invitation" }).click();
-  await expect(page.getByText(`Invitation sent to ${employeeEmail}.`)).toBeVisible();
+  await expect(page.getByText(`Invitation sent to ${employeeName} (${employeeEmail}).`)).toBeVisible();
 
   const invite = await waitForEmail(employeeEmail, /invited you/);
   const employeeContext = await browser.newContext();
   const employee = await employeeContext.newPage();
   await employee.goto(linkIn(invite));
-  await field(employee, "Your name").fill(employeeName);
+  // Already filled in from the invitation.
+  await expect(field(employee, "Your name")).toHaveValue(employeeName);
   await field(employee, "Choose a password").fill(PASSWORD);
   await employee.getByRole("button", { name: "Create account and join" }).click();
   await expect(employee).toHaveURL("/employee");

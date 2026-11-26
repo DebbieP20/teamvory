@@ -15,7 +15,7 @@
 | ORM | **Prisma** | Type-safe queries and easy migrations. |
 | Auth | **Better Auth** (email + password, database sessions) plus our own invitation links | Stable, built-in sign-up, login and password reset. Chosen in M2 instead of Auth.js, whose v5 was still in beta and which discourages passwords. |
 | Validation | **Zod** | One schema validates both forms and server actions. |
-| Email | **Gmail** (free trial) → **Resend** (business launch) | Plain-text emails. The free trial sends through a Gmail app password; once `RESEND_API_KEY` is set, Resend sends from the business domain. Team emails show "*Business* via TeamVory" and replies go to the owner (decision 31). |
+| Email | **Gmail** (free trial) → **Resend** (business launch) | Designed HTML emails in the brand colors with a plain-text version (`lib/email-content.ts`; images in `public/email`). The free trial sends through a Gmail app password; once `RESEND_API_KEY` is set, Resend sends from the business domain. Team emails show "*Business* via TeamVory" and replies go to the owner (decision 31). |
 | SMS (later) | **Twilio** | Employees already use text messages. Added after v1 through the same notification layer. |
 | Exports | **@react-pdf/renderer** (PDF), **satori + resvg** (PNG), **sharp** (JPG), **docx** (Word .docx), **exceljs** (Excel .xlsx) | Covers all five formats the manager asked for. |
 | Dates / time zone | **date-fns + date-fns-tz**, zone `America/New_York` | Switches automatically between EDT (summer) and EST (winter). |
@@ -77,10 +77,11 @@ Week            id, businessId, startDate (always a Monday),
                 status (CONFIGURING | DRAFT | PUBLISHED)
 
 AvailabilityTemplate  id, membershipId, dayOfWeek, startTime, endTime
-                (recurring default availability)
-AvailabilityOverride  id, membershipId, weekId, date, startTime?, endTime?,
-                type (AVAILABLE | UNAVAILABLE),
+                (the owner's usual week only: "all day" unless marked off; decision 32)
+AvailabilityOverride  id, membershipId, date, kind, startTime?, endTime?,
                 enteredById (the employee themselves OR the manager)
+AvailabilityWeek  id, membershipId, weekStart, sentAt, sentById
+                (they sent that week's availability; decision 32)
 TimeOff         id, membershipId, startDate, endDate, note?,
                 enteredById (employee or manager),
                 status (PENDING | APPROVED | DECLINED), default APPROVED:
@@ -116,7 +117,7 @@ Notification    id, userId, channel (EMAIL | SMS), type,
 AuditLog        id, businessId, actorId, action, entity, before, after, at
 ```
 
-**How availability is resolved for a given week:** start from the employee's `AvailabilityTemplate`, then apply that week's `AvailabilityOverride` rows, then remove any `TimeOff`. By default there is **no deadline**: employees (or the manager on their behalf) can change availability at any time. A business can turn on a deadline (decision 29, below). Time off counts only when APPROVED; pending time off is treated as unavailable by the auto-scheduler.
+**How availability is resolved for a given week (decision 32):** each employee and manager **sends each week's availability**; nothing carries over from the week before. A day is what they sent for that date (`AvailabilityOverride`), then any `TimeOff` on top. Until they send the week, they count as **not available** and are listed as missing on the dashboard and the Availability page. Only the owner has a usual week (`AvailabilityTemplate`, "all day"), since they fill the gaps. By default there is **no deadline**: employees (or the manager on their behalf) can change availability at any time. A business can turn on a deadline (decision 29, below). Time off counts only when APPROVED; pending time off is treated as unavailable by the auto-scheduler.
 
 ### Optional business settings: availability deadline and time-off approval (decisions 29 and 30)
 
@@ -133,7 +134,7 @@ TeamVory is meant for many kinds of businesses, so these two are **settings in B
 - Time off a manager enters for someone is approved automatically. If an employee edits approved time off, it goes back to Pending.
 - Turning the setting off approves anything still pending.
 
-**How far ahead (decision 22):** the owner schedules one week at a time, at most two weeks out. So week-by-week changes ("This week") are offered for the **current week and next week only**. Anything further ahead is covered by the default week, or by time off, which can be any future date. Availability is **one time range per day** (decision 21).
+**How far ahead (decision 22):** the owner schedules one week at a time, at most two weeks out. Employees send availability for the **coming week** (shown to them as "This week", e.g. Nov 30 – Dec 6, during the week before) and may send the **week after** early ("Next week"). Managers can enter or change it for anyone for the current week, the coming week and the week after. Time off can be any future date. Availability is **one time range per day** (decision 21).
 
 **Availability change after publishing:** when someone changes availability for a week that is already published and it conflicts with one of their shifts, the change is still saved. The shift is flagged as a conflict on the manager's dashboard, and the manager gets one notification. The published schedule does **not** change by itself.
 
@@ -253,9 +254,9 @@ In **Settings → Availability reminders** the owner chooses:
 
 Reminders go out with the **daily morning job** (around 9 AM Eastern), so there's no time-of-day setting.
 
-Each reminder day, an email goes to **active employees who haven't set their availability for next week**. "Set" means they have a default week saved or have entered changes for next week. People who already have it get nothing, and the reminder stops for a person as soon as they enter it (so day 2 only reaches whoever is still missing). One extra option, off by default: *also remind people who only use their default week, to check it's still right*.
+Each reminder day, an email goes to **active employees who haven't sent their availability for next week**. People who already sent it get nothing, and the reminder stops for a person as soon as they send it (so day 2 only reaches whoever is still missing).
 
-This is only a nudge. If the business has turned on an availability deadline (decision 29), the reminder says when it's due. Each send is saved in the notification outbox with a `dedupeKey` like `avail-reminder:{weekStart}:{userId}:{date}`, so nobody gets the same reminder twice. The dashboard's "who hasn't updated availability" list uses the same rule.
+This is only a nudge. If the business has turned on an availability deadline (decision 29), the reminder says when it's due. Each send is saved in the notification outbox with a `dedupeKey` like `avail-reminder:{weekStart}:{userId}:{date}`, so nobody gets the same reminder twice. The dashboard's "who hasn't sent their availability" list uses the same rule.
 
 ### Importing events from the owner's phone calendar (decision 27, ON HOLD)
 
@@ -290,7 +291,7 @@ One **Vercel Cron job runs once a day in the morning** (`/api/cron/daily`, prote
 | 4 | Seniority | None |
 | 5 | Legal / overtime limits | None |
 | 6 | Availability deadline | **No deadline** for this client. Employees can update any time, with no extra steps for the manager. Other businesses can turn on a deadline (decision 29) |
-| 7 | Recurring availability | Yes. Default weekly availability plus per-week exceptions |
+| 7 | Recurring availability | ~~Default weekly availability plus per-week exceptions~~ Replaced by decision 32 |
 | 8 | Manager enters for employee | Yes, alongside employees entering their own |
 | 9 | Time off | Separate from weekly availability. **No approval** for this client: the employee adds it to the calendar and the manager sees it. Other businesses can require approval (decision 30) |
 | 10 | Swap approval | Manager setting: automatic or manager approval |
@@ -316,6 +317,7 @@ One **Vercel Cron job runs once a day in the morning** (`/api/cron/daily`, prote
 | 29 | Availability deadline setting | **Optional, off by default.** Owner picks a day and time; after it, that week is locked for employees and only managers can change it (section 3) |
 | 30 | Time-off approval setting | **Optional, off by default.** When on, employee time off is *Pending* until a manager approves or declines it (section 3) |
 | 31 | Free trial and team emails | **Free trial first** (Vercel Hobby, Neon free, Gmail app password, `*.vercel.app` address), then the business launch (domain, Resend, paid hosting): settings only, see `docs/launch-checklist.md`. Emails to a team come from "*Business* via TeamVory" and replies go to the business owner; password resets come from TeamVory |
+| 32 | Availability is sent every week (Nov 2026) | No default week for employees and managers: each week starts empty, and they choose every day and send it, so last week's answers are never reused by mistake. Not sent = not available, and the manager sees who's missing. Weeks already scheduled when this changed kept the hours they were planned with |
 
 **Brand colors** (from the brand sheet)
 

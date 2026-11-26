@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { ownerWithEmployee } from "./helpers";
-import { applyPattern, next, setDefaultWeek } from "./schedule-helpers";
+import { applyPattern, next, sendWeek } from "./schedule-helpers";
 
 // Every page fits a small phone (360 px wide) without sideways scrolling.
 // With SHOTS=1 it also saves a full-page screenshot of each, for a visual review.
@@ -49,7 +49,7 @@ test("every manager and employee page fits a small phone", async ({ page, browse
   test.skip(testInfo.project.name !== "phone", "one run is enough");
   test.setTimeout(120_000);
   const { employee, employeeContext } = await ownerWithEmployee(page, browser, testInfo, "Eleanor Longname-Employee");
-  await setDefaultWeek(employee, Array(7).fill("All day"));
+  await sendWeek(employee, Array(7).fill("All day"));
   await applyPattern(page, "Standard", [0, 1, 2, 3, 4, 5, 6]);
 
   // A real-looking week: built, published, with an event and an open shift.
@@ -57,9 +57,9 @@ test("every manager and employee page fits a small phone", async ({ page, browse
   const form = page.getByRole("region", { name: "Add an event" });
   await form.getByLabel("Event", { exact: true }).fill("Private birthday party on the patio");
   await form.getByLabel("Date").fill(next(5));
-  await form.getByRole("combobox", { name: "Start" }).fill("6pm");
+  await form.getByLabel("Start", { exact: true }).fill("18:00");
   await page.keyboard.press("Tab");
-  await form.getByRole("combobox", { name: "End" }).fill("10pm");
+  await form.getByLabel("End", { exact: true }).fill("22:00");
   await page.keyboard.press("Tab");
   await form.getByRole("button", { name: "Add event" }).click();
   await expect(page.getByText(/saved\.$/)).toBeVisible();
@@ -85,7 +85,8 @@ test("every manager and employee page fits a small phone", async ({ page, browse
     "/manager",
     "/manager/employees",
     "/manager/availability",
-    "/manager/availability?week=next",
+    "/manager/availability?week=this",
+    "/manager/availability?week=after",
     "/manager/shifts?week=next",
     "/manager/shifts/patterns",
     "/manager/schedule?week=next",
@@ -100,7 +101,7 @@ test("every manager and employee page fits a small phone", async ({ page, browse
     "/employee/shifts",
     shiftHref,
     "/employee/availability",
-    "/employee/availability/week?week=next",
+    "/employee/availability/next",
     "/employee/availability/time-off",
   ]) {
     await fits(employee, path, problems);

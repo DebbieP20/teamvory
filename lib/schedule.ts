@@ -21,7 +21,7 @@ export function coversShift(day: ResolvedDay, shift: ShiftTimes): boolean {
 export function unavailableReason(day: ResolvedDay): string {
   if (day.source === "time-off") return "Time off";
   if (day.source === "pending-time-off") return "Time off requested";
-  if (day.source === "not-set") return "Availability not set";
+  if (day.source === "not-set") return "Availability not sent";
   if (day.kind === "OFF") return "Not available that day";
   return `Only available ${describe(day)}`;
 }

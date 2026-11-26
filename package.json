@@ -15,7 +15,8 @@
     "db:migrate": "prisma migrate dev && prisma generate",
     "db:studio": "prisma studio",
     "vercel-build": "prisma migrate deploy && next build",
-    "screenshots": "SCREENSHOTS=1 playwright test e2e/screenshots.spec.ts --project=desktop"
+    "screenshots": "SCREENSHOTS=1 playwright test e2e/screenshots.spec.ts --project=desktop",
+    "email-images": "node scripts/make-email-images.mjs"
   },
   "dependencies": {
     "@fontsource/dm-sans": "^5.3.0",
@@ -65,7 +66,8 @@
   },
   "overrides": {
     "uuid": "^11.1.1",
-    "fflate": "^0.8.3"
+    "fflate": "^0.8.3",
+    "effect": "^3.22.5"
   },
   "engines": {
     "node": "22.x"

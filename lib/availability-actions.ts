@@ -3,16 +3,18 @@
 import { refresh } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
-import { type DaySetting, editableWeeks, isWeekLocked, validateDay } from "@/lib/availability";
+import { type DaySetting, editableWeeks, isWeekLocked, sendableWeeks, validateDay } from "@/lib/availability";
 import { authorizeAvailability, getBusinessSettings, today } from "@/lib/availability-data";
 import { addDays, daysBetween, formatDay, formatWeek, fromDbDate, type IsoDate, toDbDate, weekStart } from "@/lib/dates";
 import { notifyManagersOfConflicts } from "@/lib/conflicts";
 import { db } from "@/lib/db";
 import { isUuid } from "@/lib/ids";
 import { sendEmail } from "@/lib/email";
+import { renderEmail } from "@/lib/email-content";
 import { teamSender } from "@/lib/team-sender";
 import { errorState, type FormState } from "@/lib/form-state";
 import { requireManager, requireUser } from "@/lib/session";
+import { appUrl } from "@/lib/urls";
 
 const NOT_ALLOWED = "You can't change this person's availability.";
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -42,82 +44,77 @@ function alertManagersIfConflict(access: { actor: { businessId: string }; target
   );
 }
 
-// --- Default week ------------------------------------------------------------
+// --- Sending a week -----------------------------------------------------------
 
-export async function saveDefaultWeek(_prev: FormState, formData: FormData): Promise<FormState> {
+/**
+ * Which weeks this person's availability can be sent for. Employees: the coming week and
+ * the one after. Managers (for anyone, themselves included): the weeks they schedule, this
+ * week and next, plus the week after so they can fill it in early.
+ */
+function allowedWeeks(access: { actorIsManager: boolean }, todayDate: IsoDate): IsoDate[] {
+  const { first, second } = sendableWeeks(todayDate);
+  return access.actorIsManager ? [editableWeeks(todayDate).thisWeek, first, second] : [first, second];
+}
+
+/** The form has one `d{1..7}-kind` per day it shows. Days it leaves out (past days, time off) are kept as they are. */
+const UNCHOSEN = "Choose Off, All day or Custom.";
+
+export async function sendWeek(_prev: FormState, formData: FormData): Promise<FormState> {
   const access = await authorizeAvailability(String(formData.get("membershipId")));
   if (!access) return errorState(NOT_ALLOWED);
-
-  const days = Array.from({ length: 7 }, (_, i) => readDay(formData, `d${i + 1}-`));
-  const fieldErrors: Record<string, string> = {};
-  days.forEach((d, i) => {
-    const error = validateDay(d);
-    if (error) fieldErrors[`d${i + 1}`] = error;
-  });
-  if (Object.keys(fieldErrors).length) return errorState("Please fix the highlighted days.", fieldErrors);
-
-  await db.$transaction(
-    days.map((d, i) =>
-      db.availabilityTemplate.upsert({
-        where: { membershipId_dayOfWeek: { membershipId: access.target.id, dayOfWeek: i + 1 } },
-        create: { membershipId: access.target.id, dayOfWeek: i + 1, ...d },
-        update: d,
-      }),
-    ),
-  );
-  alertManagersIfConflict(access);
-  refresh();
-  return { status: "success", message: "Default week saved." };
-}
-
-// --- One-week changes ----------------------------------------------------------
-
-async function checkWeekChange(membershipId: string, date: string) {
-  const access = await authorizeAvailability(membershipId);
-  if (!access) return { error: NOT_ALLOWED } as const;
-  if (!isoDate.safeParse(date).success) return { error: "That date isn't valid." } as const;
+  const monday = String(formData.get("weekStart"));
+  if (!isoDate.safeParse(monday).success || weekStart(monday) !== monday) return errorState("That week isn't valid.");
 
   const now = today(access.settings);
-  const { thisWeek, nextWeek } = editableWeeks(now.date);
-  const monday = weekStart(date);
-  if (monday !== thisWeek && monday !== nextWeek) {
-    return { error: "You can only change this week and next week. Use your default week for later weeks." } as const;
+  if (!allowedWeeks(access, now.date).includes(monday)) return errorState("You can't send availability for that week.");
+  if (access.deadlineApplies && isWeekLocked(monday, access.settings.deadline, now)) return errorState(lockedMessage(monday));
+
+  const days: { date: IsoDate; setting: DaySetting }[] = [];
+  const fieldErrors: Record<string, string> = {};
+  for (let i = 0; i < 7; i++) {
+    const prefix = `d${i + 1}-`;
+    if (!formData.has(`${prefix}shown`)) continue;
+    const date = addDays(monday, i);
+    if (date < now.date) continue; // past days can't change
+    if (!formData.has(`${prefix}kind`)) {
+      fieldErrors[`d${i + 1}`] = UNCHOSEN;
+      continue;
+    }
+    const setting = readDay(formData, prefix);
+    const error = validateDay(setting);
+    if (error) fieldErrors[`d${i + 1}`] = error;
+    else days.push({ date, setting });
   }
-  if (access.deadlineApplies && isWeekLocked(monday, access.settings.deadline, now)) {
-    return { error: lockedMessage(monday) } as const;
+  if (Object.keys(fieldErrors).length) {
+    const unchosen = Object.values(fieldErrors).every((e) => e === UNCHOSEN);
+    return errorState(unchosen ? "Please choose an option for every day." : "Please fix the highlighted days.", fieldErrors);
   }
-  return { access } as const;
-}
 
-export async function saveDayChange(_prev: FormState, formData: FormData): Promise<FormState> {
-  const date = String(formData.get("date"));
-  const check = await checkWeekChange(String(formData.get("membershipId")), date);
-  if ("error" in check) return errorState(check.error);
-
-  const day = readDay(formData);
-  const error = validateDay(day);
-  if (error) return errorState(error);
-
-  const membershipId = check.access.target.id;
-  await db.availabilityOverride.upsert({
-    where: { membershipId_date: { membershipId, date: toDbDate(date) } },
-    create: { membershipId, date: toDbDate(date), enteredById: check.access.actor.id, ...day },
-    update: { enteredById: check.access.actor.id, ...day },
-  });
-  alertManagersIfConflict(check.access);
+  const membershipId = access.target.id;
+  const enteredById = access.actor.id;
+  await db.$transaction([
+    ...days.map(({ date, setting }) =>
+      db.availabilityOverride.upsert({
+        where: { membershipId_date: { membershipId, date: toDbDate(date) } },
+        create: { membershipId, date: toDbDate(date), enteredById, ...setting },
+        update: { enteredById, ...setting },
+      }),
+    ),
+    db.availabilityWeek.upsert({
+      where: { membershipId_weekStart: { membershipId, weekStart: toDbDate(monday) } },
+      create: { membershipId, weekStart: toDbDate(monday), sentById: enteredById },
+      update: { sentAt: new Date(), sentById: enteredById },
+    }),
+  ]);
+  alertManagersIfConflict(access);
   refresh();
-  return { status: "success", message: `Saved for ${formatDay(date)}.` };
-}
-
-export async function resetDayChange(_prev: FormState, formData: FormData): Promise<FormState> {
-  const date = String(formData.get("date"));
-  const check = await checkWeekChange(String(formData.get("membershipId")), date);
-  if ("error" in check) return errorState(check.error);
-
-  await db.availabilityOverride.deleteMany({ where: { membershipId: check.access.target.id, date: toDbDate(date) } });
-  alertManagersIfConflict(check.access);
-  refresh();
-  return { status: "success", message: `${formatDay(date)} is back to the default.` };
+  const week = formatWeek(monday);
+  return {
+    status: "success",
+    message: access.isSelf
+      ? `Sent! Your availability for ${week} is in.`
+      : `Saved ${access.target.name}'s availability for ${week}.`,
+  };
 }
 
 // --- Time off ----------------------------------------------------------------
@@ -224,14 +221,22 @@ export async function reviewTimeOff(formData: FormData) {
   const start = fromDbDate(timeOff.startDate);
   const end = fromDbDate(timeOff.endDate);
   const dates = start === end ? formatDay(start) : `${formatDay(start)} to ${formatDay(end)}`;
+  const approved = decision === "APPROVED";
   await sendEmail({
     ...(await teamSender(membership.businessId)),
     to: timeOff.membership.user.email,
-    subject: `Your time off was ${decision === "APPROVED" ? "approved" : "declined"}`,
-    text:
-      `Hi ${timeOff.membership.user.name},\n\n` +
-      `Your time off for ${dates} at ${membership.businessName} was ${decision === "APPROVED" ? "approved" : "declined"}.` +
-      (decision === "DECLINED" ? "\n\nIf you have questions, talk to your manager." : ""),
+    ...renderEmail({
+      subject: `Your time off was ${approved ? "approved" : "declined"}`,
+      icon: approved ? "approved" : "declined",
+      heading: `Your time off was ${approved ? "approved" : "declined"}`,
+      greeting: `Hi ${timeOff.membership.user.name.split(" ")[0]},`,
+      businessName: membership.businessName,
+      blocks: [
+        { type: "p", text: `Your time off for ${dates} at ${membership.businessName} was ${approved ? "approved" : "declined"}.` },
+        ...(approved ? [] : [{ type: "p" as const, text: "If you have questions, talk to your manager." }]),
+        { type: "button", label: "See my time off", url: `${appUrl()}/employee/availability/time-off` },
+      ],
+    }),
   });
   refresh();
 }
@@ -246,7 +251,6 @@ const settingsSchema = z.object({
   reminderEnabled: z.boolean(),
   reminderStartDay: z.coerce.number().int().min(1).max(7),
   reminderDays: z.coerce.number().int().min(1).max(7),
-  reminderIncludeDefaultOnly: z.boolean(),
   swapApprovalMode: z.enum(["AUTOMATIC", "MANAGER_APPROVAL"]),
 }).refine((v) => v.reminderStartDay + v.reminderDays <= 8, { message: "Reminders can't run past Sunday." });
 
@@ -262,7 +266,6 @@ export async function saveAvailabilitySettings(_prev: FormState, formData: FormD
     reminderEnabled: formData.get("reminderEnabled") === "on",
     reminderStartDay: formData.get("reminderStartDay"),
     reminderDays: formData.get("reminderDays"),
-    reminderIncludeDefaultOnly: formData.get("reminderIncludeDefaultOnly") === "on",
     swapApprovalMode: formData.get("swapApprovalMode") ?? "AUTOMATIC",
   });
   if (!parsed.success) return errorState("Please check the settings.");
@@ -279,7 +282,6 @@ export async function saveAvailabilitySettings(_prev: FormState, formData: FormD
         reminderEnabled: parsed.data.reminderEnabled,
         reminderStartDay: parsed.data.reminderStartDay,
         reminderDays: parsed.data.reminderDays,
-        reminderIncludeDefaultOnly: parsed.data.reminderIncludeDefaultOnly,
         swapApprovalMode: parsed.data.swapApprovalMode,
       },
     }),

@@ -4,6 +4,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
+import { renderEmail } from "@/lib/email-content";
 import { appUrl } from "@/lib/urls";
 
 // Better Auth handles passwords (hashed with scrypt) and sessions.
@@ -35,12 +36,17 @@ export const auth = betterAuth({
       const link = `${appUrl()}/reset-password?token=${encodeURIComponent(token)}`;
       await sendEmail({
         to: user.email,
-        subject: "Reset your TeamVory password",
-        text:
-          `Hi ${user.name},\n\n` +
-          `Someone asked to reset the password for your TeamVory account. ` +
-          `If it was you, open this link within 1 hour to choose a new password:\n\n${link}\n\n` +
-          `If it wasn't you, you can ignore this email. Your password won't change.`,
+        ...renderEmail({
+          subject: "Reset your TeamVory password",
+          icon: "password",
+          heading: "Reset your password",
+          greeting: `Hi ${user.name.split(" ")[0]},`,
+          blocks: [
+            { type: "p", text: "Someone asked to reset the password for your TeamVory account. If it was you, choose a new password within 1 hour." },
+            { type: "button", label: "Choose a new password", url: link },
+            { type: "small", text: "If it wasn't you, you can ignore this email. Your password won't change." },
+          ],
+        }),
       });
     },
   },

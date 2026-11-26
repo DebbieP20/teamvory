@@ -4,16 +4,16 @@ import { CtaBand, PageHeader, Section } from "@/components/site/sections";
 export const metadata: Metadata = {
   title: "How it works",
   description:
-    "The weekly cycle in TeamVory: your team sets availability, you set up shifts, generate a fair schedule and publish it.",
+    "The weekly cycle in TeamVory: your team sends availability, you set up shifts, generate a fair schedule and publish it.",
 };
 
 const cycle = [
   {
     who: "Your team",
-    title: "Set availability",
+    title: "Send availability",
     points: [
-      "Each employee sets their regular availability once, including the days and times they can usually work.",
-      "When a week looks different, they update only that week. They can also submit time-off requests.",
+      "Each week, every employee sends the days and times they can work the coming week, fresh from their phone.",
+      "Nothing is copied from the week before, so the schedule is built on this week's answers. They can also request time off.",
       "Set a weekly availability deadline and send automatic email reminders to employees who haven't submitted their availability yet.",
     ],
   },

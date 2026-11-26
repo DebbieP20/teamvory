@@ -3,7 +3,7 @@
 import { TriangleAlertIcon } from "lucide-react";
 import { useActionState, useId, useState } from "react";
 import { FormMessage, SubmitButton, submitWithoutReset, TextField } from "@/components/forms/fields";
-import { TimeCombobox, timeProblem } from "@/components/forms/time-combobox";
+import { TimeInput, timeProblem } from "@/components/forms/time-input";
 import { Button } from "@/components/ui/button";
 import { addEventShift, deleteEvent, saveEvent, setEventShiftPeople } from "@/lib/event-actions";
 import { idleState } from "@/lib/form-state";
@@ -65,12 +65,12 @@ export function EventForm({ initial, onDone, minDate }: { initial?: EventFormVal
           <div className="flex flex-wrap items-end gap-2 text-sm">
             <div className="space-y-2">
               <label htmlFor={`${id}-start`} className="block font-medium">Start</label>
-              <TimeCombobox id={`${id}-start`} name="start" value={start} onChange={setStart} invalid={!!timeError} errorId={`${id}-time`} />
+              <TimeInput id={`${id}-start`} name="start" value={start} onChange={setStart} invalid={!!timeError} errorId={`${id}-time`} />
             </div>
             <span aria-hidden className="pb-2.5">–</span>
             <div className="space-y-2">
               <label htmlFor={`${id}-end`} className="block font-medium">End</label>
-              <TimeCombobox id={`${id}-end`} name="end" value={end} onChange={setEnd} invalid={!!timeError} errorId={`${id}-time`} />
+              <TimeInput id={`${id}-end`} name="end" value={end} onChange={setEnd} invalid={!!timeError} errorId={`${id}-time`} />
             </div>
           </div>
           <p id={`${id}-time`} aria-live="polite" className={cn("text-sm font-medium text-destructive", timeError && "mt-1")}>

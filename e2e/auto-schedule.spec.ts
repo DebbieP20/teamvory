@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { ownerWithEmployee } from "./helpers";
-import { applyPattern, setDefaultWeek, shiftLabel } from "./schedule-helpers";
+import { applyPattern, sendWeek, shiftLabel } from "./schedule-helpers";
 
 test("Build schedule fills shifts fairly, the owner covers gaps, and pinned shifts stay", async ({ page, browser }, testInfo) => {
   const { employee, employeeContext } = await ownerWithEmployee(page, browser, testInfo);
   // Eli works weekdays only.
-  await setDefaultWeek(employee, ["All day", "All day", "All day", "All day", "All day", "Off", "Off"]);
+  await sendWeek(employee, ["All day", "All day", "All day", "All day", "All day", "Off", "Off"]);
   await applyPattern(page, "Standard", [0, 5]); // Monday and Saturday, 2 people per shift
   const mondayEvening = shiftLabel(0, "17:00", "21:00");
 

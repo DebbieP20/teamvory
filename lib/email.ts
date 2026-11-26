@@ -9,6 +9,8 @@ type Email = {
   to: string;
   subject: string;
   text: string;
+  /** The designed version (lib/email-content.ts); text is the fallback. */
+  html?: string;
   replyTo?: string;
   /** The sender's name, e.g. "Harbor Lane Café via TeamVory". Defaults to TeamVory. */
   fromName?: string;
@@ -57,6 +59,7 @@ async function sendWithResend(email: Email): Promise<boolean> {
     to: email.to,
     subject: email.subject,
     text: email.text,
+    html: email.html,
     replyTo: email.replyTo,
   });
   if (error) {
@@ -82,6 +85,7 @@ async function sendWithGmail(email: Email): Promise<boolean> {
     to: email.to,
     subject: email.subject,
     text: email.text,
+    html: email.html,
     replyTo: email.replyTo,
   });
   return true;

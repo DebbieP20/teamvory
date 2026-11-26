@@ -1,9 +1,9 @@
 "use client";
 
 import { TriangleAlertIcon } from "lucide-react";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import type { DaySetting, Kind } from "@/lib/availability";
-import { TimeCombobox, timeProblem } from "@/components/forms/time-combobox";
+import { TimeInput, timeProblem } from "@/components/forms/time-input";
 import { cn } from "@/lib/utils";
 
 const choices: { kind: Kind; label: string }[] = [
@@ -15,6 +15,7 @@ const choices: { kind: Kind; label: string }[] = [
 /**
  * One day's availability: Off / All day / Custom (one time range, decision 21).
  * Field names are `${prefix}kind`, `${prefix}start`, `${prefix}end`.
+ * With no `initial`, nothing is chosen yet: a week starts empty until it's filled in.
  */
 export function DayEditor({
   legend,
@@ -24,30 +25,40 @@ export function DayEditor({
 }: {
   legend: string;
   prefix?: string;
-  initial: DaySetting;
+  initial: DaySetting | null;
   error?: string;
 }) {
   const id = useId();
-  const [kind, setKind] = useState<Kind>(initial.kind);
-  const [start, setStart] = useState(initial.startTime ?? "12:00");
-  const [end, setEnd] = useState(initial.endTime ?? "17:00");
+  const [kind, setKind] = useState<Kind | null>(initial?.kind ?? null);
+  const [start, setStart] = useState(initial?.startTime ?? "12:00");
+  const [end, setEnd] = useState(initial?.endTime ?? "17:00");
+  const timesRef = useRef<HTMLDivElement>(null);
+  // A message from the last send (e.g. "Choose Off, All day or Custom.") goes away once the day is changed.
+  const [dismissed, setDismissed] = useState<string | undefined>();
+  const serverError = error !== dismissed ? error : undefined;
 
   // Checked as soon as a time changes, so mistakes show right away (the server checks again).
   const startProblem = timeProblem(start);
   const endProblem = timeProblem(end);
   const orderProblem = !startProblem && !endProblem && start >= end;
   const message = startProblem ?? endProblem ?? (orderProblem ? "The end time must be after the start time." : null);
-  const shownError = kind === "CUSTOM" ? (message ?? error) : error;
+  const shownError = kind === "CUSTOM" ? (message ?? serverError) : serverError;
 
   return (
     <fieldset aria-describedby={shownError ? `${id}-error` : undefined}>
       <legend className="sr-only">{legend}</legend>
-      <div className="grid grid-cols-3 overflow-hidden rounded-lg border border-input">
+      <div
+        className={cn(
+          "grid grid-cols-3 overflow-hidden rounded-lg border",
+          serverError && !kind ? "border-destructive" : "border-input",
+        )}
+      >
         {choices.map((c) => (
           <label
             key={c.kind}
             className={cn(
-              "cursor-pointer border-r border-input px-2 py-2 text-center text-sm last:border-r-0 has-focus-visible:ring-3 has-focus-visible:ring-ring/50",
+              // relative: keeps the hidden radio inside its label, so Safari doesn't jump the page when it's tapped.
+              "relative cursor-pointer border-r border-input px-2 py-2 text-center text-sm last:border-r-0 has-focus-visible:ring-3 has-focus-visible:ring-ring/50",
               kind === c.kind ? "bg-mint font-semibold text-teal-dark" : "bg-white hover:bg-slate-50",
             )}
           >
@@ -56,7 +67,14 @@ export function DayEditor({
               name={`${prefix}kind`}
               value={c.kind}
               checked={kind === c.kind}
-              onChange={() => setKind(c.kind)}
+              onChange={() => {
+                setKind(c.kind);
+                setDismissed(error);
+                // Then bring the time boxes on screen: on a phone they can open below the bottom edge.
+                if (c.kind === "CUSTOM") {
+                  requestAnimationFrame(() => timesRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }));
+                }
+              }}
               className="sr-only"
             />
             {c.label}
@@ -64,12 +82,12 @@ export function DayEditor({
         ))}
       </div>
       {kind === "CUSTOM" && (
-        <div className="mt-2 space-y-1">
+        <div ref={timesRef} className="mt-2 scroll-mb-4 space-y-1">
           {/* Labels above the boxes, so both fit side by side on a small phone. */}
           <div className="flex flex-wrap gap-x-3 gap-y-2 text-sm">
             <div className="space-y-1">
               <label htmlFor={`${id}-start`} className="block font-medium">From</label>
-              <TimeCombobox
+              <TimeInput
                 id={`${id}-start`}
                 name={`${prefix}start`}
                 value={start}
@@ -80,7 +98,7 @@ export function DayEditor({
             </div>
             <div className="space-y-1">
               <label htmlFor={`${id}-end`} className="block font-medium">To</label>
-              <TimeCombobox
+              <TimeInput
                 id={`${id}-end`}
                 name={`${prefix}end`}
                 value={end}
@@ -90,7 +108,7 @@ export function DayEditor({
               />
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">Type a time (like 12:15 PM) or pick one from the list. Times go in 15-minute steps.</p>
+          <p className="text-xs text-muted-foreground">Times go in 15-minute steps.</p>
         </div>
       )}
       <p id={`${id}-error`} aria-live="polite" className={cn("text-sm font-medium text-destructive", shownError && "mt-2")}>

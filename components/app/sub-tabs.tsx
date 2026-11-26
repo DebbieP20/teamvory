@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-/** Tabs that are separate pages (e.g. Default week / This & next week / Time off). */
+/** Tabs that are separate pages (e.g. This week / Next week / Time off). */
 export function SubTabs({ label, tabs }: { label: string; tabs: { href: string; label: string }[] }) {
   const pathname = usePathname();
   return (
